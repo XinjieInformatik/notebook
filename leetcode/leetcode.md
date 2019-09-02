@@ -240,6 +240,19 @@ class Solution:
         return out
 ```
 
+#### [226. 翻转二叉树](https://leetcode-cn.com/problems/invert-binary-tree/)
+注意体会递归的逐步进入与退出，变量的生命周期
+```PYTHON
+class Solution:
+    def invertTree(self, root: TreeNode) -> TreeNode:
+        if root != None:
+            left_node = self.invertTree(root.left)
+            right_node = self.invertTree(root.right)
+            root.left = right_node
+            root.right = left_node
+        return root
+```
+
 ### 杂
 #### 58. 最后一个单词的长度
 ```python
@@ -329,4 +342,188 @@ class Solution:
         if p0 == m: nums1[p3:] = nums2[p1:]
         else: nums1[p3:] = nums1_copy[p0:]
         return nums1
+```
+
+## 排序
+#### 快速排序
+```PYTHON
+def qsort(array, l, r):
+    def partition(array, l, r):
+        p = array[r]
+        s = l - 1
+        for i in range(l, r):
+            if array[i] <= p:
+                s += 1
+                array[i], array[s] = array[s], array[i]
+        p_i = s + 1
+        array[p_i], array[r] = array[r], array[p_i]
+        return p_i
+
+    if l < r:
+        p_i = partition(array, l, r)
+        qsort(array, l, p_i - 1)
+        qsort(array, p_i + 1, r)
+```
+#### 归并排序
+```PYTHON
+def mergesort(slist):
+    def merge(l, r):
+        result = []
+        index_l, index_r = 0, 0
+        while (index_l < len(l) and index_r < len(r)):
+            if l[index_l] < r[index_r]:
+                result.append(l[index_l])
+                index_l += 1
+            else:
+                result.append(r[index_r])
+                index_r += 1
+        if index_l < index_r:
+            result.extend(l[index_l:])
+        else:
+            result.extend(r[index_r:])
+        return result
+
+    if len(slist) <= 1:
+        return slist
+    m = len(slist) // 2
+    l = mergesort(slist[:m])
+    r = mergesort(slist[m:])
+    return merge(l, r)
+```
+#### 冒泡排序
+```PYTHON
+def bubblesort(array):
+    n = len(array)
+    while(n != 1):
+        flag = 1
+        if n == len(array):
+            last = len(array[:n])-1
+        for i in range(last):
+            j = i + 1
+            if array[i] > array[j]:
+                array[i], array[j] = array[j], array[i]
+                flag = 0; last = i
+        n -= 1
+        if flag == 1: break
+```
+#### 选择排序
+```PYTHON
+def selectsort(array):
+    sort_array = []
+    while(len(array) > 0):
+        temp_min = 1e5
+        temp_i = 0
+        for i in range(len(array)):
+            if array[i] < temp_min:
+                temp_min = array[i]
+                temp_i = i
+        sort_array.append(temp_min)
+        del array[temp_i]
+    return sort_array
+```
+#### 插入排序
+```PYTHON
+def insertsort(array):
+    insert_array = []
+    for i in array:
+        if len(insert_array) == 0:
+            insert_array.append(i)
+            continue
+        insert_i = low_bound(insert_array, 0, len(insert_array), i)
+        insert_array.insert(insert_i, i)
+    return insert_array
+```
+
+## 二分查找
+### 基础 (前提，数组有序)
+```PYTHON
+def low_bound(array, l, r, o):
+    # 返回区间内第一个 >= o 的值
+    while l < r:
+        m = l + (r - l) // 2
+        # l, r 的赋值规则也要符合左闭右开
+        if array[m] < o: l = m + 1
+        else: r = m
+    return l
+
+def up_bound(array, l, r, o):
+    # 返回区间内第一个 > o 的值
+    while l < r:
+        m = l + (r - l) // 2
+        if array[m] <= o: l = m + 1
+        else: r = m
+    return r
+```
+#### [69. x 的平方根](https://leetcode-cn.com/problems/sqrtx/)
+```PYTHON
+def mySqrt(x):
+    l = 0; r = x // 2 + 1
+    while (l < r):
+        m = l + (r - l + 1) // 2
+        squre = m ** 2
+        if squre <= x: l = m
+        else: r = m - 1
+    return l
+```
+#### [441. 排列硬币](https://leetcode-cn.com/problems/arranging-coins/solution/er-fen-fa-by-xxinjiee/)
+可以直接用数学公式求解，也可以通过二分法求解数学公式 类似[69. x的平方根](https://leetcode-cn.com/problems/sqrtx/)
+
+这里使用二分查找求解的核心是
+1. 定义左右边界，r 初始值限定为 n // 2 + 1，缩小范围
+2. m为层数，循环中每次用l, r的中点更新
+3. 定义target = m * (m + 1) / 2 待求解公式
+4. 如果target < n - m (m 同时也是最后一层的个数)，更新查找范围下限l
+5. 否则更新查找范围上限r，最后r = l 退出while loop，返回其中一个即可
+
+```python
+class Solution:
+    def arrangeCoins(self, n: int) -> int:
+        # 解方程 m(m+1) / 2 = n
+        l = 0; r = n // 2 + 1
+        while(l < r):
+            m = l + (r - l) // 2
+            target = m * (m + 1) / 2
+            if target < n - m: l = m + 1
+            else: r = m
+        return l
+```
+
+附上二分查找的low_bound(),该题的主要区别就是定义target，替换low_bound()中的array[m]与被查找值的比较
+
+```python
+def low_bound(array, l, r, o):
+    # 返回区间内第一个 >= o 的值, o 为被查找值
+    while l < r:
+        m = l + (r - l) // 2
+        # l, r 的赋值规则也要符合左闭右开
+        if array[m] < o: l = m + 1
+        else: r = m
+```
+
+## 字符串
+#### [443. 压缩字符串](https://leetcode-cn.com/problems/string-compression/)
+```PYTHON
+class Solution:
+    def compress(self, chars: List[str]) -> int:
+        count = 1
+        temp = chars[0]
+        read = 1
+        while (read < len(chars)):
+            if chars[read] == temp:
+                count += 1
+                chars.pop(read)
+                read -= 1
+            else:
+                if count != 1:
+                    for item in str(count):
+                        chars.insert(read, item)
+                        read += 1
+                count = 1
+                temp = chars[read]
+            read += 1
+        if count != 1:
+            for item in str(count):
+                chars.insert(read, item)
+                read += 1
+        return len(chars)
 ```
