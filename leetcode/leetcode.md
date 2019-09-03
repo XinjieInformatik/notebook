@@ -144,6 +144,10 @@ class Solution:
 - 尝试去访问该节点右孩子，若为`None`则退出该层递归，返回并保存父节点
 - 若不为`None`则去寻找该右孩子的最左节点
 
+
+- 时间复杂度：O(n)。递归函数 T(n) = 2 * T(n/2) + 1。
+- 空间复杂度：最坏情况下需要空间O(n)，平均情况为O(logn)
+
 ```PYTHON
 # Definition for a binary tree node.
 class TreeNode:
@@ -251,6 +255,27 @@ class Solution:
             root.left = right_node
             root.right = left_node
         return root
+```
+
+#### [437. 路径总和 III](https://leetcode-cn.com/problems/path-sum-iii/submissions/)
+```PYTHON
+class Solution:
+    def pathSum(self, root: TreeNode, sum: int) -> int:
+        def traversal(node, stack):
+            if node:
+                stack.append(node.val)
+                cur = 0
+                for i in range(len(stack)-1, -1, -1):
+                    cur += stack[i]
+                    if cur == sum: # 注意比较区别 sum(stack[i:]) == sum_
+                        self.count += 1
+                traversal(node.left, stack)
+                traversal(node.right, stack)
+                stack.pop() # 注意递归变量的生命周期
+
+        self.count = 0; stack = []
+        traversal(root, stack)
+        return self.count
 ```
 
 ### 杂
@@ -526,4 +551,80 @@ class Solution:
                 chars.insert(read, item)
                 read += 1
         return len(chars)
+```
+
+## 滑动窗口
+#### [76. 最小覆盖子串](https://leetcode-cn.com/problems/minimum-window-substring)
+双指针，滑动窗口求解
+```PYTHON
+class Solution:
+    def minWindow(self, s: str, t: str) -> str:
+        window = {}
+        # 构造 window dict
+        for item in t:
+            if item not in window:
+                window[item] = 1
+            else: window[item] += 1
+
+        # 根据 window 初始化 search_area dict
+        search_area = {}
+        for key in window.keys():
+            search_area[key] = 0
+
+        l_pointer, r_pointer = 0, 0
+        ans, ans_len = '', len(s)
+
+        while (r_pointer < len(s)):
+            if s[r_pointer] in search_area.keys():
+                search_area[s[r_pointer]] += 1
+            r_pointer += 1 # 右指针右移
+            self.flag = 1
+            for key in window.keys():
+                if search_area[key] < window[key]:
+                    self.flag = 0
+                    break
+            # 如果search_area已经覆盖window,对search_area进行优化，移动左指针
+            while self.flag:
+                if s[l_pointer] in search_area.keys():
+                    search_area[s[l_pointer]] -= 1
+                    if search_area[s[l_pointer]] < window[s[l_pointer]]:
+                        if len(s[l_pointer:r_pointer]) <= ans_len:
+                            ans = s[l_pointer:r_pointer] #用ans记录当前符合条件的最小长度子串
+                            ans_len = len(ans)
+                        l_pointer += 1
+                        break
+                l_pointer += 1
+
+        return ans
+```
+#### [438. 找到字符串中所有字母异位词](https://leetcode-cn.com/problems/find-all-anagrams-in-a-string)
+```PYTHON
+class Solution:
+    def findAnagrams(self, s: str, p: str) -> List[int]:
+        res = []
+        window = {}
+        for item in p:
+            if item not in window:
+                window[item] = 1
+            else: window[item] += 1
+
+        search_area = {}
+        for key in window.keys():
+            search_area[key] = 0
+
+        pointer = 0
+        while (pointer < len(s)):
+            self.flag = 1 # 注意flag初始化位置
+            if s[pointer] in window.keys():
+                search_area[s[pointer]] += 1
+            for key in window.keys():
+                if search_area[key] != window[key]:
+                    self.flag = 0
+                    break
+            if self.flag: res.append(pointer - len(p) + 1)
+            pointer += 1
+            if pointer > len(p) - 1:
+                if s[pointer-len(p)] in search_area.keys():
+                    search_area[s[pointer-len(p)]] -= 1
+        return res
 ```
