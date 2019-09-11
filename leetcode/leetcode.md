@@ -114,7 +114,8 @@ class Solution:
 
 所以到达第 `i` 阶的方法总数就是到第 `i-1` 阶和第 `i-2` 阶的方法数之和。
 
-令 `dp[i]` 表示能到达第 `i` 阶的方法总数，则有（同斐波那契数）：
+令 `dp[i]` 表示能到达第 `i` 阶的方法总数，
+状态转移方程（同斐波那契数）：
 `dp[i] = dp[i−1] + dp[i−2]`
 ```python
 class Solution:
@@ -129,6 +130,50 @@ class Solution:
             f1 = f2
         return f2
 ```
+
+#### [198. 打家劫舍](https://leetcode-cn.com/problems/house-robber)
+状态转移方程 cur_max = max(pprev_max + nums[i], prev_max)
+```python
+class Solution:
+    def rob(self, nums: List[int]) -> int:
+        # 动态规划两部曲，1.定义初始值 2.定义状态转移方程
+        cur_max = 0
+        prev_max = 0
+        pprev_max = 0
+
+        for i in range(len(nums)):
+            cur_max = max(pprev_max + nums[i], prev_max)
+            pprev_max = prev_max
+            prev_max = cur_max
+
+        return cur_max
+```
+
+#### [64. 最小路径和](https://leetcode-cn.com/problems/minimum-path-sum)
+逆序，二维
+```python
+class Solution:
+    def minPathSum(self, grid: List[List[int]]) -> int:
+        if len(grid) == 0: return
+        h = len(grid)
+        w = len(grid[0])
+        dp = [[0]*w for i in range(h)]
+        dp[-1][-1] = grid[-1][-1]
+        print(dp)
+        for i in range(h - 1, -1, -1):
+            for j in range(w - 1, -1, -1):
+                if i == h-1 and j == w-1:
+                    continue
+                try: down = dp[i+1][j]
+                except: down = 1e4
+                try: right = dp[i][j+1]
+                except: right = 1e4
+                dp[i][j] = grid[i][j] + min(down, right)
+        return dp[0][0]
+```
+顺序，二维
+
+
 ## 树
 ### 树的遍历
 ![例子](assets/leetcode-78b089f0.png)
@@ -273,9 +318,55 @@ class Solution:
                 traversal(node.right, stack)
                 stack.pop() # 注意递归变量的生命周期
 
-        self.count = 0; stack = []
+        self.count = 0; stack = [] # self.count与直接定义count的区别
         traversal(root, stack)
         return self.count
+```
+
+二叉搜索树具有以下性质：
+- 如果节点的左子树不空，则左子树上所有结点的值均小于等于它的根结点的值；
+- 如果节点的右子树不空，则右子树上所有结点的值均大于等于它的根结点的值；
+- 任意节点的左、右子树也分别为二叉查找树；（二叉搜索树的定义是递归的二叉搜索树的定义是递归的）
+- 没有键值相等的节点
+- 中序遍历是升序
+
+#### [538. 把二叉搜索树转换为累加树](https://leetcode-cn.com/problems/convert-bst-to-greater-tree/)
+这道题对理解递归，回溯很有帮助。以树为例子，递归从root开始，在root结束。
+递归回溯是一个不断深入，又回溯退出，在之间的操作注意理解同级性
+```python
+class Solution:
+    def convertBST(self, root: TreeNode) -> TreeNode:
+        # 注意体会递归，回溯变量的生命周期,递归从root开始，从root退出
+        def traversal(node):
+            if node:
+                traversal(node.right)
+                if self.last_val:
+                    node.val += self.last_val
+                self.last_val = node.val # 注意变量生命周期
+                traversal(node.left)
+
+        self.last_val = None
+        traversal(root)
+        return root
+```
+
+#### [543. 二叉树的直径](https://leetcode-cn.com/problems/diameter-of-binary-tree)
+注意理解递归，通过后序遍历得到每个当前节点的直径，保存最大直径
+```python
+class Solution:
+    def __init__(self):
+        self.max_diameter = 0
+    def diameterOfBinaryTree(self, root: TreeNode) -> int:
+        # 通过后序遍历获得当前节点左右最深子节点的深度，保存最大的直径长度
+        def traversal(node):
+            if node == None: return 0
+            l = traversal(node.left)
+            r = traversal(node.right)
+            self.max_diameter = max(l + r, self.max_diameter)
+            return max(l, r) + 1
+
+        _ = traversal(root)
+        return self.max_diameter
 ```
 
 ### 杂
@@ -552,6 +643,22 @@ class Solution:
                 read += 1
         return len(chars)
 ```
+#### [541. 反转字符串 II](https://leetcode-cn.com/problems/reverse-string-ii/)
+python字符串修改及其麻烦，转换成list，最后再通过''.join()转成str
+```python
+class Solution:
+    def reverseStr(self, s: str, k: int) -> str:
+        pointer = 0
+        s = list(s)
+        while (pointer < len(s)):
+            if pointer + k <= len(s):
+                s[pointer:pointer+k] = s[pointer:pointer+k][::-1]
+            else:
+                s[pointer:] = s[pointer:][::-1]
+            pointer += 2 * k
+        s = ''.join(s)
+        return str(s)
+```
 
 ## 滑动窗口
 #### [76. 最小覆盖子串](https://leetcode-cn.com/problems/minimum-window-substring)
@@ -627,4 +734,23 @@ class Solution:
                 if s[pointer-len(p)] in search_area.keys():
                     search_area[s[pointer-len(p)]] -= 1
         return res
+```
+#### [3. 无重复字符的最长子串](https://leetcode-cn.com/problems/longest-substring-without-repeating-characters)
+```python
+class Solution:
+    def lengthOfLongestSubstring(self, s: str) -> int:
+        l_pointer, r_pointer = 0, 0
+        ans = ''
+        ans_max = ''
+        while (r_pointer < len(s)):
+            if s[r_pointer] not in s[l_pointer:r_pointer]:
+                r_pointer += 1
+            else:
+                if r_pointer - l_pointer > len(ans_max):
+                    ans_max = s[l_pointer:r_pointer]
+                l_pointer +=1
+        # 补充对最后一次的校对
+        if r_pointer - l_pointer > len(ans_max):
+            ans_max = s[l_pointer:r_pointer]
+        return len(ans_max)
 ```

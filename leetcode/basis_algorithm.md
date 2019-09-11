@@ -23,6 +23,13 @@ list(my_dict.value())[0]
 sorted(mylist, key=lambda ele:(ele[1],ele[0]))
 ```
 
+### 初始化二维list
+```python
+[[i] * 5 for i in range(3)]
+[[0, 0, 0, 0, 0], [1, 1, 1, 1, 1], [2, 2, 2, 2, 2]]
+```
+
+
 ### list remove
 #### python list remove(ele), pop(ele_idx), del array[idx]，只移除一个元素（第一个满足条件的元素
 
