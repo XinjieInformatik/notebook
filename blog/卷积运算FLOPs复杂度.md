@@ -97,7 +97,13 @@ def load_pb(pb):
 """
 Flops should be ~ 7200
 result: FLOP before freezing 8288
-解析：变量通常会通过高斯分布进行初始化，引入额外的FLOPs，而初始化一次性完成，并且在训练或推理期间都不会发生。于此之外，一份完整的模型还会包括loss, learning rate, BN 等参数。因此在真正统计模型FLOPs之前, 我们需要冻结模型, 在~/dist-packages/tensorflow/python/tools文件下tensorflow有提供 freeze_graph.py, 可以方便的冻结训练模型，移除与输出节点不相干的nodes
+解析：变量通常会通过高斯分布进行初始化，引入额外的FLOPs，
+而初始化一次性完成，并且在训练或推理期间都不会发生。
+此外，一份完整的模型还会包括loss, learning rate, BN 等参数。
+因此在真正统计模型FLOPs之前, 我们需要冻结模型,
+在~/dist-packages/tensorflow/python/tools文件下
+tensorflow有提供 freeze_graph.py, 可以方便的冻结训练模型，
+移除与输出节点不相干的nodes
 """
 # ***** (2) freeze graph *****
     output_graph_def = graph_util.convert_variables_to_constants(sess, g.as_graph_def(), ['output'])
