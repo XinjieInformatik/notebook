@@ -59,10 +59,11 @@ def conv_forward(feature, filter, bias, conv_param):
 
 ### 优化
 用矩阵乘法代替多重for循环
-![](assets/conv1.jpg)
-![](assets/conv2.jpg)
-![](assets/conv3.jpg)
-![](assets/conv4.jpg)
+
+<img src="assets/conv1.jpg" width="50%" height="50%" align="center" />
+<img src="assets/conv2.jpg" width="50%" height="50%" align="center" />
+<img src="assets/conv3.jpg" width="50%" height="50%" align="center" />
+<img src="assets/conv4.jpg" width="50%" height="50%" align="center" />
 
 reference: https://www.zhihu.com/question/28385679
 
