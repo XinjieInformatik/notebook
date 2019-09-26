@@ -11,21 +11,22 @@ FLOPs：floating point operations的缩写（s表复数），浮点运算数，
 
 不考虑bias，只考虑滑动窗口中的k * k此乘法与k * k-1次加法运算 (batch size = 1)
 
-<img src="http://latex.codecogs.com/gif.latex?$$&space;(2&space;*&space;k^2&space;*&space;c_{in-channel}&space;-&space;1)&space;*&space;h_{out}&space;*&space;w_{out}&space;*&space;c_{out-channel}&space;$$" title="$$ (2 * k^2 * c_{in-channel} - 1) * h_{out} * w_{out} * c_{out-channel} $$" />
-
 $$ (2 * k^2 * c_{in-channel} - 1) * h_{out} * w_{out} * c_{out-channel} $$
+
+<img src="http://latex.codecogs.com/gif.latex?$$&space;(2&space;*&space;k^2&space;*&space;c_{in-channel}&space;-&space;1)&space;*&space;h_{out}&space;*&space;w_{out}&space;*&space;c_{out-channel}&space;$$" title="$$ (2 * k^2 * c_{in-channel} - 1) * h_{out} * w_{out} * c_{out-channel} $$" />
 
 考虑bias，z在上面的基础上 * 1 + bias
 
-<img src="http://latex.codecogs.com/gif.latex?$$&space;(2&space;*&space;k^2&space;*&space;c_{in-channel}&space;&plus;&space;1)&space;*&space;h_{out}&space;*&space;w_{out}&space;*&space;c_{out-channel}&space;$$" title="$$ (2 * k^2 * c_{in-channel} + 1) * h_{out} * w_{out} * c_{out-channel} $$" />
-
 $$ (2 * k^2 * c_{in-channel} + 1) * h_{out} * w_{out} * c_{out-channel} $$
+
+<img src="http://latex.codecogs.com/gif.latex?$$&space;(2&space;*&space;k^2&space;*&space;c_{in-channel}&space;&plus;&space;1)&space;*&space;h_{out}&space;*&space;w_{out}&space;*&space;c_{out-channel}&space;$$" title="$$ (2 * k^2 * c_{in-channel} + 1) * h_{out} * w_{out} * c_{out-channel} $$" />
 
 tf.profiler.profile 提供的FLOPs计算API
 
+$$ (2 * k^2 * c_{in-channel}) * h_{out} * w_{out} * c_{out-channel} $$
+
 <img src="http://latex.codecogs.com/gif.latex?$$&space;(2&space;*&space;k^2&space;*&space;c_{in-channel})&space;*&space;h_{out}&space;*&space;w_{out}&space;*&space;c_{out-channel}&space;$$" title="$$ (2 * k^2 * c_{in-channel}) * h_{out} * w_{out} * c_{out-channel} $$" />
 
-$$ (2 * k^2 * c_{in-channel}) * h_{out} * w_{out} * c_{out-channel} $$
 
 ### 简单的前向传播卷积实现
 ```python
@@ -114,4 +115,3 @@ with g2.as_default():
 ```
 
 reference: https://stackoverflow.com/questions/45085938/tensorflow-is-there-a-way-to-measure-flops-for-a-model/50680663#50680663?newreg=384984a98356434bb936801d52714a46
- 
