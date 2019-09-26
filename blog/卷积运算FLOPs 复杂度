@@ -53,18 +53,8 @@ def conv_forward(feature, filter, bias, conv_param):
 ![](assets/conv2.jpg)
 ![](assets/conv3.jpg)
 ![](assets/conv4.jpg)
+
 reference: https://www.zhihu.com/question/28385679
-
-
-
-
-
-
-
-
-
-
-
 
 
 ### 实际tensorflow模型FLOPs统计示例
