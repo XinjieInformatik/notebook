@@ -1,4 +1,4 @@
-# 卷积运算FlOPs 复杂度分析
+# 卷积运算原理 与 模型FlOPs复杂度分析
 
 ### 概念
 
@@ -13,13 +13,18 @@ FLOPs：floating point operations的缩写（s表复数），浮点运算数，
 
 <img src="http://latex.codecogs.com/gif.latex?$$&space;(2&space;*&space;k^2&space;*&space;c_{in-channel}&space;-&space;1)&space;*&space;h_{out}&space;*&space;w_{out}&space;*&space;c_{out-channel}&space;$$" title="$$ (2 * k^2 * c_{in-channel} - 1) * h_{out} * w_{out} * c_{out-channel} $$" />
 
-
 $$ (2 * k^2 * c_{in-channel} - 1) * h_{out} * w_{out} * c_{out-channel} $$
 
 考虑bias，z在上面的基础上 * 1 + bias
+
+<img src="http://latex.codecogs.com/gif.latex?$$&space;(2&space;*&space;k^2&space;*&space;c_{in-channel}&space;&plus;&space;1)&space;*&space;h_{out}&space;*&space;w_{out}&space;*&space;c_{out-channel}&space;$$" title="$$ (2 * k^2 * c_{in-channel} + 1) * h_{out} * w_{out} * c_{out-channel} $$" />
+
 $$ (2 * k^2 * c_{in-channel} + 1) * h_{out} * w_{out} * c_{out-channel} $$
 
 tf.profiler.profile 提供的FLOPs计算API
+
+<img src="http://latex.codecogs.com/gif.latex?$$&space;(2&space;*&space;k^2&space;*&space;c_{in-channel})&space;*&space;h_{out}&space;*&space;w_{out}&space;*&space;c_{out-channel}&space;$$" title="$$ (2 * k^2 * c_{in-channel}) * h_{out} * w_{out} * c_{out-channel} $$" />
+
 $$ (2 * k^2 * c_{in-channel}) * h_{out} * w_{out} * c_{out-channel} $$
 
 ### 简单的前向传播卷积实现
@@ -78,22 +83,26 @@ def load_pb(pb):
         return graph
 
 # ***** (1) Create Graph *****
-# g = tf.Graph()
-# sess = tf.Session(graph=g)
-# with g.as_default():
-#     A = tf.Variable(initial_value=tf.random_normal([25, 16]))
-#     B = tf.Variable(initial_value=tf.random_normal([16, 9]))
-#     C = tf.matmul(A, B, name='output')
-#     sess.run(tf.global_variables_initializer())
-#     flops = tf.profiler.profile(g, options = tf.profiler.ProfileOptionBuilder.float_operation())
-#     print('FLOP before freezing', flops.total_float_ops)
-# # *****************************
-#
-# # ***** (2) freeze graph *****
-# output_graph_def = graph_util.convert_variables_to_constants(sess, g.as_graph_def(), ['output'])
-#
-# with tf.gfile.GFile('graph.pb', "wb") as f:
-#     f.write(output_graph_def.SerializeToString())
+    g = tf.Graph()
+    sess = tf.Session(graph=g)
+    with g.as_default():
+        A = tf.Variable(initial_value=tf.random_normal([25, 16]))
+        B = tf.Variable(initial_value=tf.random_normal([16, 9]))
+        C = tf.matmul(A, B, name='output')
+        sess.run(tf.global_variables_initializer())
+        flops = tf.profiler.profile(g, options = tf.profiler.ProfileOptionBuilder.float_operation())
+        print('FLOP before freezing', flops.total_float_ops)
+# *****************************
+"""
+Flops should be ~ 7200
+result: FLOP before freezing 8288
+解析：变量通常会通过高斯分布进行初始化，引入额外的FLOPs，而初始化一次性完成，并且在训练或推理期间都不会发生。于此之外，一份完整的模型还会包括loss, learning rate, BN 等参数。因此在真正统计模型FLOPs之前, 我们需要冻结模型, 在~/dist-packages/tensorflow/python/tools文件下tensorflow有提供 freeze_graph.py, 可以方便的冻结训练模型，移除与输出节点不相干的nodes
+"""
+# ***** (2) freeze graph *****
+    output_graph_def = graph_util.convert_variables_to_constants(sess, g.as_graph_def(), ['output'])
+
+    with tf.gfile.GFile('graph.pb', "wb") as f:
+        f.write(output_graph_def.SerializeToString())
 # *****************************
 
 
@@ -102,19 +111,7 @@ g2 = load_pb('path_to_your_freezing_graph')
 with g2.as_default():
     flops = tf.profiler.profile(g2, options = tf.profiler.ProfileOptionBuilder.float_operation())
     print('after freezing: {} BFLOPs'.format(flops.total_float_ops / 1e9))
-
-reference: https://stackoverflow.com/questions/45085938/tensorflow-is-there-a-way-to-measure-flops-for-a-model/50680663#50680663?newreg=384984a98356434bb936801d52714a46
 ```
 
-待补充
-
-
-https://zhuanlan.zhihu.com/p/63974249
-
-https://zhuanlan.zhihu.com/p/64933417
-
-https://www.zhihu.com/question/28385679
-
-http://fanding.xyz/2017/09/07/CNN%E5%8D%B7%E7%A7%AF%E7%BD%91%E7%BB%9C%E7%9A%84Python%E5%AE%9E%E7%8E%B0III-CNN%E5%AE%9E%E7%8E%B0/
-
-http://geeshang.top/convolution-implementation
+reference: https://stackoverflow.com/questions/45085938/tensorflow-is-there-a-way-to-measure-flops-for-a-model/50680663#50680663?newreg=384984a98356434bb936801d52714a46
+ 
