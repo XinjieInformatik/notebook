@@ -2,14 +2,16 @@
 
 ### 概念
 
-FLOPS：floating point operations per second的缩写，每秒浮点运算次数，
-理解为计算速度。是一个衡量硬件性能的指标。
+FLOPS：floating point operations per second的缩写，每秒浮点运算次数，理解为计算速度。是一个衡量硬件性能的指标。
+
 FLOPs：floating point operations的缩写（s表复数），浮点运算数，
 理解为计算量。可以用来衡量算法/模型的复杂度。
 
 ### FLOPs 计算公式
 
 不考虑bias，只考虑滑动窗口中的k * k此乘法与k * k-1次加法运算 (batch size = 1)
+
+![](http://latex.codecogs.com/gif.latex?\\(2 * k^2 * c_{in-channel} - 1) * h_{out} * w_{out} * c_{out-channel})
 
 $$ (2 * k^2 * c_{in-channel} - 1) * h_{out} * w_{out} * c_{out-channel} $$
 
