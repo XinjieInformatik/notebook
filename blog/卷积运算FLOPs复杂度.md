@@ -11,7 +11,8 @@ FLOPs：floating point operations的缩写（s表复数），浮点运算数，
 
 不考虑bias，只考虑滑动窗口中的k * k此乘法与k * k-1次加法运算 (batch size = 1)
 
-![](http://latex.codecogs.com/gif.latex?\\(2 * k^2 * c_{in-channel} - 1) * h_{out} * w_{out} * c_{out-channel})
+<img src="http://latex.codecogs.com/gif.latex?$$&space;(2&space;*&space;k^2&space;*&space;c_{in-channel}&space;-&space;1)&space;*&space;h_{out}&space;*&space;w_{out}&space;*&space;c_{out-channel}&space;$$" title="$$ (2 * k^2 * c_{in-channel} - 1) * h_{out} * w_{out} * c_{out-channel} $$" />
+
 
 $$ (2 * k^2 * c_{in-channel} - 1) * h_{out} * w_{out} * c_{out-channel} $$
 
