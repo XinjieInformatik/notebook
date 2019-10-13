@@ -1,5 +1,82 @@
 # Leetcode python
 
+## 栈
+#### [20. 有效的括号](https://leetcode-cn.com/problems/valid-parentheses/)
+符号匹配用单个栈
+```python
+class Solution:
+    def isValid(self, s: str) -> bool:
+        stack = []
+        match = {'{':'}', '[':']', '(':')'}
+        for item in s:
+            if item in match.keys():
+                stack.append(item)
+            else:
+                if len(stack) != 0:
+                    if match[stack[-1]] == item:
+                        stack.pop()
+                    else: return False
+                else: return False
+        if len(stack) == 0: return True
+        else: return False
+```
+
+#### [394. 字符串解码](https://leetcode-cn.com/problems/decode-string/)
+单个栈
+```python
+class Solution:
+    def decodeString(self, s: str) -> str:
+        stack = []
+        for item in s:
+            if item != ']':
+                stack.append(item)
+            else:
+                decode_str = ''
+                while True:
+                    top = stack.pop()
+                    if top != '[':
+                        decode_str += top
+                    else: break
+                num_str = ''
+                while True:
+                    num_top = stack.pop()
+                    if num_top.isdigit() == True:
+                        num_str += num_top
+                        if len(stack) == 0:
+                            break
+                    else:
+                        stack.append(num_top)
+                        break
+                num_int = int(num_str[::-1])
+                decode_str = decode_str[::-1] * num_int
+                for i in decode_str:
+                    stack.append(i)
+        return_str = ''.join(stack)
+        return return_str
+```
+
+#### [739. 每日温度](https://leetcode-cn.com/problems/daily-temperatures/)
+包含index的单调递减栈
+```python
+class Solution:
+    def dailyTemperatures(self, T: List[int]) -> List[int]:
+        # 单调递减，栈顶为当前遍历值，包含序号
+        stack = []
+        result = [0] * len(T)
+        # 遍历list T
+        for index, item in enumerate(T):
+            # 维护单调栈并且赋值result
+            while stack and stack[-1][1] < item:
+                i, value = stack.pop()
+                target = index - i
+                result[i] = target
+            stack.append((index, item))
+        return result
+```
+
+
+
+
 ## 堆
 #### 347. 前 K 个高频元素
 **堆排序处理海量数据的topK，分位数** 非常合适，因为它不用将所有的元素都进行排序，只需要比较和根节点的大小关系就可以了，同时也不需要一次性将所有的数据都加载到内存。
@@ -189,11 +266,10 @@ class Solution:
 - 尝试去访问该节点右孩子，若为`None`则退出该层递归，返回并保存父节点
 - 若不为`None`则去寻找该右孩子的最左节点
 
-
+解法一： 递归
 - 时间复杂度：O(n)。递归函数 T(n) = 2 * T(n/2) + 1。
 - 空间复杂度：最坏情况下需要空间O(n)，平均情况为O(logn)
-
-```PYTHON
+```python
 # Definition for a binary tree node.
 class TreeNode:
     def __init__(self, x):
@@ -213,13 +289,36 @@ class Solution:
         traversal(root, res)
         return res
 ```
+解法二： 栈加循环
+- 使用颜色标记节点的状态，新节点为白色，已访问的节点为灰色。
+- 如果遇到的节点为白色，则将其标记为灰色，然后将其右子节点、自身、左子节点依次入栈。
+- 如果遇到的节点为灰色，则将节点的值输出。
+```python
+class Solution:
+    def inorderTraversal(self, root: TreeNode) -> List[int]:
+        WHITE, GRAY = 0, 1
+        stack = []
+        stack.append((root, WHITE))
+        result = []
+        while stack:
+            node, color = stack.pop()
+            if node:
+                if color == WHITE:
+                    stack.append((node.right, WHITE))
+                    stack.append((node, GRAY))
+                    stack.append((node.left, WHITE))
+                else:
+                    result.append(node.val)
+        return result
+```
+
 #### [144. 二叉树的前序遍历](https://leetcode-cn.com/problems/binary-tree-preorder-traversal/)
 输出顺序：根 -> 左子节点 -> 右子节点
 思路：
 - 从根节点开始，若当前节点非空，输出
 - 依次向左，左子为空再向右
 
-```PYTHON
+```python
 class Solution:
     def preorderTraversal(self, root: TreeNode) -> List[int]:
         def traversal(node, res):
@@ -232,9 +331,30 @@ class Solution:
         traversal(root, res)
         return res
 ```
+
+```python
+class Solution:
+    def preorderTraversal(self, root: TreeNode) -> List[int]:
+        WHITE, GRAY = 0, 1
+        stack = []
+        stack.append((root, WHITE))
+        result = []
+        while stack:
+            node, color = stack.pop()
+            if node:
+                if color == WHITE:
+                    stack.append((node.right, WHITE))
+                    stack.append((node.left, WHITE))
+                    stack.append((node, GRAY))
+                else:
+                    result.append(node.val)
+        return result
+```
+
 #### [145. 二叉树的后序遍历](https://leetcode-cn.com/problems/binary-tree-postorder-traversal/)
 输出顺序：左后 -> 右后 -> 根
-```PYTHON
+
+```python
 class Solution:
     def postorderTraversal(self, root: TreeNode) -> List[int]:
         def traversal(node, res):
@@ -247,9 +367,29 @@ class Solution:
         traversal(root, res)
         return res
 ```
+
+```python
+class Solution:
+    def postorderTraversal(self, root: TreeNode) -> List[int]:
+        WHITE, GRAY = 0, 1
+        stack = []
+        stack.append((root, WHITE))
+        result = []
+        while stack:
+            node, color = stack.pop()
+            if node:
+                if color == WHITE:
+                    stack.append((node, GRAY))
+                    stack.append((node.right, WHITE))
+                    stack.append((node.left, WHITE))
+                else:
+                    result.append(node.val)
+        return result
+```
+
 #### [102. 二叉树的层次遍历](https://leetcode-cn.com/problems/binary-tree-level-order-traversal/submissions/)
 输出顺序：按层级从左到右
-```PYTHON
+```python
 class Solution:
     def levelOrder(self, root: TreeNode) -> List[List[int]]:
         def traversal(node, level, res):
@@ -264,9 +404,30 @@ class Solution:
         return res
 ```
 
+```python
+class Solution:
+    def levelOrder(self, root: TreeNode) -> List[List[int]]:
+        WHITE, GRAY = 0, 1
+        stack = []
+        init_level = 0
+        stack.append((root, WHITE, init_level))
+        result = []
+        while stack:
+            node, color, level = stack.pop()
+            if node:
+                if color == WHITE:
+                    stack.append((node.right, WHITE, level+1))
+                    stack.append((node.left, WHITE, level+1))
+                    stack.append((node, GRAY, level))
+                else:
+                    if len(result) == level: result.append([])
+                    result[level].append(node.val)
+        return result
+```
+
 #### [987. 二叉树的垂序遍历](https://leetcode-cn.com/problems/vertical-order-traversal-of-a-binary-tree/submissions/)
 输出顺序：左 -> 右， 上 -> 下
-```PYTHON
+```python
 class Solution:
     def verticalTraversal(self, root: TreeNode) -> List[List[int]]:
         def traversal(node, level, res, levels, deep=0):
@@ -291,7 +452,7 @@ class Solution:
 
 #### [226. 翻转二叉树](https://leetcode-cn.com/problems/invert-binary-tree/)
 注意体会递归的逐步进入与退出，变量的生命周期
-```PYTHON
+```python
 class Solution:
     def invertTree(self, root: TreeNode) -> TreeNode:
         if root != None:
@@ -303,7 +464,7 @@ class Solution:
 ```
 
 #### [437. 路径总和 III](https://leetcode-cn.com/problems/path-sum-iii/submissions/)
-```PYTHON
+```python
 class Solution:
     def pathSum(self, root: TreeNode, sum: int) -> int:
         def traversal(node, stack):
@@ -404,7 +565,7 @@ class Solution:
         return s[::-1]
 ```
 #### 66. 加一
-```PYTHON
+```python
 class Solution:
     def plusOne(self, digits: List[int]) -> List[int]:
         if digits[-1] != 9: digits[-1] += 1
@@ -419,7 +580,7 @@ class Solution:
         return digits
 ```
 #### [83. 删除排序链表中的重复元素](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list/)
-```PYTHON
+```python
 # Definition for singly-linked list.
 # class ListNode:
 #     def __init__(self, x):
@@ -443,7 +604,7 @@ class Solution:
 ```
 #### [88. 合并两个有序数组](https://leetcode-cn.com/problems/merge-sorted-array/submissions/)
 双指针
-```PYTHON
+```python
 class Solution:
     def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:
         nums1_copy = nums1[:m].copy()
@@ -462,7 +623,7 @@ class Solution:
 
 ## 排序
 #### 快速排序
-```PYTHON
+```python
 def qsort(array, l, r):
     def partition(array, l, r):
         p = array[r]
@@ -481,7 +642,7 @@ def qsort(array, l, r):
         qsort(array, p_i + 1, r)
 ```
 #### 归并排序
-```PYTHON
+```python
 def mergesort(slist):
     def merge(l, r):
         result = []
@@ -507,7 +668,7 @@ def mergesort(slist):
     return merge(l, r)
 ```
 #### 冒泡排序
-```PYTHON
+```python
 def bubblesort(array):
     n = len(array)
     while(n != 1):
@@ -523,7 +684,7 @@ def bubblesort(array):
         if flag == 1: break
 ```
 #### 选择排序
-```PYTHON
+```python
 def selectsort(array):
     sort_array = []
     while(len(array) > 0):
@@ -538,7 +699,7 @@ def selectsort(array):
     return sort_array
 ```
 #### 插入排序
-```PYTHON
+```python
 def insertsort(array):
     insert_array = []
     for i in array:
@@ -552,7 +713,7 @@ def insertsort(array):
 
 ## 二分查找
 ### 基础 (前提，数组有序)
-```PYTHON
+```python
 def low_bound(array, l, r, o):
     # 返回区间内第一个 >= o 的值
     while l < r:
@@ -571,7 +732,7 @@ def up_bound(array, l, r, o):
     return r
 ```
 #### [69. x 的平方根](https://leetcode-cn.com/problems/sqrtx/)
-```PYTHON
+```python
 def mySqrt(x):
     l = 0; r = x // 2 + 1
     while (l < r):
@@ -618,7 +779,7 @@ def low_bound(array, l, r, o):
 
 ## 字符串
 #### [443. 压缩字符串](https://leetcode-cn.com/problems/string-compression/)
-```PYTHON
+```python
 class Solution:
     def compress(self, chars: List[str]) -> int:
         count = 1
@@ -663,7 +824,7 @@ class Solution:
 ## 滑动窗口
 #### [76. 最小覆盖子串](https://leetcode-cn.com/problems/minimum-window-substring)
 双指针，滑动窗口求解
-```PYTHON
+```python
 class Solution:
     def minWindow(self, s: str, t: str) -> str:
         window = {}
@@ -705,7 +866,7 @@ class Solution:
         return ans
 ```
 #### [438. 找到字符串中所有字母异位词](https://leetcode-cn.com/problems/find-all-anagrams-in-a-string)
-```PYTHON
+```python
 class Solution:
     def findAnagrams(self, s: str, p: str) -> List[int]:
         res = []
