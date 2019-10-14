@@ -4,19 +4,19 @@ reference:
 http://www.vision.deis.unibo.it/smatt/Seminars/StereoVision.pdf
 
 ## 传统 Stereo Vision
-<img src="assets/立体视觉_Stereo_Vision-39604de6.png" width="25%" />
-<img src="assets/立体视觉_Stereo_Vision-4ebd1630.png" width="35%" />
+<img src="assets/立体视觉_Stereo_Vision-39604de6.png" width="30%" />
+<img src="assets/立体视觉_Stereo_Vision-4ebd1630.png" width="40%" />
 
 通过使用使用两个（或多个）相机，如果能在两个图像中找到对应点，则可以通过三角测量(triangulation)来推断深度
 
-<img src="assets/立体视觉_Stereo_Vision-73e255ab.png" width="60%" />
-<img src="assets/立体视觉_Stereo_Vision-0118d06f.png" width="60%" />
+<img src="assets/立体视觉_Stereo_Vision-73e255ab.png" width="55%" />
+<img src="assets/立体视觉_Stereo_Vision-0118d06f.png" width="55%" />
 
 对极约束(epipolar constraint)指出: 位于（红色）视线的点的对应点位于目标图像像平面πT上的绿线上。
 
-<img src="assets/立体视觉_Stereo_Vision-2ad5aaf6.png" width="40%" />
+<img src="assets/立体视觉_Stereo_Vision-2ad5aaf6.png" width="50%" />
 
-<img src="assets/立体视觉_Stereo_Vision-a3504486.png" width="40%" />
+<img src="assets/立体视觉_Stereo_Vision-a3504486.png" width="50%" />
 
 可以找到平行的相平面，使得πR与πT上的成像点位于同一扫描线上
 
