@@ -4,13 +4,13 @@ reference:
 http://www.vision.deis.unibo.it/smatt/Seminars/StereoVision.pdf
 
 ## 传统 Stereo Vision
-<img src="assets/立体视觉_Stereo_Vision-39604de6.png" width="20%" />
-<img src="assets/立体视觉_Stereo_Vision-4ebd1630.png" width="30%" />
+<img src="assets/立体视觉_Stereo_Vision-39604de6.png" width="25%" />
+<img src="assets/立体视觉_Stereo_Vision-4ebd1630.png" width="35%" />
 
 通过使用使用两个（或多个）相机，如果能在两个图像中找到对应点，则可以通过三角测量(triangulation)来推断深度
 
-<img src="assets/立体视觉_Stereo_Vision-73e255ab.png" width="30%" />
-<img src="assets/立体视觉_Stereo_Vision-0118d06f.png" width="20%" />
+<img src="assets/立体视觉_Stereo_Vision-73e255ab.png" width="60%" />
+<img src="assets/立体视觉_Stereo_Vision-0118d06f.png" width="60%" />
 
 对极约束(epipolar constraint)指出: 位于（红色）视线的点的对应点位于目标图像像平面πT上的绿线上。
 
@@ -20,7 +20,7 @@ http://www.vision.deis.unibo.it/smatt/Seminars/StereoVision.pdf
 
 可以找到平行的相平面，使得πR与πT上的成像点位于同一扫描线上
 
-<img src="assets/立体视觉_Stereo_Vision-d8d48a75.png" width="30%" />
+<img src="assets/立体视觉_Stereo_Vision-d8d48a75.png" width="40%" />
 
 视差d与深度Z的转换：相似三角形
 $$ \frac{b}{Z} = \frac{(b - x_R) + x_T}{Z - f} $$
