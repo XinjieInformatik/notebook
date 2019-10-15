@@ -1,5 +1,5 @@
 # 立体视觉 Stereo Vision
-最近在研究一些双目3D，深度估计的方向，但是中文这方面系统性的知识很少，于是在学习的同时做个总结。这份总结会从传统stereo vision的知识点与数学基础开始，过渡到深度学习的方法。classical -> deeplearning
+最近在研究一些双目3D，深度估计的方向，但是中文这方面系统性的知识很少，于是在学习的同时做个总结。这份总结会从传统stereo vision的知识点与数学基础开始，过渡到深度学习的方法。
 reference:
 http://www.vision.deis.unibo.it/smatt/Seminars/StereoVision.pdf
 
