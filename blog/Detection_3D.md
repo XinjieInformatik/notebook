@@ -39,3 +39,6 @@ ROI-10D:
 ### 2D 中心与 3D 中心投影的错位
 
 <img src="assets/Detection_3D-284a32b3.png" width="50%" />
+
+
+\begin{aligned} \mathcal{A}(f) &=\Re(\mathfrak{F}[\mathcal{I}(x)]) \\ \mathcal{P}(f) &=\Im(\mathfrak{F}[\mathcal{I}(x)]) \\ \mathcal{L}(f) &=\log (\mathcal{A}(f)) \\ \mathcal{R}(f) &=\mathcal{L}(f)-h_{n}(f) * \mathcal{L}(f) \\ \mathcal{S}(x) &=g(x) * \mathfrak{F}^{-1}[\exp (\mathcal{R}(f)+\mathcal{P}(f))]^{2} \end{aligned}

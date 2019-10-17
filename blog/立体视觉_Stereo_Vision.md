@@ -22,9 +22,9 @@ http://www.vision.deis.unibo.it/smatt/Seminars/StereoVision.pdf
 
 <img src="assets/立体视觉_Stereo_Vision-d8d48a75.png" width="40%" />
 
-视差d与深度Z的转换：相似三角形
+视差dis与深度Z的转换：相似三角形
 $$ \frac{b}{Z} = \frac{(b - x_R) + x_T}{Z - f} $$
-$$ Z = \frac{b * f}{x_R - x_T} = \frac{b * f}{d} $$
+$$ Z = \frac{b * f}{x_R - x_T} = \frac{b * f}{dis} $$
 根据Triangulation，世界坐标系的X, Y 也能由如下公式算出
 $$ X = Z * \frac{x_R}{f}$$
 $$ Y = Z * \frac{y_R}{f}$$
@@ -134,3 +134,14 @@ $E_{smooth}$ 衡量边界处的连续性
 - Single Matching Phase
 - Segmentation based outliers identification and replacement
 - Iterative approaches
+
+
+## 补充
+
+<img src="assets/立体视觉_Stereo_Vision-ab52ee9a.png" width="60%" />
+
+[0, d] 为 在R平面上点$x_R$对应T平面$x_R$向左搜索的范围, 如果对图片上每个点进行搜索匹配计算cost，就会形成上图3维的DSI视差匹配代价空间(cost volume)
+如果WTA，就是在d维度上求min，变成2维，每个格子里可储存的是该像素点最小cost对应的d值，完成视差计算，进一步就可以通过 $Z = \frac{b * f}{dis}$ 转为深度了
+
+## 初步思路
+stereo imgs 输入同一个神经网络，做目标检测，在ROI对应的feature上构建cost volume，再来几层卷积，对应该ROI的深度
