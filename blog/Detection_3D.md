@@ -20,7 +20,7 @@ $$ \begin{bmatrix} u\\v\\1 \end{bmatrix} = \frac{1}{Z_c} * K *
 相机坐标系: $X_c, Y_c, Z_c$
 
 `核心，如何求解3D相关的7个未知数:` $\theta, X_o, Y_o, Z_o, X_c, Y_c, Z_c$
-其中 $\theta, X_c, Y_c, Z_c$最重要
+其中 $\theta(r_y), X_c, Y_c, Z_c$最重要
 
 M3D-RPN:
 神经网络直接预测 $\theta, t_w, t_h, t_l, [t_x, t_y, t_z]_P$
@@ -39,6 +39,3 @@ ROI-10D:
 ### 2D 中心与 3D 中心投影的错位
 
 <img src="assets/Detection_3D-284a32b3.png" width="50%" />
-
-
-\begin{aligned} \mathcal{A}(f) &=\Re(\mathfrak{F}[\mathcal{I}(x)]) \\ \mathcal{P}(f) &=\Im(\mathfrak{F}[\mathcal{I}(x)]) \\ \mathcal{L}(f) &=\log (\mathcal{A}(f)) \\ \mathcal{R}(f) &=\mathcal{L}(f)-h_{n}(f) * \mathcal{L}(f) \\ \mathcal{S}(x) &=g(x) * \mathfrak{F}^{-1}[\exp (\mathcal{R}(f)+\mathcal{P}(f))]^{2} \end{aligned}

@@ -176,3 +176,5 @@ class ToTensor(object):
 composed = transforms.Compose([Rescale(256),
                                ToTensor()])
 ```
+
+## 进阶

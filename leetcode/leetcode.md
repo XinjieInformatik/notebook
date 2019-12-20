@@ -27,32 +27,46 @@ class Solution:
 class Solution:
     def decodeString(self, s: str) -> str:
         stack = []
-        for item in s:
+        str_out = ""
+
+        for index, item in enumerate(s):
             if item != ']':
                 stack.append(item)
             else:
-                decode_str = ''
-                while True:
-                    top = stack.pop()
-                    if top != '[':
-                        decode_str += top
-                    else: break
-                num_str = ''
-                while True:
-                    num_top = stack.pop()
-                    if num_top.isdigit() == True:
-                        num_str += num_top
-                        if len(stack) == 0:
-                            break
+                str_temp = ""
+                str_num = ""
+                count = 1
+                sign = stack[-1]
+
+                while (sign != '['):
+                    str_temp += stack.pop()
+                    sign = stack[-1]
+
+                stack.pop() # delete '['
+                sign = stack[-1]
+
+                while (sign.isdigit()):
+                    str_num += stack.pop()
+                    if stack:
+                        sign = stack[-1]
                     else:
-                        stack.append(num_top)
-                        break
-                num_int = int(num_str[::-1])
-                decode_str = decode_str[::-1] * num_int
-                for i in decode_str:
-                    stack.append(i)
-        return_str = ''.join(stack)
-        return return_str
+                        sign = "end"
+
+                str_num = str_num[::-1]
+                str_temp = str_temp[::-1]
+
+                try:
+                    num = int(str_num)
+                except:
+                    num = 1
+                str_temp *= num
+                for item in str_temp:
+                    stack.append(item)
+
+        if stack:
+            str_out = ''.join(stack)
+
+        return str_out
 ```
 
 #### [739. 每日温度](https://leetcode-cn.com/problems/daily-temperatures/)
