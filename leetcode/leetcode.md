@@ -74,17 +74,18 @@ class Solution:
 ```python
 class Solution:
     def dailyTemperatures(self, T: List[int]) -> List[int]:
-        # 单调递减，栈顶为当前遍历值，包含序号
-        stack = []
         result = [0] * len(T)
-        # 遍历list T
+        stack = []
+
         for index, item in enumerate(T):
-            # 维护单调栈并且赋值result
-            while stack and stack[-1][1] < item:
+            # while 维护单调栈
+            while stack and item > stack[-1][1]:
                 i, value = stack.pop()
-                target = index - i
-                result[i] = target
+                res = index - i
+                result[i] = res
+
             stack.append((index, item))
+
         return result
 ```
 
@@ -92,7 +93,7 @@ class Solution:
 
 
 ## 堆
-#### 347. 前 K 个高频元素
+#### [347. 前 K 个高频元素](https://leetcode-cn.com/problems/top-k-frequent-elements)
 **堆排序处理海量数据的topK，分位数** 非常合适，因为它不用将所有的元素都进行排序，只需要比较和根节点的大小关系就可以了，同时也不需要一次性将所有的数据都加载到内存。
 
 因此有必要不引入库，自己用python实现研究一下
@@ -154,7 +155,7 @@ class Solution:
 
 ## 队列
 ### 双向队列
-#### 239. 滑动窗口最大值
+#### [239. 滑动窗口最大值](https://leetcode-cn.com/problems/sliding-window-maximum/)
 > TODO: 用动态规划再做一次
 
 双向队列
@@ -181,7 +182,7 @@ class Solution:
 ```
 
 ## 动态规划
-#### 55. 跳跃游戏
+#### [55. 跳跃游戏](https://leetcode-cn.com/problems/jump-game)
 动态规划，贪心
 ```python
 class Solution:
@@ -191,6 +192,24 @@ class Solution:
             if nums[i] + i >= left_good:
                 left_good = i
         return left_good == 0
+
+# 从后往前，核对能否到达终点，或者到达后面能到达终点的点
+class Solution:
+    def canJump(self, nums: List[int]) -> bool:
+        if len(nums) == 1:
+            return True
+
+        point_to_end = []
+        for i in range(len(nums)-2,-1,-1):
+            if nums[i] >= len(nums)-1-i:
+                point_to_end.append(i)
+            if point_to_end and nums[i] >= point_to_end[-1] - i:
+                point_to_end.append(i)
+
+        if 0 in point_to_end:
+            return True
+        else:
+            return False
 ```
 参看 [官方题解](https://leetcode-cn.com/problems/jump-game/solution/tiao-yue-you-xi-by-leetcode/) 四种方案思路很清楚
 
