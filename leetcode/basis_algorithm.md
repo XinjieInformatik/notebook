@@ -20,7 +20,7 @@ list(my_dict.value())[0]
 
 ### sorted 多重排序
 ```PYTHON
-sorted(mylist, key=lambda ele:(ele[1],ele[0]))
+sorted(mylist.items(), key=lambda ele:(ele[1],ele[0]))
 ```
 
 ### 初始化二维list
@@ -65,4 +65,11 @@ Out[27]: 'aabbcd'
 
 s[:4] + s[5:]
 Out[30]: 'aabbd'
+```
+
+#### str 判断
+```python
+str_.isdigit()
+str_.isspace()
+
 ```

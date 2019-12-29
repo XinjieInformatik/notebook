@@ -264,21 +264,21 @@ class Solution:
 ```python
 class Solution:
     def minPathSum(self, grid: List[List[int]]) -> int:
-        if len(grid) == 0: return
-        h = len(grid)
-        w = len(grid[0])
-        dp = [[0]*w for i in range(h)]
-        dp[-1][-1] = grid[-1][-1]
-        print(dp)
-        for i in range(h - 1, -1, -1):
-            for j in range(w - 1, -1, -1):
-                if i == h-1 and j == w-1:
-                    continue
-                try: down = dp[i+1][j]
-                except: down = 1e4
-                try: right = dp[i][j+1]
-                except: right = 1e4
-                dp[i][j] = grid[i][j] + min(down, right)
+        grid_h = len(grid)
+        grid_w = len(grid[0])
+        dp = [[0] * grid_w for i in range(grid_h)]
+
+        for i in range(grid_h-1, -1, -1):
+            for j in range(grid_w-1, -1, -1):
+                if i+1 > grid_h-1 and j+1 > grid_w-1:
+                    dp[i][j] = grid[i][j]
+                elif i+1 > grid_h-1 and j+1 <= grid_w-1:
+                    dp[i][j] = grid[i][j] + dp[i][j+1]
+                elif i+1 <= grid_h-1 and j+1 > grid_w-1:
+                    dp[i][j] = grid[i][j] + dp[i+1][j]
+                else:
+                    dp[i][j] = grid[i][j] + min(dp[i+1][j], dp[i][j+1])
+
         return dp[0][0]
 ```
 顺序，二维
@@ -481,6 +481,43 @@ class Solution:
             item = sorted(item, key=lambda ele:(ele[1],ele[0]))
             out.append([i[0] for i in item])
         return out
+
+class Solution:
+    def verticalTraversal(self, root: TreeNode) -> List[List[int]]:
+        def traversal(node, level, deep, res):
+            if node:
+
+                traversal(node.left, level+1, deep-1, res)
+                res.append((node.val, deep, level))
+                traversal(node.right, level+1, deep+1, res)
+
+        level = 0
+        deep = 0
+        res = []
+        traversal(root, level, deep, res)
+
+        res_deep = sorted(res, key=lambda ele: ele[1])
+        output = []
+        deep_level = -1
+        deep_last = None
+
+        for item in res_deep:
+            val, deep, level = item
+            if deep_last != deep:
+                output.append([])
+                deep_level += 1
+
+            output[deep_level].append((val, level))
+            deep_last = deep
+
+        out = []
+        for i in range(len(output)):
+            output[i] = sorted(output[i], key=lambda ele: (ele[1], ele[0]))
+            out.append([])
+            for item in output[i]:
+                out[i].append(item[0])
+
+        return out
 ```
 
 #### [226. 翻转二叉树](https://leetcode-cn.com/problems/invert-binary-tree/)
@@ -493,6 +530,18 @@ class Solution:
             right_node = self.invertTree(root.right)
             root.left = right_node
             root.right = left_node
+        return root
+
+class Solution:
+    def invertTree(self, root: TreeNode) -> TreeNode:
+        def traversal(node):
+            if node:
+                traversal(node.left)
+                traversal(node.right)
+                temp = node.left
+                node.left = node.right
+                node.right = temp
+        traversal(root)
         return root
 ```
 
@@ -530,16 +579,14 @@ class Solution:
 ```python
 class Solution:
     def convertBST(self, root: TreeNode) -> TreeNode:
-        # 注意体会递归，回溯变量的生命周期,递归从root开始，从root退出
         def traversal(node):
             if node:
                 traversal(node.right)
-                if self.last_val:
-                    node.val += self.last_val
-                self.last_val = node.val # 注意变量生命周期
+                node.val += self.last_value
+                self.last_value = node.val
                 traversal(node.left)
 
-        self.last_val = None
+        self.last_value = 0
         traversal(root)
         return root
 ```
@@ -561,10 +608,26 @@ class Solution:
 
         _ = traversal(root)
         return self.max_diameter
+
+class Solution:
+    def diameterOfBinaryTree(self, root: TreeNode) -> int:
+        def traversal(node, deep):
+            if node != None:
+                l = traversal(node.left, deep+1)
+                r = traversal(node.right, deep+1)
+
+                self.diam = max(self.diam, (l + r - 2 * deep))
+                return max(l,r)
+            else: return deep-1
+
+        self.diam = 0
+        deep = 0
+        _ = traversal(root, deep)
+        return self.diam
 ```
 
 ### 杂
-#### 58. 最后一个单词的长度
+#### [58. 最后一个单词的长度](https://leetcode-cn.com/problems/length-of-last-word)
 ```python
 class Solution:
     def lengthOfLastWord(self, s: str) -> int:
@@ -576,8 +639,15 @@ class Solution:
                 flag = 1
             if i.isspace() and flag: break
         return l
+
+class Solution:
+    def lengthOfLastWord(self, s: str) -> int:
+        split_list = s.split()
+        if split_list:
+            return len(split_list[-1])
+        else: return 0
 ```
-#### 67. 二进制求和
+#### [67. 二进制求和](https://leetcode-cn.com/problems/add-binary)
 ```python
 class Solution:
     def addBinary(self, a: str, b: str) -> str:
@@ -596,20 +666,47 @@ class Solution:
             s += str(res)
         if add == 1: s += str(1)
         return s[::-1]
+
+class Solution:
+    def addBinary(self, a: str, b: str) -> str:
+        if len(a) > len(b):
+            b = '0' * (len(a) - len(b)) + b
+        else:
+            a = '0' * (len(b) - len(a)) + a
+
+        out = ''
+        next_ = 0
+
+        for i in range(len(a)-1,-1,-1):
+            c = int(a[i]) + int(b[i]) + next_
+            next_ = 0
+            if c > 1:
+                c -= 2
+                next_ = 1
+            out += str(c)
+
+        if next_ == 1:
+            out += '1'
+
+        return out[::-1]
 ```
-#### 66. 加一
+#### [66. 加一](https://leetcode-cn.com/problems/plus-one)
 ```python
 class Solution:
     def plusOne(self, digits: List[int]) -> List[int]:
-        if digits[-1] != 9: digits[-1] += 1
-        else:
-            flag = 0; add = 0
-            for i in range(len(digits)-1, -1, -1):
-                if digits[i] == 9:
-                    digits[i] = 0
-                else: flag = 1; add = i; break
-            if flag: digits[add] += 1
-            else: digits.insert(0, 1)
+        if digits[-1] < 9:
+            digits[-1] += 1
+            return digits
+
+        digits[-1] += 1
+        for i in range(len(digits)-1, 0, -1):
+            if digits[i] == 10:
+                digits[i] = 0
+                digits[i-1] += 1
+        if digits[0] == 10:
+            digits[0] = 0
+            digits.insert(0,1)
+
         return digits
 ```
 #### [83. 删除排序链表中的重复元素](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list/)
@@ -625,7 +722,7 @@ class Solution:
         if head == None: return None
         num_list = []
         node = head
-        num_list.append(head.val)
+        num_list.append(node.val)
 
         while(node.next):
             next_node = node.next
@@ -633,6 +730,20 @@ class Solution:
                 num_list.append(next_node.val)
                 node = node.next
             else: node.next = next_node.next
+        return head
+
+class Solution:
+    def deleteDuplicates(self, head: ListNode) -> ListNode:
+        if head == None or head.next == None: return head
+        node = head
+
+        while(node.next):
+            while(node.val == node.next.val):
+                node.next = node.next.next
+                if node.next == None: break
+            if node.next == None: break
+            else: node = node.next
+
         return head
 ```
 #### [88. 合并两个有序数组](https://leetcode-cn.com/problems/merge-sorted-array/submissions/)
@@ -652,7 +763,55 @@ class Solution:
         if p0 == m: nums1[p3:] = nums2[p1:]
         else: nums1[p3:] = nums1_copy[p0:]
         return nums1
+
+class Solution:
+    def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:
+        i, j = 0, 0
+        nums1[:] = nums1[:m]
+
+        while (i < m and j < n):
+            if nums1[i] > nums2[j]:
+                nums1.insert(i, nums2[j]) # 注意insert后元素位置的变化, 数组大小的变化!
+                j += 1
+                i += 1
+                m += 1
+            else:
+                i += 1
+
+        if j < n: nums1.extend(nums2[j:])
+
+        return nums1
 ```
+
+#### [1296. 划分数组为连续数字的集合](https://leetcode-cn.com/problems/divide-array-in-sets-of-k-consecutive-numbers/)
+```python
+class Solution:
+    def isPossibleDivide(self, nums: List[int], k: int) -> bool:
+        dict_count = {}
+        for i in range(len(nums)):
+            if nums[i] not in dict_count:
+                dict_count[nums[i]] = 1
+            else:
+                dict_count[nums[i]] += 1
+
+        new_dict = {}
+        for key in sorted(dict_count.keys()):
+            new_dict[key] = dict_count[key]
+
+        for key in new_dict:
+            count = new_dict[key]
+            if count > 0:
+                try:
+                    for i in range(key, key+k):
+                        new_dict[i] = new_dict[i] - count
+                except: return False
+
+        for key in new_dict:
+            if new_dict[key] != 0: return False
+        return True
+```
+
+
 
 ## 排序
 #### 快速排序
@@ -660,12 +819,12 @@ class Solution:
 def qsort(array, l, r):
     def partition(array, l, r):
         p = array[r]
-        s = l - 1
+        index = l - 1
         for i in range(l, r):
             if array[i] <= p:
-                s += 1
-                array[i], array[s] = array[s], array[i]
-        p_i = s + 1
+                index += 1
+                array[i], array[index] = array[index], array[i]
+        p_i = index + 1
         array[p_i], array[r] = array[r], array[p_i]
         return p_i
 
@@ -676,28 +835,28 @@ def qsort(array, l, r):
 ```
 #### 归并排序
 ```python
-def mergesort(slist):
+def mergesort(array):
     def merge(l, r):
         result = []
-        index_l, index_r = 0, 0
-        while (index_l < len(l) and index_r < len(r)):
-            if l[index_l] < r[index_r]:
-                result.append(l[index_l])
-                index_l += 1
+        l_i, r_i = 0, 0
+        while (l_i < len(l) and r_i < len(r)):
+            if l[l_i] < r[r_i]:
+                result.append(l[l_i])
+                l_i += 1
             else:
-                result.append(r[index_r])
-                index_r += 1
-        if index_l < index_r:
-            result.extend(l[index_l:])
+                result.append(r[r_i])
+                r_i += 1
+        if l_i < len(l):
+            result.extend(l[l_i:])
         else:
-            result.extend(r[index_r:])
+            result.extend(r[r_i:])
         return result
 
-    if len(slist) <= 1:
-        return slist
-    m = len(slist) // 2
-    l = mergesort(slist[:m])
-    r = mergesort(slist[m:])
+    if len(array) <= 1:
+        return array
+    m = len(array) // 2
+    l = mergesort(array[:m])
+    r = mergesort(array[m:])
     return merge(l, r)
 ```
 #### 冒泡排序
@@ -734,35 +893,45 @@ def selectsort(array):
 #### 插入排序
 ```python
 def insertsort(array):
-    insert_array = []
-    for i in array:
-        if len(insert_array) == 0:
-            insert_array.append(i)
-            continue
-        insert_i = low_bound(insert_array, 0, len(insert_array), i)
-        insert_array.insert(insert_i, i)
-    return insert_array
+    def low_bound(arr, l, r, target):
+        while (l < r):
+            m = l + (r - l) // 2
+            if arr[m] < target:
+                l = m + 1
+            else:
+                r = m
+        return l
+
+    result = []
+    result.append(array[0])
+    for i in range(1, len(array)):
+        insert_index = low_bound(result, 0, len(result), array[i])
+        result.insert(insert_index, array[i])
+    return result
 ```
 
 ## 二分查找
 ### 基础 (前提，数组有序)
 ```python
-def low_bound(array, l, r, o):
-    # 返回区间内第一个 >= o 的值
-    while l < r:
+def low_bound(arr, l, r, target):
+    while (l < r):
         m = l + (r - l) // 2
-        # l, r 的赋值规则也要符合左闭右开
-        if array[m] < o: l = m + 1
-        else: r = m
+        if arr[m] < target:
+            l = m + 1
+        else:
+            r = m
     return l
 
-def up_bound(array, l, r, o):
-    # 返回区间内第一个 > o 的值
-    while l < r:
+def up_bound(arr, l, r, target):
+    while (l < r):
         m = l + (r - l) // 2
-        if array[m] <= o: l = m + 1
-        else: r = m
-    return r
+        if arr[m] <= target:
+            l = m + 1
+        else:
+            r = m
+    return l
+
+index = low_bound(result, 0, len(result), array[i])
 ```
 #### [69. x 的平方根](https://leetcode-cn.com/problems/sqrtx/)
 ```python
@@ -836,6 +1005,33 @@ class Solution:
                 chars.insert(read, item)
                 read += 1
         return len(chars)
+
+class Solution:
+    def compress(self, chars: List[str]) -> int:
+        if len(chars) <= 1: return len(chars)
+        count = 1
+        pointer = 0
+        dynamic_boundary = len(chars)
+        while (pointer < dynamic_boundary-1):
+            next_char = chars[pointer+1]
+            curr_char = chars[pointer]
+            if next_char == curr_char:
+                count += 1
+                chars.pop(pointer)
+                dynamic_boundary -= 1
+            else:
+                pointer += 1
+                if count > 1:
+                    for item in str(count):
+                        chars.insert(pointer, item)
+                        dynamic_boundary += 1
+                        pointer += 1
+                    count = 1
+        if count > 1:
+            for item in str(count):
+                chars.insert(pointer+1, item)
+                pointer += 1
+        return len(chars)
 ```
 #### [541. 反转字符串 II](https://leetcode-cn.com/problems/reverse-string-ii/)
 python字符串修改及其麻烦，转换成list，最后再通过''.join()转成str
@@ -851,7 +1047,19 @@ class Solution:
                 s[pointer:] = s[pointer:][::-1]
             pointer += 2 * k
         s = ''.join(s)
-        return str(s)
+        return s
+
+class Solution:
+    def reverseStr(self, s: str, k: int) -> str:
+        s_list = list(s)
+        for i in range(len(s_list)):
+            if i % (2*k) == 0:
+                try:
+                    s_list[i:i+k] = s_list[i:i+k][::-1]
+                except:
+                    s_list[i:] = s_list[i:][::-1]
+        s_reverse = ''.join(s_list)
+        return s_reverse
 ```
 
 ## 滑动窗口
@@ -897,6 +1105,40 @@ class Solution:
                 l_pointer += 1
 
         return ans
+
+class Solution:
+    def minWindow(self, s: str, t: str) -> str:
+        T_dict = {}
+        for item in t:
+            if item in T_dict:
+                T_dict[item] += 1
+            else:
+                T_dict[item] = 1
+
+        p1 = 0
+        p2 = 0
+        result = ''
+        last_len = len(s)
+
+        while (p2 < len(s)):
+            if s[p2] in T_dict:
+                T_dict[s[p2]] -= 1
+            p2 += 1
+
+            while max(T_dict.values()) <= 0:
+                s_len = p2 - p1
+                if s_len <= last_len:
+                    result = s[p1:p2]
+                    last_len = s_len
+                if s[p1] in T_dict:
+                    if T_dict[s[p1]] + 1 <= 0:
+                        T_dict[s[p1]] += 1
+                        p1 += 1
+                    else: break
+                else:
+                    p1 += 1
+
+        return result
 ```
 #### [438. 找到字符串中所有字母异位词](https://leetcode-cn.com/problems/find-all-anagrams-in-a-string)
 ```python
