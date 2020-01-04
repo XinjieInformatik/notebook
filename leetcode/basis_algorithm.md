@@ -21,6 +21,16 @@ list(my_dict.value())[0]
 ### sorted 多重排序
 ```PYTHON
 sorted(mylist.items(), key=lambda ele:(ele[1],ele[0]))
+return -> list(tuple)
+```
+
+### order list
+```python
+impoort collections
+dict_ = collections.Counter(str or list)
+print(dict_) # 默认从大到小显示，但是遍历时，按初始顺序！
+dict_.most_common(3) # 前3大, list(tuple)
+
 ```
 
 ### 初始化二维list

@@ -182,6 +182,9 @@ class Solution:
 ```
 
 ## 动态规划
+用额外的空间，存储子问题的最优解，找到状态转移方程，不断推出当前最优解。
+1. 状态转移方程
+2. 初始值
 #### [55. 跳跃游戏](https://leetcode-cn.com/problems/jump-game)
 动态规划，贪心
 ```python
@@ -196,7 +199,7 @@ class Solution:
 # 从后往前，核对能否到达终点，或者到达后面能到达终点的点
 class Solution:
     def canJump(self, nums: List[int]) -> bool:
-        if len(nums) == 1:
+        if len(nums) == 1:二叉搜索
             return True
 
         point_to_end = []
@@ -259,6 +262,24 @@ class Solution:
         return cur_max
 ```
 
+#### [152. 乘积最大子序列](https://leetcode-cn.com/problems/maximum-product-subarray/)
+```python
+class Solution:
+    def maxProduct(self, nums: List[int]) -> int:
+        curr_min = 1
+        curr_max = 1
+        max_value = max(nums)
+        for item in nums:
+            # 如果遇到负数，最大变最小，最小变最大
+            if item < 0:
+                curr_min, curr_max = curr_max, curr_min
+            curr_max = max(item, curr_max*item)  # 无负数阶段的当前最大值
+            curr_min = min(item, curr_min*item)  # 维护连乘最小值或者当前值
+            max_value = max(curr_max, max_value)
+        return max_value
+```
+
+
 #### [64. 最小路径和](https://leetcode-cn.com/problems/minimum-path-sum)
 逆序，二维
 ```python
@@ -281,8 +302,183 @@ class Solution:
 
         return dp[0][0]
 ```
-顺序，二维
 
+#### [62. 不同路径](https://leetcode-cn.com/problems/unique-paths/)
+```python
+class Solution:
+    def uniquePaths(self, m: int, n: int) -> int:
+        dp = [[0]*m for i in range(n)]
+        for i in range(m):
+            for j in range(n):
+                if j-1 < 0 and i - 1 < 0:
+                    dp[j][i] = 1
+                elif j-1 < 0:
+                    dp[j][i] = dp[j][i-1]
+                elif i-1 < 0:
+                    dp[j][i] = dp[j-1][i]
+                else:
+                    dp[j][i] = dp[j-1][i] + dp[j][i-1]
+        return dp[n-1][m-1]
+```
+
+#### [221. 最大正方形](https://leetcode-cn.com/problems/maximal-square/)
+
+$$
+\mathrm{dp}(i, j)=\min (\mathrm{dp}(i-1, j), \mathrm{dp}(i-1, j-1), \mathrm{dp}(i, j-1))+1
+$$
+
+![](assets/markdown-img-paste-20200103141305216.png)
+
+```python
+class Solution:
+    def maximalSquare(self, matrix: List[List[str]]) -> int:
+        h = len(matrix)
+        try:
+            w = len(matrix[0])
+        except:
+            return 0
+        dp = [[0] * w for i in range(h)]
+        max_value = 0
+        for i in range(h):
+            for j in range(w):
+                if matrix[i][j] == '1':
+                    top = 0 if i==0 else dp[i-1][j]
+                    left = 0 if j==0 else dp[i][j-1]
+                    top_left = 0 if (i==0 and j==0) else dp[i-1][j-1]
+                    dp[i][j] = min(top_left, top, left) + 1
+                    max_value = dp[i][j] if dp[i][j] > max_value else max_value
+        return max_value**2
+```
+
+#### [139. 单词拆分](https://leetcode-cn.com/problems/word-break/)
+对于给定的字符串（s）可以被拆分成子问题 s1 和 s2, 如果这些子问题都可以独立地被拆分成符合要求的子问题，那么整个问题 s 也可以满足.
+```python
+class Solution:
+    def wordBreak(self, s: str, wordDict: List[str]) -> bool:
+        dp = [1] + [0] * len(s)
+        for i in range(1, len(s)+1):
+            for j in range(i):
+                if dp[j] and s[j:i] in wordDict:
+                    dp[i] = True
+        return dp[len(s)]
+
+class Solution:
+    def wordBreak(self, s: str, wordDict: List[str]) -> bool:
+        dp = [0]
+        for i in range(len(s)):
+            for index in dp:
+                if s[index:i+1] in wordDict and (i+1) not in dp:
+                    dp.append(i+1)
+        if dp[-1] == len(s): return True
+        else: return False
+```
+
+
+#### [96. 不同的二叉搜索树](https://leetcode-cn.com/problems/unique-binary-search-trees)
+G(n): 长度为n的序列的不同二叉搜索树个数
+
+F(i,n): 以i为根的不同二叉搜索树的个数(1<=i<=n)
+
+$$ G(n) = \sum_{i=1}^n F(i,n) $$
+$$ F(i,n) = G(i-1) G(n-i) $$
+$$ G(n) = \sum_{i=1}^n G(i-1) G(n-i) $$
+
+- 状态转移方程 $G(n) = \sum_{i=1}^n G(i-1) G(n-i)$
+- 初始值 G(0) = 1, G(1) = 1
+
+```python
+class Solution:
+    def numTrees(self, n: int) -> int:
+        g0 = 1
+        g1 = 1
+        if n == 0: return g0
+        if n == 1: return g1
+        G = [g0,g1] + [0] * (n-1)
+        for j in range(2,n+1):
+            for i in range(1,j+1):
+                G[j] += G[i-1] * G[j-i]
+        return G[-1]
+```
+
+#### [279. 完全平方数](https://leetcode-cn.com/problems/perfect-squares/)
+1. 队列构造 BTS 广度优先搜索
+2. 动态规划
+
+![](assets/markdown-img-paste-20200103163948976.png)
+
+```python
+class Solution:
+    def numSquares(self, n: int) -> int:
+        from collections import deque
+        queue = deque([n]) # 通过队列构造 BTS
+        seen = set() # 如果之前见过，没必要再搜索一次
+        level = 1
+        while queue:
+            # 遍历完同级后,level+1
+            for _ in range(len(queue)):
+                node_val = queue.popleft()
+                for item in range(1, int(node_val**0.5)+1):
+                    node = node_val - item**2
+                    if node == 0: return level
+                    if node not in seen:
+                        queue.append(node)
+                        seen.add(node)
+            level += 1
+        return level
+```
+
+#### [300. 最长上升子序列](https://leetcode-cn.com/problems/longest-increasing-subsequence/)
+时间复杂度$O(n^2)$, TODO: $O(n\log n)$
+```python
+class Solution:
+    def lengthOfLIS(self, nums: List[int]) -> int:
+        if len(nums) == 0: return 0
+        dp = [1] * len(nums)
+        for i in range(len(nums)):
+            for j in range(i):
+                if nums[j] < nums[i]:
+                    dp[i] = max(dp[i], dp[j]+1)
+        return max(dp)
+```
+
+## 贪心算法
+在每一步选择中都采取在当前状态下最好或最优（即最有利）的选择，从而希望导致结果是最好或最优的算法,
+贪心使用前提,局部最优可实现全局最优.
+#### [406. 根据身高重建队列](https://leetcode-cn.com/problems/queue-reconstruction-by-height/)
+```python
+class Solution:
+    def reconstructQueue(self, people: List[List[int]]) -> List[List[int]]:
+        # 从大往小贪心排
+        people = sorted(people, key=lambda ele: (-ele[0], ele[1]))
+        result = []
+        for item in people:
+            index = item[1]
+            result.insert(index,item)
+        return result
+```
+
+#### [621. 任务调度器](https://leetcode-cn.com/problems/task-scheduler/)
+```python
+import collections
+
+class Solution:
+    def leastInterval(self, tasks: List[str], n: int) -> int:
+        dict_task = collections.Counter(tasks)
+        time = 0
+        while (max(dict_task.values()) > 0):
+            count = 0
+            for key in dict_task.most_common():
+                if count < n+1:
+                    if dict_task[key[0]] > 0:
+                        dict_task[key[0]] -= 1
+                        time += 1
+                        count += 1
+                else:
+                    break
+            if count < n + 1 and max(dict_task.values()) > 0:
+                time += n + 1 - count
+        return time
+```
 
 ## 树
 ### 树的遍历
@@ -812,26 +1008,24 @@ class Solution:
 ```
 
 
-
 ## 排序
 #### 快速排序
 ```python
 def qsort(array, l, r):
     def partition(array, l, r):
-        p = array[r]
-        index = l - 1
-        for i in range(l, r):
-            if array[i] <= p:
-                index += 1
-                array[i], array[index] = array[index], array[i]
-        p_i = index + 1
-        array[p_i], array[r] = array[r], array[p_i]
-        return p_i
+        pivot = array[r]
+        pivot_index = l
+        for i in range(l, r + 1):
+            if array[i] <= pivot:
+                array[i], array[pivot_index] = array[pivot_index], array[i]
+                if i != r:
+                    pivot_index += 1
+        return pivot_index
 
     if l < r:
-        p_i = partition(array, l, r)
-        qsort(array, l, p_i - 1)
-        qsort(array, p_i + 1, r)
+        pivot_index = partition(array, l, r)
+        qsort(array, l, pivot_index - 1)
+        qsort(array, pivot_index+1, r)
 ```
 #### 归并排序
 ```python
@@ -1063,6 +1257,7 @@ class Solution:
 ```
 
 ## 滑动窗口
+先考虑双指针构成的list窗口能不能求解，再考虑把窗口化为字典
 #### [76. 最小覆盖子串](https://leetcode-cn.com/problems/minimum-window-substring)
 双指针，滑动窗口求解
 ```python
@@ -1140,7 +1335,42 @@ class Solution:
 
         return result
 ```
-#### [438. 找到字符串中所有字母异位词](https://leetcode-cn.com/problems/find-all-anagrams-in-a-string)
+#### [438. 找到字符串中所有字母异位词](https://leetcode-cn.com/problems/find-all-anagrams-in-a-string)、
+方法一，通过双重for找到第一个满足的后，往后依次遍历。最直观但是超时
+```python
+class Solution:
+    def findAnagrams(self, s: str, p: str) -> List[int]:
+        # TODO： 超时方法 ！！
+        p_dict = {}
+        for item in p:
+            if item in p_dict:
+                p_dict[item] += 1
+            else:
+                p_dict[item] = 1
+
+        p1 = 0
+        result = []
+        temp_dict = p_dict.copy() # 共享内存,修改temp,p_dict也跟着变!
+        while (p1 < len(s) - len(p) + 1):
+            if len(s) - p1 >= len(p):
+                if s[p1] in temp_dict:
+                    temp_dict[s[p1]] -= 1
+                    p2 = p1 + 1
+                    for i in range(p2, p2+len(p)-1):
+                        if s[i] in temp_dict:
+                            temp_dict[s[i]] -= 1
+                            if min(temp_dict.values()) < 0:
+                                break
+                        else:
+                            break
+                    if max(temp_dict.values()) == 0:
+                        result.append(p1)
+                    temp_dict = p_dict.copy()
+                p1 += 1
+            else: break
+        return result
+```
+方法二三，构造被检索子串字典，构造临时字典，双指针维护临时字典.
 ```python
 class Solution:
     def findAnagrams(self, s: str, p: str) -> List[int]:
@@ -1170,23 +1400,53 @@ class Solution:
                 if s[pointer-len(p)] in search_area.keys():
                     search_area[s[pointer-len(p)]] -= 1
         return res
+
+class Solution:
+    def findAnagrams(self, s: str, p: str) -> List[int]:
+        p_dict = {}
+        for item in p:
+            if item in p_dict:
+                p_dict[item] += 1
+            else:
+                p_dict[item] = 1
+
+        p1 = 0
+        result = []
+        temp_dict = {}
+        for key in p_dict:
+            temp_dict[key] = 0
+        while (p1 < len(s)):
+            if s[p1] in temp_dict:
+                temp_dict[s[p1]] += 1
+            flag = True
+            for key in temp_dict:
+                if temp_dict[key] != p_dict[key]:
+                    flag = False
+            if flag:
+                result.append(p1 - len(p) + 1)
+            p1 += 1
+
+            if p1 > len(p) - 1:
+                if s[p1-len(p)] in temp_dict:
+                    temp_dict[s[p1-len(p)]] -= 1
+
+        if temp_dict == p_dict:
+            result.append(p1 - len(p) + 1)
+
+        return result
 ```
 #### [3. 无重复字符的最长子串](https://leetcode-cn.com/problems/longest-substring-without-repeating-characters)
 ```python
 class Solution:
     def lengthOfLongestSubstring(self, s: str) -> int:
-        l_pointer, r_pointer = 0, 0
-        ans = ''
-        ans_max = ''
-        while (r_pointer < len(s)):
-            if s[r_pointer] not in s[l_pointer:r_pointer]:
-                r_pointer += 1
+        p1, p2 = 0, 0
+        max_len = 0
+        while (p2 < len(s)):
+            if s[p2] not in s[p1:p2]:
+                p2 += 1
+                max_len = max(max_len, p2-p1)
             else:
-                if r_pointer - l_pointer > len(ans_max):
-                    ans_max = s[l_pointer:r_pointer]
-                l_pointer +=1
-        # 补充对最后一次的校对
-        if r_pointer - l_pointer > len(ans_max):
-            ans_max = s[l_pointer:r_pointer]
-        return len(ans_max)
+                while (s[p2] in s[p1:p2]):
+                    p1 += 1
+        return max_len
 ```
