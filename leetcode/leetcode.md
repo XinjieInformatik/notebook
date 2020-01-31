@@ -441,6 +441,173 @@ class Solution:
         return max(dp)
 ```
 
+#### [322. 零钱兑换](https://leetcode-cn.com/problems/coin-change/)
+https://leetcode-cn.com/problems/coin-change/solution/dong-tai-gui-hua-tao-lu-xiang-jie-by-wei-lai-bu-ke/)
+如果只是求最小个数，相当于问题只问了一半，可以用广度优先来做，但如果要列举所有满足条件的可能，还是需要动态规划或者递归来做，例如题377。
+```python
+class Solution:
+    def coinChange(self, coins: List[int], amount: int) -> int:
+        dp = [float('inf')] * (amount+1)
+        dp[0] = 0 # 注意初始化是0!
+        for i in range(1, amount+1):
+            for coin in coins:
+                if i < coin:
+                    dp[i] = dp[i]
+                else:
+                    dp[i] = min(dp[i], dp[i-coin]+1) # 注意是 dp[i-coin]+1
+        return dp[-1] if dp[-1] != float('inf') else -1
+
+import collections
+class Solution:
+    def coinChange(self, coins: List[int], amount: int) -> int:
+        if amount == 0: return 0
+        queue = collections.deque()
+        queue.append(amount)
+        seen = set([amount])
+        level = 0
+        while queue:
+            level += 1
+            # deque 在遍历过程中不能修改, 保证level+1
+            for _ in range(len(queue)):
+                parent = queue.popleft()
+                for coin in coins:
+                    child = parent - coin
+                    if child == 0: return level
+                    if child > 0 and child not in seen:
+                        queue.append(child)
+                        seen.add(child)
+        return -1
+```
+
+#### [338. 比特位计数](https://leetcode-cn.com/problems/counting-bits/)
+```python
+class Solution:
+    def countBits(self, num: int) -> List[int]:
+        dp = [0] * (num+1)
+        count = 0
+        pivot = pow(2, count)
+        for i in range(1, num+1):
+            if i == pow(2, count+1):
+                count += 1
+                pivot = pow(2, count)
+
+            dp[i] = 1 + dp[i-pivot]
+
+        return dp
+```
+
+#### [416. 分割等和子集](https://leetcode-cn.com/problems/partition-equal-subset-sum/)
+```python
+二维dp
+class Solution:
+    def canPartition(self, nums: List[int]) -> bool:
+        nums_sum = sum(nums)
+        if nums_sum % 2 != 0: return False
+        target = nums_sum // 2
+
+        dp = [[False] * (target+1) for _ in range(len(nums)+1)]
+        dp[0][0] = True
+
+        for i in range(1, len(dp)):
+            for j in range(1, len(dp[0])):
+                if j < nums[i-1]:
+                    dp[i][j] = dp[i-1][j]
+                else:
+                    dp[i][j] = dp[i-1][j] or dp[i-1][j-nums[i-1]]
+
+        return dp[-1][-1]
+空间优化，不断覆盖之前的记录
+class Solution:
+    def canPartition(self, nums: List[int]) -> bool:
+        if sum(nums) % 2 != 0: return False
+        target = sum(nums) // 2
+        dp = [False] * (target+1)
+        dp[0] = True
+
+        for num in nums:
+            for i in range(target, num-1, -1):
+                dp[i] = dp[i] or dp[i-num]
+
+        return dp[-1]
+```
+
+#### [494. 目标和](https://leetcode-cn.com/problems/target-sum/)
+```python
+class Solution:
+    def findTargetSumWays(self, nums: List[int], S: int) -> int:
+        if (S + sum(nums)) % 2 != 0 or sum(nums) < S: return 0
+        T = (S + sum(nums)) // 2
+        dp = [0] * (T+1)
+        dp[0] = 1
+        for num in nums:
+            for j in range(T, num-1, -1): # 注意到 num-1，否则索引<0反向更新
+                dp[j] = dp[j] + dp[j-num] # 不放num的方法数 + 放num之前容量的方法数
+        return dp[-1]
+```
+
+#### [647. 回文子串](https://leetcode-cn.com/problems/palindromic-substrings/)
+```python
+class Solution:
+    def countSubstrings(self, s: str) -> int:
+        # 中心拓展法
+        count = len(s)
+        if count <= 1: return count
+        for i in range(len(s)):
+            # 重点，两个回文中心
+            j = 1
+            while (i-j >= 0 and i+j < len(s) and s[i-j] == s[i+j]):
+                count += 1
+                j += 1
+            j = 1
+            while (i-j+1 >= 0 and i+j < len(s) and s[i-j+1] == s[i+j]):
+                count += 1
+                j += 1
+        return count
+
+class Solution:
+    def countSubstrings(self, s: str) -> int:
+        # 二维dp
+        dp = [[0]*len(s) for _ in range(len(s))]
+        for i in range(len(s)):
+            dp[i][i] = 1
+        for i in range(1, len(s)):
+            for j in range(0, i):
+                # 对角线旁的特殊处理
+                if i-j == 1:
+                    if s[i] == s[j]:
+                        dp[i][j] = 1
+                else:
+                    if s[i] == s[j] and dp[i-1][j+1]:
+                        dp[i][j] = 1
+        count = 0
+        for i in range(len(s)):
+            count += sum(dp[i])
+        return count
+
+class Solution:
+    def countSubstrings(self, s: str) -> int:
+        # 一维dp
+        dp = [0]*len(s)
+        dp[0] = 0
+        count = 0
+        for i in range(1, len(s)):
+            for j in range(0, i):
+                # 对角线旁的特殊处理
+                if i-j == 1:
+                    if s[i] == s[j]:
+                        dp[j] = 1
+                    else: dp[j] = 0
+                else:
+                    if s[i] == s[j] and dp[j+1]:
+                        dp[j] = 1
+                    else: dp[j] = 0
+            dp[i] = 1
+            count += sum(dp)
+
+        return count+1
+
+```
+
 ## 贪心算法
 在每一步选择中都采取在当前状态下最好或最优（即最有利）的选择，从而希望导致结果是最好或最优的算法,
 贪心使用前提,局部最优可实现全局最优.
@@ -716,6 +883,31 @@ class Solution:
         return out
 ```
 
+#### [104. 二叉树的最大深度](https://leetcode-cn.com/problems/maximum-depth-of-binary-tree)
+```python
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
+class Solution:
+    def maxDepth(self, root: TreeNode) -> int:
+        if root == None: return 0
+        stack = []
+        stack.append([1, root])
+        depth = 0
+        while (stack):
+            curr_depth, top = stack.pop()
+            left = top.left
+            right = top.right
+            depth = max(curr_depth, depth)
+            if right: stack.append([curr_depth+1,right])
+            if left: stack.append([curr_depth+1,left])
+        return depth
+```
+
 #### [226. 翻转二叉树](https://leetcode-cn.com/problems/invert-binary-tree/)
 注意体会递归的逐步进入与退出，变量的生命周期
 ```python
@@ -905,6 +1097,83 @@ class Solution:
 
         return digits
 ```
+
+#### [283. 移动零](https://leetcode-cn.com/problems/move-zeroes)
+```python
+class Solution:
+    def moveZeroes(self, nums: List[int]) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        end = len(nums)
+        i = 0
+        while (i<end): # 注意inplace操作不要用for
+            if nums[i] == 0:
+                nums.pop(i)
+                nums.append(0)
+                end -= 1
+            else:
+                i += 1
+```
+
+#### [581. 最短无序连续子数组](https://leetcode-cn.com/problems/shortest-unsorted-continuous-subarray/)
+```python
+class Solution:
+    def findUnsortedSubarray(self, nums: List[int]) -> int:
+        l, r = len(nums), 0
+        for i in range(len(nums)):
+            for j in range(i+1, len(nums)):
+                if nums[i] > nums[j]:
+                    l = min(l, i)
+                    r = max(r, j)
+        return r-l+1 if r-l+1 > 0 else 0
+
+class Solution:
+    def findUnsortedSubarray(self, nums: List[int]) -> int:
+        sorted_nums = sorted(nums)
+        l, r = len(nums), 0
+        for i in range(len(nums)):
+            if nums[i] != sorted_nums[i]:
+                l = min(l, i)
+                r = max(r, i)
+        return r-l+1 if r-l+1 > 0 else 0
+```
+#### [560. 和为K的子数组](https://leetcode-cn.com/problems/subarray-sum-equals-k/)
+```python
+class Solution:
+    def subarraySum(self, nums: List[int], k: int) -> int:
+        # 最直接方法，O(n^2) 超时
+        count = 0
+        for i in range(len(nums)):
+            sum_ = nums[i]
+            if sum_ == k:
+                count += 1
+
+            for j in range(i+1, len(nums)):
+                sum_ += nums[j]
+                if sum_ == k:
+                    count += 1
+
+        return count
+
+class Solution:
+    def subarraySum(self, nums: List[int], k: int) -> int:
+        # 如果累计总和，在索引i和j处相差k，即 sum[i] - sum[j] = k，则位于索引i和j之间的元素之和是k
+        sum_dict = {}
+        sum_dict[0] = 1
+        sum_ = 0
+        count = 0
+        for item in nums:
+            sum_ += item
+            if sum_ - k in sum_dict:
+                count += sum_dict[sum_-k]
+            if sum_ not in sum_dict:
+                sum_dict[sum_] = 1
+            else:
+                sum_dict[sum_] += 1
+        return count
+```
+
 #### [83. 删除排序链表中的重复元素](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list/)
 ```python
 # Definition for singly-linked list.
