@@ -89,68 +89,171 @@ class Solution:
         return result
 ```
 
-
-
-
 ## 堆
 #### [347. 前 K 个高频元素](https://leetcode-cn.com/problems/top-k-frequent-elements)
-**堆排序处理海量数据的topK，分位数** 非常合适，因为它不用将所有的元素都进行排序，只需要比较和根节点的大小关系就可以了，同时也不需要一次性将所有的数据都加载到内存。
+这题是对**堆，优先队列**很好的练习，因此有必要自己用python实现研究一下。**堆 处理海量数据的topK，分位数**非常合适，**优先队列**应用在元素优先级排序，比如本题的频率排序非常合适。与基于比较的排序算法 时间复杂度**O(nlogn)** 相比, 使用**堆，优先队列**复杂度可以下降到 **O(nlogk)**,在总体数据规模 n 较大，而维护规模 k 较小时，时间复杂度优化明显。
+**堆，优先队列**的本质其实就是个完全二叉树，有其下重要性质
+1. 父节点index为 (i-1) // 2
+2. 左子节点index为 2*i + 1
+3. 右子节点index为 2*i + 2
+4. 大顶堆中每个父节点大于子节点，小顶堆每个父节点小于子节点
+5. 优先队列以优先级为堆的排序依据
+因为性质1，2，3，堆可以用数组直接来表示，不需要通过链表建树。
 
-因此有必要不引入库，自己用python实现研究一下
+**堆，优先队列** 有两个重要操作，时间复杂度均是 O(logk)。以大顶锥为例：
+1. 上浮sift up: 向堆新加入一个元素，堆规模+1，依次向上与父节点比较，如大于父节点就交换。
+2. 下沉sift down: 从堆取出一个元素（堆规模-1，用于堆排序）或者更新堆中一个元素（本题），逆序遍历数组index从 (k-1) // 2 到 index为 0，向下走保证父节点大于子节点。
 
-**原则：最大堆求前n小，最小堆求前n大。**
-- 前k小：构建一个k个数的最大堆，当读取的数小于根节点时，替换根节点，重新塑造最大堆
-- 前k大：构建一个k个数的最小堆，当读取的数大于根节点时，替换根节点，重新塑造最小堆
+对于topk 问题：**最大堆求topk小，最小堆求topk大。**
+- topk小：构建一个k个数的最大堆，当读取的数小于根节点时，替换根节点，重新塑造最大堆
+- topk大：构建一个k个数的最小堆，当读取的数大于根节点时，替换根节点，重新塑造最小堆
 
-**总体思路**
-- 建立字典遍历一次统计出现频率
-- 取前k个数，构造**规模为k的最小堆** minheap
-- 遍历规模k之外的数据，大于堆顶则入堆，维护规模为k的最小堆 minheap
-- 如需按频率输出，对规模为k的堆进行排序
+**这一题的总体思路** 总体时间复杂度 **O(nlogk)**
+- 建立字典遍历一次统计出现频率. O(logn)
+- 取前k个数，构造**规模为k的最小堆** minheap. O(logn)
+- 遍历规模k之外的数据，大于堆顶则入堆，维护规模为k的最小堆 minheap. O(nlogk)
+- (如需按频率输出，对规模为k的堆进行排序)
 
 ```python
 class Solution:
     def topKFrequent(self, nums: List[int], k: int) -> List[int]:
-        def heapify(arr, n, i):
-            smallest = i  # 构造根节点与左右子节点
-            l = 2 * i + 1
-            r = 2 * i + 2
-            if l < n and arr[l][1] < arr[i][1]:  # 如果左子节点在范围内且小于父节点
-                smallest = l
-            if r < n and arr[r][1] < arr[smallest][1]:
-                smallest = r
-            if smallest != i:  # 递归基:如果没有交换，退出递归
-                arr[i], arr[smallest] = arr[smallest], arr[i]
-                heapify(arr, n, smallest)  # 确保交换后，小于其左右子节点
-
-        # 哈希字典统计出现频率
-        map_dict = {}
-        for item in nums:
-            if item not in map_dict.keys():
-                map_dict[item] = 1
+        # hashmap 统计频率
+        freq_count = {}
+        for num in nums:
+            if num in freq_count:
+                freq_count[num] += 1
             else:
-                map_dict[item] += 1
+                freq_count[num] = 1
 
-        map_arr = list(map_dict.items())
-        lenth = len(map_dict.keys())
-        # 构造规模为k的minheap
-        if k <= lenth:
-            k_minheap = map_arr[:k]
-            # 从后往前维护堆，避免局部符合而影响递归跳转，例:2,1,3,4,5,0
-            for i in range(k // 2 - 1, -1, -1):
-                heapify(k_minheap, k, i)
-            # 对于k:, 大于堆顶则入堆，维护规模为k的minheap
-            for i in range(k, lenth): # 堆建好了，没有乱序，从前往后即可
-                if map_arr[i][1] > k_minheap[0][1]:
-                    k_minheap[0] = map_arr[i] # 入堆顶
-                    heapify(k_minheap, k, 0)  # 维护 minheap
-        # 如需按顺序输出，对规模为k的堆进行排序
-        # 从尾部起，依次与顶点交换再构造minheap，最小值被置于尾部
-        for i in range(k - 1, 0, -1):
-            k_minheap[i], k_minheap[0] = k_minheap[0], k_minheap[i]
-            k -= 1 # 交换后，维护的堆规模-1
-            heapify(k_minheap, k, 0)
-        return [item[0] for item in k_minheap]
+        def sift_up(arr, k):
+            """ 时间复杂度 O(logk) k 为堆的规模"""
+            new_index, new_val = k-1, arr[k-1]
+            while (new_index > 0 and arr[(new_index-1)//2][1] > new_val[1]):
+                arr[new_index] = arr[(new_index-1)//2]
+                new_index = (new_index-1)//2
+            arr[new_index] = new_val # 这里采用的是类似插入排序的赋值交换
+
+        def sift_down(arr, root, k):
+            """ O(logk). 右节点index 2*root+1，左节点 2*root+1, 父节点 (child-1)//2"""
+            root_val = arr[root]
+            while (2*root+1 < k):
+                # 右节点 2*root+1，左节点 2*root+1, 父节点 (child-1)//2
+                child = 2 * root + 1
+                # 小顶锥 用 >，大顶锥 用 <
+                if child+1 < k and arr[child][1] > arr[child+1][1]:
+                    child += 1
+                if root_val[1] > arr[child][1]:
+                    arr[root] = arr[child]
+                    root = child # 继续向下检查
+                else: break # 如果到这里没乱序，不用再检查后续子节点
+            arr[root] = root_val
+
+        # 注意构造规模为k的堆, 时间复杂度O(n)，因为堆的规模是从0开始增长的
+        freq_list = list(freq_count.items())
+        min_heap = []
+        for i in range(k):
+            min_heap.append(freq_list[i])
+            sift_up(min_heap, i+1)
+
+        # 遍历剩下元素，大于堆顶入堆，下沉维护小顶堆
+        for item in freq_list[k:]:
+            priority = item[1]
+            if priority > min_heap[0][1]:
+                min_heap[0] = item
+                sift_down(min_heap, 0, k)
+
+        return [item[0] for item in min_heap]
+```
+
+#### [295. 数据流的中位数](https://leetcode-cn.com/problems/find-median-from-data-stream/)
+```python
+class MaxHeap:
+    def __init__(self):
+        self.heap = []
+
+    def sift_down(self, root, k):
+        root_val = self.heap[root]
+        while (2*root+1 < k):
+            child = 2 * root + 1
+            if child+1 < k and self.heap[child] < self.heap[child+1]:
+                child += 1
+            if root_val < self.heap[child]:
+                self.heap[root] = self.heap[child]
+                root = child
+            else: break
+        self.heap[root] = root_val
+
+    def sift_up(self, k):
+        new_index, new_val = k-1, self.heap[k-1]
+        while (new_index > 0 and self.heap[(new_index-1)//2] < new_val):
+            self.heap[new_index] = self.heap[(new_index-1)//2]
+            new_index = (new_index-1)//2
+        self.heap[new_index] = new_val
+
+    def add_new(self, new_val):
+        self.heap.append(new_val)
+        self.sift_up(len(self.heap))
+
+    def take(self):
+        val = self.heap[0]
+        self.heap[0], self.heap[-1] = self.heap[-1], self.heap[0]
+        self.heap.pop()
+        if self.heap:
+            self.sift_down(0, len(self.heap))
+        return val
+
+    def __len__(self):
+        return len(self.heap)
+
+
+class MinHeap(MaxHeap):
+    def __init__(self):
+        self.heap = []
+
+    def sift_down(self, root, k):
+        root_val = self.heap[root]
+        while (2*root+1 < k):
+            child = 2 * root + 1
+            if child+1 < k and self.heap[child] > self.heap[child+1]:
+                child += 1
+            if root_val > self.heap[child]:
+                self.heap[root] = self.heap[child]
+                root = child
+            else: break
+        self.heap[root] = root_val
+
+    def sift_up(self, k):
+        new_index, new_val = k-1, self.heap[k-1]
+        while (new_index > 0 and self.heap[(new_index-1)//2] > new_val):
+            self.heap[new_index] = self.heap[(new_index-1)//2]
+            new_index = (new_index-1)//2
+        self.heap[new_index] = new_val
+
+
+class MedianFinder:
+    def __init__(self):
+        """
+        initialize your data structure here.
+        """
+        self.max_heap = MaxHeap()
+        self.min_heap = MinHeap()
+        self.max_capacity =  4
+
+    def addNum(self, num: int) -> None:
+        self.max_heap.add_new(num)
+        self.min_heap.add_new(self.max_heap.take())
+        if len(self.max_heap) < len(self.min_heap):
+            self.max_heap.add_new(self.min_heap.take())
+
+
+    def findMedian(self) -> float:
+        median = self.max_heap.heap[0] if len(self.max_heap) > len(self.min_heap) else (self.max_heap.heap[0]+self.min_heap.heap[0])/2
+        return median
+
+# Your MedianFinder object will be instantiated and called as such:
+# obj = MedianFinder()
+# obj.addNum(num)
+# param_2 = obj.findMedian()
 ```
 
 ## 队列
@@ -603,9 +706,42 @@ class Solution:
                     else: dp[j] = 0
             dp[i] = 1
             count += sum(dp)
-
         return count+1
+```
 
+[5. 最长回文子串](https://leetcode-cn.com/problems/longest-palindromic-substring/)
+```python
+class Solution:
+    def longestPalindrome(self, s: str) -> str:
+        # 1维dp
+        if len(s) <= 1: return s
+        dp = [0] * len(s)
+        min_l = len(s)
+        max_r = 0
+        max_lenth = 0
+        for r in range(1, len(s)):
+            for l in range(r):
+                if r - l == 1:
+                    if s[r] == s[l]:
+                        dp[l] = 1
+                        if r-l > max_lenth:
+                            max_lenth = r-l
+                            min_l = l
+                            max_r = r
+                    else:
+                        dp[l] = 0
+                else:
+                    if s[r] == s[l] and dp[l+1]:
+                        dp[l] = 1
+                        if r-l > max_lenth:
+                            max_lenth = r-l
+                            min_l = l
+                            max_r = r
+                    else:
+                        dp[l] = 0
+                dp[r] = 1
+
+        return s[min_l:max_r+1] if max_lenth != 0 else s[0]
 ```
 
 ## 贪心算法
@@ -1014,6 +1150,125 @@ class Solution:
         return self.diam
 ```
 
+### 图
+#### [399. 除法求值](https://leetcode-cn.com/problems/evaluate-division/)
+```python
+from collections import defaultdict, deque
+
+class Solution:
+    def bfs(self, query, graph):
+            top, bottom = query
+            visited = set([top])
+            queue = deque([[top, 1]]) # careful
+            while queue:
+                top, value = queue.pop()
+                if top == bottom:
+                    return value
+                for item in graph[top]:
+                    if item not in visited:
+                        visited.add(item)
+                        queue.appendleft([item, value * graph[top][item]])
+            return -1
+
+    def dfs(self, query, graph):
+        top, bottom = query
+        visited = set([top])
+        queue = deque([[top, 1]])
+        while queue:
+            top, value = queue.pop()
+            if top == bottom:
+                return value
+            for item in graph[top]:
+                if item not in visited:
+                    visited.add(item)
+                    queue.append([item, value * graph[top][item]])
+        return -1
+
+    def calcEquation(self, equations: List[List[str]], values: List[float], queries: List[List[str]]) -> List[float]:
+        graph = defaultdict(dict)
+        chars = set()
+        for equation, value in zip(equations, values):
+            x, y = equation[0], equation[1]
+            chars.update(equation)
+            graph[x][y] = value
+            graph[y][x] = 1 / value
+
+        result = []
+        for query in queries:
+            value = -1 if query[0] not in chars and query[1] not in chars else self.dfs(query, graph)
+            result.append(value)
+        return result
+```
+
+#### [207. 课程表](https://leetcode-cn.com/problems/course-schedule)
+```python
+class Solution:
+    def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:
+        indegrees = [0 for _ in range(numCourses)]
+        adjacency = [[] for _ in range(numCourses)]
+
+        for item in prerequisites:
+            curr, pre = item[0], item[1]
+            adjacency[pre].append(curr)
+            indegrees[curr] += 1
+        queue = []
+        for i, degree in enumerate(indegrees):
+            if degree == 0:
+                queue.append(i)
+        while queue:
+            pre = queue.pop()
+            numCourses -= 1
+            for curr in adjacency[pre]:
+                indegrees[curr] -= 1
+                if indegrees[curr] == 0:
+                    queue.append(curr)
+
+        return True if numCourses == 0 else False
+```
+
+#### [210. 课程表 II](https://leetcode-cn.com/problems/course-schedule-ii)
+```python
+class Solution:
+    def findOrder(self, numCourses: int, prerequisites: List[List[int]]) -> List[int]:
+        indegrees = [0 for _ in range(numCourses)]
+        adjacency = [[] for _ in range(numCourses)]
+        for item in prerequisites:
+            curr, pre = item[0], item[1]
+            indegrees[curr] += 1
+            adjacency[pre].append(curr)
+        queue = []
+        for index, degree in enumerate(indegrees):
+            if degree == 0:
+                queue.append(index)
+        result = []
+        while queue:
+            index = queue.pop()
+            numCourses -= 1
+            result.append(index)
+            for curr in adjacency[index]:
+                indegrees[curr] -= 1
+                if indegrees[curr] == 0:
+                    queue.append(curr)
+        return result if numCourses == 0 else []
+```
+#### [1042. 不邻接植花](https://leetcode-cn.com/problems/flower-planting-with-no-adjacent)
+```python
+class Solution:
+    def gardenNoAdj(self, N: int, paths: List[List[int]]) -> List[int]:
+        adjacency = [[] for _ in range(N)]
+        for path in paths:
+            x, y = path[0]-1, path[1]-1
+            adjacency[x].append(y)
+            adjacency[y].append(x)
+        result = [1] * N
+        for i in range(N):
+            flower = [1,2,3,4]
+            for garden in adjacency[i]:
+                if result[garden] in flower:
+                    flower.remove(result[garden])
+            result[i] = flower[0]
+        return result
+```
 ### 杂
 #### [58. 最后一个单词的长度](https://leetcode-cn.com/problems/length-of-last-word)
 ```python
@@ -1278,23 +1533,73 @@ class Solution:
 
 
 ## 排序
+### 比较排序
 #### 快速排序
 ```python
 def qsort(array, l, r):
     def partition(array, l, r):
-        pivot = array[r]
+        """单路快排，缺点：当数据有序程度高，递归调用太深"""
+        pivot = array[l]
         pivot_index = l
-        for i in range(l, r + 1):
-            if array[i] <= pivot:
+        # 遍历区间，把<pivot的数交换到数组开头
+        for i in range(l+1, r):
+            if array[i] < pivot:
+                pivot_index += 1
                 array[i], array[pivot_index] = array[pivot_index], array[i]
-                if i != r:
-                    pivot_index += 1
+        array[l], array[pivot_index] = array[pivot_index], array[l]
         return pivot_index
+```
+```python
+    def partition_2(array, l, r):
+        """双路快排"""
+        pivot = array[l]
+        p1 = l + 1
+        p2 = r - 1
+        while (p1 <= p2): # 注意是 <= !
+            # 左指针找到大于pivot的数
+            while (p1 < r and array[p1] <= pivot):
+                p1 += 1
+            # 右指针找到小于pivot的数
+            while (p2 > l and array[p2] >= pivot):
+                p2 -= 1
+            if p1 < p2:
+                array[p1], array[p2] = array[p2], array[p1]
+        array[l], array[p2] = array[p2], array[l] # p2
+        return p2
 
     if l < r:
-        pivot_index = partition(array, l, r)
-        qsort(array, l, pivot_index - 1)
+        # partition: 交换，使得pivot左边<pivot,右边>=pivot
+        pivot_index = partition_2(array, l, r)
+        qsort(array, l, pivot_index)
         qsort(array, pivot_index+1, r)
+```
+```python
+def qsort3(array, l, r):
+    def partition_3(array, l, r):
+        """三路快排，用于多重复元素的排序任务"""
+        pivot = array[l]
+        p_l = l
+        p_r = r
+        p = l + 1
+        while (p < p_r):
+            if array[p] < pivot:
+                p_l += 1
+                array[p], array[p_l] = array[p_l], array[p]
+                p += 1
+            elif array[p] > pivot:
+                p_r -= 1
+                array[p], array[p_r] = array[p_r], array[p]
+            else:
+                p += 1
+        array[l], array[p_l] = array[p_l], array[l]
+        return p_l, p_r
+
+    if l < r:
+        p_l, p_r = partition_3(array, l, r)
+        qsort3(array, 0, p_l)
+        qsort3(array, p_r+1, r)
+
+qsort3(nums, 0, len(nums))
 ```
 #### 归并排序
 ```python
@@ -1355,28 +1660,124 @@ def selectsort(array):
 ```
 #### 插入排序
 ```python
-def insertsort(array):
-    def low_bound(arr, l, r, target):
-        while (l < r):
-            m = l + (r - l) // 2
-            if arr[m] < target:
-                l = m + 1
-            else:
-                r = m
-        return l
-
-    result = []
-    result.append(array[0])
-    for i in range(1, len(array)):
-        insert_index = low_bound(result, 0, len(result), array[i])
-        result.insert(insert_index, array[i])
-    return result
+def insertionSort(arr):
+    for i in range(len(arr)):
+        preIndex = i - 1
+        current = arr[i]
+        while preIndex >= 0 and arr[preIndex] > current:
+            arr[preIndex+1] = arr[preIndex]
+            preIndex -= 1
+        arr[preIndex+1] = current
+    return arr
 ```
+
+#### 堆排序
+```python
+def heapSort(arr):
+    def sift_down(arr, root, k):
+        root_val = arr[root] # 用插入排序的赋值交换
+        # 确保交换后，对后续子节点无影响
+        while (2*root+1 < k):
+            # 构造根节点与左右子节点
+            child = 2 * root + 1  # left = 2 * i + 1, right = 2 * i + 2
+            if child+1 < k and arr[child] < arr[child+1]: # 如果右子节点在范围内且大于左节点
+                child += 1
+            if root_val < arr[child]:
+                arr[root] = arr[child]
+                root = child
+            else: break # 如果有序，后续子节点就不用再检查了
+        arr[root] = root_val
+
+    n = len(arr) # n 为heap的规模
+    # 构造 maxheap. 从倒数第二层起，该元素下沉
+    for i in range((n-1)//2, -1, -1):
+        sift_down(arr, i, n)
+    # 从尾部起，依次与顶点交换并再构造 maxheap，heap规模-1
+    for i in range(n - 1, 0, -1):
+        arr[i], arr[0] = arr[0], arr[i]  # 交换
+        sift_down(arr, 0, i)
+```
+
+#### 希尔排序
+TODO: CHECK!
+```python
+count = 1
+inc = 2
+while (inc > 1):
+    inc = len(array) // (2 * count)
+    count += 1
+    for i in range(len(array)-inc):
+        if array[i] > array[i+inc]: array[i+inc], array[i] = array[i], array[i+inc]
+```
+
+### 非比较排序
+#### 计数排序
+时间复杂度为O(n+k)，空间复杂度为O(n+k)。n 是待排序数组长度，k 是 max_value-min_value+1长度。稳定排序算法，即排序后的相同值的元素原有的相对位置不会发生改变。
+
+可以排序整数（包括负数），不能排序小数
+1. 计算数组值最大与最小，生成长度为 max-min+1 的bucket
+2. 遍历待排序数组，将当前元素值-min作为index，放在bucket数组
+3. 清空原数组，遍历bucket，原数组依次append
+```python
+def countingSort(array):
+    min_value = min(array)
+    max_value = max(array)
+    bucket_len = max_value -  min_value + 1
+    buckets = [0] * bucket_len
+    for num in array:
+        buckets[num - min_value] += 1
+    array.clear() # 注意不要用 array = []
+    for i in range(len(buckets)):
+        while buckets[i] != 0:
+            buckets[i] -= 1
+            array.append(i + min_value)
+```
+
+#### 桶排序
+桶排序是计数排序的拓展
+![](assets/leetcode-be66e5dc.png)
+如果对每个桶（共M个）中的元素排序使用的算法是插入排序，每次排序的时间复杂度为O(N/Mlog(N/M))。则总的时间复杂度为O(N)+O(M)O(N/Mlog(N/M)) = O(N+ Nlog(N/M)) = O(N + NlogN - NlogM)。当M接近于N时，桶排序的时间复杂度就可以近似认为是O(N)的。是一种稳定排序算法.
+
+可以排序负数与小数
+```python
+def bucketSort(array, n):
+    min_value = min(array)
+    max_value = max(array)
+    bucket_count = int((max_value - min_value) / n) + 1
+    buckets = [[] for _ in range(bucket_count)]
+    for num in array:
+        bucket_index = int((num - min_value) // n)
+        buckets[bucket_index].append(num)
+    array.clear()
+    for bucket in buckets:
+        insertionSort(bucket)
+        for item in bucket:
+            array.append(item)
+```
+
+#### 基数排序
+非负整数排序
+```python
+def radixSort(array):
+    rounds = len(str(max(array)))
+    radix = 10
+    for i in range(rounds):
+        buckets = [[] for _ in range(radix)]
+        for num in array:
+            index = num // (10**i) % radix
+            buckets[index].append(num)
+        array.clear()
+        for bucket in buckets:
+            for item in bucket:
+                array.append(item)
+```
+
 
 ## 二分查找
 ### 基础 (前提，数组有序)
 ```python
 def low_bound(arr, l, r, target):
+    """查找第一个 >= target的数的index"""
     while (l < r):
         m = l + (r - l) // 2
         if arr[m] < target:
@@ -1386,6 +1787,7 @@ def low_bound(arr, l, r, target):
     return l
 
 def up_bound(arr, l, r, target):
+    """查找第一个 > target的数的index"""
     while (l < r):
         m = l + (r - l) // 2
         if arr[m] <= target:
@@ -1719,3 +2121,18 @@ class Solution:
                     p1 += 1
         return max_len
 ```
+
+## 递归算法复杂度分析 -- 主定理
+T(问题规模) = 子问题数 * T(子问题规模) + 额外计算
+T(n) = a * T(n/b) + f(n)
+T(n) = a * T(n/b) + O(n^d)
+- $d < log_b^a, O(n^{log_b^a})$
+- $d = log_b^a, O(n^d * logn)$
+- $d > log_b^a, O(n^d)$
+(log 不标底默认为2)
+
+归并排序
+T(n) = 2T(n/2) + O(n) --> T(n) = O(nlogn)
+
+二分查找
+T(n) = T(n/2) + O(1) --> T(n) = O(logn)
