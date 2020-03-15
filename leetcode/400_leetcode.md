@@ -1,5 +1,4 @@
 # 400 leetcode
-## First time
 ### Array
 #### 基础题
 ##### [27. 移除元素](https://leetcode-cn.com/problems/remove-element/)
@@ -608,6 +607,41 @@ class Solution:
         return res
 ```
 
+[1013. 将数组分成和相等的三个部分](https://leetcode-cn.com/problems/partition-array-into-three-parts-with-equal-sum/)
+```python
+class Solution:
+    def canThreePartsEqualSum(self, A: List[int]) -> bool:
+        """数组等分3分，要巧利用/3，这里还用了贪心，把复杂度降到O(n)"""
+        lookfor, rest = divmod(sum(A), 3)
+        if rest != 0: return False
+        sum_i = 0
+        recode_i = 0
+        for i in range(len(A)):
+            sum_i += A[i]
+            if sum_i == lookfor:
+                recode_i = i
+                break # 贪心
+        sum_j = 0
+        recode_j = 0
+        for j in range(len(A)-1,-1,-1):
+            sum_j += A[j]
+            if sum_j == lookfor:
+                recode_j = j
+                break
+        return True if recode_i+1 < recode_j else False
+
+    def canThreePartsEqualSum(self, A: List[int]) -> bool:
+        """暴力  O(n^2)"""
+        comsum = [0]+[sum(A[:i+1]) for i in range(len(A))]
+        for i in range((len(comsum))):
+            if comsum[i] == sum_A
+        for i in range(len(A)):
+            for j in range(i,len(A)):
+                if A[:i] and A[i:j] and A[j:] and comsum[i] == comsum[j]-comsum[i] == comsum[-1]-comsum[j]:
+                    return True
+        return False
+```
+
 #### [327. 区间和的个数](https://leetcode-cn.com/problems/count-of-range-sum)
 不会啊, TODO:线段树
 
@@ -709,7 +743,27 @@ class Solution:
 1. 一次遍历就可以了. O(n)
 
 #### [88. 合并两个有序数组](https://leetcode-cn.com/problems/merge-sorted-array/)
+#### [面试题 10.01. 合并排序的组](https://leetcode-cn.com/problems/sorted-merge-lcci/)
 从后往前遍历，更利于数组的修改 O(n+m)
+这道题坑了我半小时！！ 注意：
+1. 循环的结束条件，B走完了即可，可以保证A中剩下的有序
+2. 循环中要保证p1大于0，才能正常比较赋值。如果A p1指针已经走完了，将B走完，填满p3即可
+```python
+class Solution:
+    def merge(self, A: List[int], m: int, B: List[int], n: int) -> None:
+        """
+        Do not return anything, modify A in-place instead.
+        """
+        p1, p2, p3 = m-1, n-1, len(A)-1
+        while (p2 >= 0):
+            if p1 >= 0 and A[p1] > B[p2]:
+                A[p3] = A[p1]
+                p1 -= 1
+            else:
+                A[p3] = B[p2]
+                p2 -= 1
+            p3 -= 1
+```
 
 #### [75. 颜色分类](https://leetcode-cn.com/problems/sort-colors/)
 1. 基数排序 时间复杂度为O(n+k)，空间复杂度为O(n+k)。n 是待排序数组长度, k=2-0+1=3
@@ -760,4 +814,1004 @@ class Solution:
 2. 动态规划（登楼梯）
 3. 贪心
 
-#### []
+#### [324. 摆动排序 II](https://leetcode-cn.com/problems/wiggle-sort-ii/)
+快速选择中位数 + 三路快排 + 插入
+
+#### [278. 第一个错误的版本](https://leetcode-cn.com/problems/first-bad-version/)
+二分查找
+
+TODO: 33, 81, 153, 154 二分，有时间再多练习下
+#### [33. 搜索旋转排序数组](https://leetcode-cn.com/problems/search-in-rotated-sorted-array/)
+先寻找旋转点，再判断区间，再二分搜索，一大堆if太复杂
+```python
+class Solution:
+    def search(self, nums: List[int], target: int) -> int:
+        if len(nums) == 0: return -1
+        if len(nums) == 1: return 0 if nums[0] == target else -1
+
+        def find_rotation_index(arr, l, r):
+            while (l < r):
+                m = l + (r-l)//2
+                if arr[m] < arr[m-1]:
+                    return m
+                else:
+                    if arr[m] > arr[l]:
+                        l = m
+                    else:
+                        r = m
+            return l
+
+        def low_bound(arr, l, r, target):
+            while (l < r):
+                m = l + (r-l)//2
+                if arr[m] < target:
+                    l = m + 1
+                else:
+                    r = m
+            return l if l < len(arr) and arr[l] == target else -1
+
+        rotation_index = find_rotation_index(nums, 0, len(nums))
+        if nums[rotation_index] > nums[0]:
+            return low_bound(nums, 0, len(nums), target)
+        if target == nums[-1]:
+            return len(nums)-1
+        elif target < nums[-1]:
+            return low_bound(nums, rotation_index, len(nums), target)
+        else:
+            return low_bound(nums, 0, rotation_index, target)
+```
+#### [81. 搜索旋转排序数组 II](https://leetcode-cn.com/problems/search-in-rotated-sorted-array-ii/)
+
+#### [153. 寻找旋转排序数组中的最小值](https://leetcode-cn.com/problems/find-minimum-in-rotated-sorted-array/)
+同154. 二分寻找旋转点，注意判断二分是否查到旋转点. log(n)
+
+#### [154. 寻找旋转排序数组中的最小值 II](https://leetcode-cn.com/problems/find-minimum-in-rotated-sorted-array-ii/)
+二分查找的难点就是边界如何收缩，这里m必须通过r-1得到！
+缺点，该方法找到的只能保证是最小值，不能保证是旋转点。
+```python
+class Solution:
+    def findMin(self, nums: List[int]) -> int:
+        if len(nums) == 0: return None
+        if len(nums) == 1: return nums[0]
+
+        def search(arr, l, r):
+            r = r - 1 # 使得中位数是靠前的元素
+            while (l < r):
+                m = l + (r-l)//2
+                if arr[m] > arr[r]:
+                    l = m + 1
+                elif arr[m] < arr[r]:
+                    r = m
+                else:
+                    r = r - 1
+            return l
+
+        return nums[search(nums, 0, len(nums))]
+```
+
+#### [374. 猜数字大小](https://leetcode-cn.com/problems/guess-number-higher-or-lower/)
+```python
+# The guess API is already defined for you.
+# @return -1 if my number is lower, 1 if my number is higher, otherwise return 0
+# def guess(num: int) -> int:
+
+class Solution:
+    def guessNumber(self, n: int) -> int:
+        l, r = 0, n # 注意mapping
+        while (l < r):
+            m = l + (r-l)//2 + 1
+            if guess(m) == 0:
+                return m
+            elif guess(m) == 1:
+                l = m
+            elif guess(m) == -1:
+                r = m - 1
+        return None
+```
+
+#### [34. 在排序数组中查找元素的第一个和最后一个位置](https://leetcode-cn.com/problems/find-first-and-last-position-of-element-in-sorted-array/)
+low_bound, up_bound, 注意边界，注意up_bound为>target的index
+```python
+class Solution:
+    def searchRange(self, nums: List[int], target: int) -> List[int]:
+        def low_bound(arr, l, r, target):
+            while (l < r):
+                m = l + (r-l)//2
+                if arr[m] < target:
+                    l = m + 1
+                else:
+                    r = m
+            return l
+
+        def up_bound(arr, l, r, target):
+            while (l < r):
+                m = l + (r-l)//2
+                if arr[m] <= target:
+                    l = m + 1
+                else:
+                    r = m
+            return l
+
+        index0 = low_bound(nums, 0, len(nums), target)
+        index1 = up_bound(nums, 0, len(nums), target)
+
+        if index0 < len(nums) and nums[index0] == target:
+            return [index0, index1-1]
+        else:
+            return [-1, -1]
+```
+
+#### [349. 两个数组的交集](https://leetcode-cn.com/problems/intersection-of-two-arrays/)
+复习一下Counter用法
+```python
+class Solution:
+    def intersection(self, nums1: List[int], nums2: List[int]) -> List[int]:
+        from collections import Counter
+        a = Counter(nums1)
+        b = Counter(nums2)
+        return a & b
+```
+
+#### [300. 最长上升子序列](https://leetcode-cn.com/problems/longest-increasing-subsequence/)
+时间复杂度O(n^2), O(n)
+```python
+class Solution:
+    def lengthOfLIS(self, nums: List[int]) -> int:
+        if len(nums) == 0: return 0
+        dp = [1] * len(nums)
+        for i in range(len(nums)):
+            for j in range(i):
+                if nums[j] < nums[i]:
+                    dp[i] = max(dp[i], dp[j]+1)
+        return max(dp)
+```
+遍历nums，二分查找当前元素在dp中的low bound，替换dp中对应元素为当前元素，如果low bound 超过历史长度，长度+1. O(nlogn), O(n)
+```python
+class Solution:
+    def lengthOfLIS(self, nums: List[int]) -> int:
+        """只能保证长度对，不能保证dp就是其中一个答案"""
+        dp = [0] * len(nums)
+        lenth = 0
+        for num in nums:
+            l, r = 0, lenth
+            while (l < r):
+                m = l + (r-l)//2
+                if dp[m] < num: # <= 非严格上升子序列
+                    l = m + 1
+                else:
+                    r = m
+            if l < lenth:
+                dp[l] = num
+            else:
+                dp[l] = num
+                lenth += 1
+        return lenth
+```
+
+[354. 俄罗斯套娃信封问题](https://leetcode-cn.com/problems/russian-doll-envelopes/)
+```python
+class Solution:
+    def maxEnvelopes(self, envelopes: List[List[int]]) -> int:
+        """此方法为贪心，逻辑不严谨，是错误的，应考虑动态规划"""
+        if len(envelopes) < 2: return len(envelopes)
+        envelopes = sorted(envelopes, key=lambda ele: (ele[0],-ele[1]), reverse=True)
+        print(envelopes)
+        lenth = 1
+        p = 0
+        while (p < len(envelopes)):
+            next_envelop = -1
+            for i in range(p+1, len(envelopes)):
+                if envelopes[i][0] < envelopes[p][0] and envelopes[i][1] < envelopes[p][1]:
+                    next_envelop = i
+                    lenth += 1
+                    break
+            if next_envelop != -1:
+                p = next_envelop
+            else:
+                break
+        return lenth
+```
+```python
+class Solution:
+    def maxEnvelopes(self, envelopes: List[List[int]]) -> int:
+        """体会动态规划从下往上记录历史答案的思想，但该方法超时 O(n^2)"""
+        if len(envelopes) < 2: return len(envelopes)
+        envelopes = sorted(envelopes, key=lambda ele: (ele[0],ele[1]), reverse=True)
+        # print(envelopes)
+        dp = [1] * len(envelopes)
+        for i in range(len(envelopes)):
+            for j in range(i):
+                if envelopes[i][0] < envelopes[j][0] and envelopes[i][1] < envelopes[j][1]:
+                    dp[i] = max(dp[i],dp[j]+1)
+        return max(dp)
+```
+```python
+class Solution:
+    def maxEnvelopes(self, envelopes: List[List[int]]) -> int:
+        """巧用排序,保证w升序，相同w的h降序，使得问题可以转换成一维的最大上升子序列求解"""
+        if len(envelopes) < 2: return len(envelopes)
+        envelopes = sorted(envelopes, key=lambda ele: (ele[0],-ele[1]))
+        dp = [0] * len(envelopes)
+        lenth = 0
+        for i in range(len(envelopes)):
+            h = envelopes[i][1]
+            l, r = 0, lenth
+            while (l < r):
+                m = l + (r-l)//2
+                if dp[m] < h:
+                    l = m + 1
+                else:
+                    r = m
+            dp[l] = h
+            if l >= lenth:
+                lenth += 1
+        return lenth
+```
+
+#### [315. 计算右侧小于当前元素的个数](https://leetcode-cn.com/problems/count-of-smaller-numbers-after-self/)
+TODO: 归并排序，树状数组
+
+### Array
+#### 基础题
+#### [28. 实现 strStr()](https://leetcode-cn.com/problems/implement-strstr/)
+题解一：暴力遍历 + 避免不必要的遍历
+```python
+class Solution:
+    def strStr(self, haystack: str, needle: str) -> int:
+      """ 双指针O(m+n)超时，优化如下 """
+        # 避免不必要的遍历
+        if len(needle) == 0: return 0
+        if len(needle) > len(haystack): return -1
+        from collections import Counter
+        haystack_dict = Counter(haystack)
+        needle_dict = Counter(needle)
+        for key in needle_dict:
+            if key in haystack_dict and needle_dict[key] <= haystack_dict[key]:
+                pass
+            else: return -1
+        # 避免 needle 太长
+        for i in range(len(haystack)-len(needle)+1):
+            if haystack[i:i+len(needle)] == needle:
+                return i
+        return -1
+```
+题解二： KMP
+其实KMP并不难，解释起来也不需要一大段的，核心就是
+1. 根据子串构造一个next部分匹配表
+2. 遍历数组，当匹配失效时，查询next部分匹配表定位子串接着与主串比较的位置
+
+next部分匹配表为对应元素前后缀共同元素的个数，以"ABCDABD"为例。
+- "A"的前缀和后缀都为空集，共有元素的长度为0；
+- "AB"的前缀为[A]，后缀为[B]，共有元素的长度为0；
+- "ABC"的前缀为[A, AB]，后缀为[BC, C]，共有元素的长度0；
+- "ABCD"的前缀为[A, AB, ABC]，后缀为[BCD, CD, D]，共有元素的长度为0；
+- "ABCDA"的前缀为[A, AB, ABC, ABCD]，后缀为[BCDA, CDA, DA, A]，共有元素为"A"，长度为1；
+- "ABCDAB"的前缀为[A, AB, ABC, ABCD, ABCDA]，后缀为[BCDAB, CDAB, DAB, AB, B]，共有元素为"AB"，长度为2；
+- "ABCDABD"的前缀为[A, AB, ABC, ABCD, ABCDA, ABCDAB]，后缀为[BCDABD, CDABD, DABD, ABD, BD, D]，共有元素的长度为0。
+
+具体如何实现子串公共前后缀数目的计算呢，这里使用到双指针i, j，以"ABCDABD"为例。
+i指针遍历子串，如果没有相等元素，j指针保留在头部，如果遇到相同元素，j指针后移，当元素再次不相同时，j指针回到头部。
+可以看到，其实i指针后缀，j指针前缀，实现前后缀相同元素的计数。
+```sh
+i         i          i           i            i             i             i
+ABCDABD  ABCDABD   ABCDABD    ABCDABD     ABCDABD      ABCDABD      ABCDABD
+ABCDABD   ABCDABD    ABCDABD     ABCDABD      ABCDABD      ABCDABD        ABCDABD
+j         j          j           j            j             j             j
+```
+
+构造好子串的next表后，i指针遍历主串，当遇到子串首元素时，i，j同时前进，当匹配失效时，查找next表中当前元素的值，将j指针移动到该处。（这样可以避免将j指针又放到起始位置，重新逐一比较。）
+
+## 题解二：KMP
+```python
+class Solution:
+    def strStr(self, haystack: str, needle: str) -> int:
+        def get_next(p):
+            """ 构造子串needle的匹配表, 以 "ABCDABD" 为例
+            i         i          i           i            i             i             i
+            ABCDABD  ABCDABD   ABCDABD    ABCDABD     ABCDABD      ABCDABD      ABCDABD
+            ABCDABD   ABCDABD    ABCDABD     ABCDABD      ABCDABD      ABCDABD        ABCDABD
+            j         j          j           j            j             j             j
+            """
+            _next = [0] * (len(p)+1) #      A  B  C  D  A  B  D
+            _next[0] = -1            # [-1, 0, 0, 0, 0, 1, 2, 0]
+            i, j = 0, -1
+            while (i < len(p)):
+                if (j == -1 or p[i] == p[j]):
+                    i += 1
+                    j += 1
+                    _next[i] = j
+                else:
+                    j = _next[j]
+            return _next
+
+        def kmp(s, p, _next):
+            """kmp O(m+n). s以 "BBC ABCDAB ABCDABCDABDE" 为例"""
+            i, j = 0, 0
+            while (i < len(s) and j < len(p)):
+                if (j == -1 or s[i] == p[j]):
+                    i += 1
+                    j += 1
+                else:
+                    j = _next[j]
+            if j == len(p):
+                return i - j
+            else:
+                return -1
+
+        return kmp(haystack, needle, get_next(needle))
+```
+参考理解KMP比较好的两个链接
+http://www.ruanyifeng.com/blog/2013/05/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm.html
+https://www.zhihu.com/question/21923021/answer/281346746
+
+#### [14. 最长公共前缀](https://leetcode-cn.com/problems/longest-common-prefix/)
+```python
+class Solution:
+    def longestCommonPrefix(self, strs: List[str]) -> str:
+        """水平遍历"""
+        if len(strs) == 0: return ""
+        p = strs[0]
+        for i in range(1, len(strs)):
+            while (strs[i].find(p) != 0): # 最长公共前缀
+                p = p[:-1]
+        return p
+```
+二分归并
+```python
+class Solution:
+    def longestCommonPrefix(self, strs: List[str]) -> str:
+        if len(strs) == 0: return ""
+        if len(strs) == 1: return strs[0]
+
+        def merge(l_arr, r_arr):
+            while (l_arr.find(r_arr) != 0):
+                r_arr = r_arr[:-1]
+            return r_arr
+
+        def merge_split(arr):
+            if len(arr) == 1:
+                return arr
+            m = len(arr) // 2
+            l_arr = merge_split(arr[:m])
+            r_arr = merge_split(arr[m:])
+            common_str = merge(l_arr[0], r_arr[0])
+            return [common_str]
+
+        return merge_split(strs)[0]
+```
+
+#### [205. 同构字符串](https://leetcode-cn.com/problems/isomorphic-strings/)
+注意理解下题意
+```python
+class Solution:
+    def isIsomorphic(self, s: str, t: str) -> bool:
+        from collections import Counter
+        a = Counter(s)
+        b = Counter(t)
+        for item_a, item_b in zip(a.items(), b.items()):
+            if item_a[1] != item_b[1]:
+                return False
+
+        p = 0
+        while (p < len(s)-1):
+            if s[p] == s[p+1]:
+                status_s = True
+            else:
+                status_s = False
+            if t[p] == t[p+1]:
+                status_t = True
+            else:
+                status_t = False
+            if status_s != status_t:
+                return False
+            p += 1
+        return True
+```
+
+#### [49. 字母异位词分组](https://leetcode-cn.com/problems/group-anagrams/)
+熟悉一下defaultdict用法，tuple可以作为key，list不行
+```python
+class Solution:
+    def groupAnagrams(self, strs: List[str]) -> List[List[str]]:
+        """原Counter方法一个个比较加入result超时"""
+        from collections import defaultdict
+        result = defaultdict(list)
+        for i in range(len(strs)):
+            result[tuple(sorted(strs[i]))].append(strs[i]) # tuple 可以作为key, list 不行
+        return list(result.values())
+```
+
+#### [87. 扰乱字符串](https://leetcode-cn.com/problems/scramble-string/)
+```python
+# TODO: 动态规划 or 递归
+```
+
+#### [168. Excel表列名称](https://leetcode-cn.com/problems/excel-sheet-column-title)
+>>> ord("A") ... 65
+>>> ord("a") ... 97
+>>> ord("b") ... 98
+>>> ord("B") ... 66
+>>> chr(65) ... 'A'
+>>> divmod(5,2)  ... (2, 1)
+
+```python
+class Solution:
+    def convertToTitle(self, n: int) -> str:
+        res = ""
+        while n:
+            n -= 1
+            n, y = divmod(n, 26)
+            res = chr(y + 65) + res
+        return res
+```
+#### [171. Excel表列序号](https://leetcode-cn.com/problems/excel-sheet-column-number/)
+```python
+class Solution:
+    def titleToNumber(self, s: str) -> int:
+        result = 0
+        mul = 1
+        for str_ in s[::-1]:
+            ASCII = ord(str_) - 64
+            result += mul * ASCII
+            mul *= 26
+        return result
+```
+
+#### [13. 罗马数字转整数](https://leetcode-cn.com/problems/roman-to-integer)
+1. 把一个小值放在大值的左边，就是做减法，否则为加法
+2. jave, c++  用 switch case 会比哈希快很多
+
+#### [65. 有效数字](https://leetcode-cn.com/problems/valid-number/)
+automat 跳转，检测状态是否有效
+```python
+class Solution:
+    def isNumber(self, s: str) -> bool:
+        """automat"""
+        states = [
+            { 'b': 0, 's': 1, 'd': 2, '.': 4 }, # 0. start
+            { 'd': 2, '.': 4 } ,                # 1. 'sign' before 'e'
+            { 'd': 2, '.': 3, 'e': 5, 'b': 8 }, # 2. 'digit' before 'dot'
+            { 'd': 3, 'e': 5, 'b': 8 },         # 3. 'dot' with 'digit'
+            { 'd': 3 },                         # 4. no 'digit' before 'dot'
+            { 's': 6, 'd': 7 },                 # 5. 'e'
+            { 'd': 7 },                         # 6. 'sign' after 'e'
+            { 'd': 7, 'b': 8 },                 # 7. 'digit' after 'e'
+            { 'b': 8 }                          # 8. end with
+        ]
+        p = 0
+        for c in s:
+            if '0' <= c <= '9': typ = 'd'
+            elif c == ' ': typ = 'b'
+            elif c == '.': typ = '.'
+            elif c == 'e': typ = 'e'
+            elif c in "+-": typ = 's'
+            else: typ = '?'
+            if typ not in states[p]: return False
+            p = states[p][typ]
+        return p in [2, 3, 7, 8]
+```
+
+#### [面试题57 - II. 和为s的连续正数序列](https://leetcode-cn.com/problems/he-wei-sde-lian-xu-zheng-shu-xu-lie-lcof/)
+```python
+class Solution:
+    def findContinuousSequence(self, target: int) -> List[List[int]]:
+        """滑动窗口"""
+        target_list = [i+1 for i in range(target)]
+        l, r = 0, 1
+        result = []
+        while (r < len(target_list)):
+            if sum(target_list[l:r]) < target:
+                r += 1
+            elif sum(target_list[l:r]) > target:
+                l += 1
+            el最长回文子串se:
+                result.append([i for i in target_list[l:r]])
+                l += 1 # important
+        return result
+```
+
+#### [125. 验证回文串](https://leetcode-cn.com/problems/valid-palindrome/)
+.isdigit()判断是否是数字 .isalpha()判断是否是字母 .lower()转化为小写 .upper()转化为大写
+中心展开分奇数偶数讨论
+```python
+class Solution:
+    def isPalindrome(self, s: str) -> bool:
+        # filter and lower
+        s_new = ""
+        for str_ in s:
+            if str_.isdigit() or str_.isalpha():
+                s_new += str_.lower()
+        # 中心展开
+        center = len(s_new) // 2
+        i = 0
+        while (center+i) < len(s_new):
+            if len(s_new)%2 == 0:
+                if s_new[center-1-i] == s_new[center+i]:
+                    i += 1
+                else:
+                    return False
+            else:
+                if s_new[center-i] == s_new[center+i]:
+                    i += 1
+                else:
+                    return False
+        return True
+```
+
+#### [5. 最长回文子串](https://leetcode-cn.com/problems/longest-palindromic-substring/)
+中心拓展法,分奇偶数讨论，注意 两次初始化j=1
+```python
+class Solution:
+    def longestPalindrome(self, s: str) -> str:
+        if len(s) <= 1: return s
+        max_str = ""
+        for i in range(len(s)):
+            j = 1
+            while (i-j>=0 and i+j<len(s)):
+                if s[i-j] == s[i+j]:
+                    if 2*j+1 > len(max_str):
+                        max_str = s[i-j:i+j+1]
+                        # print(max_str)
+                    j += 1
+                else:
+                    break
+            j = 1 # be careful
+            while (i-j+1>=0 and i+j<len(s)):
+                if s[i-j+1] == s[i+j]:
+                    if 2*j > len(max_str):
+                        max_str = s[i-j+1:i+j+1]
+                    j += 1
+                else:
+                    break
+        return s[0] if len(max_str)==0 else max_str
+```
+```python
+class Solution:
+    def longestPalindrome(self, s: str) -> str:
+        """动态规划"""
+        dp = [[0] * len(s) for _ in range(len(s))]
+        res = ""
+        max_len = 0
+        for r in range(len(s)):
+            for l in range(r+1):
+                if s[r] == s[l] and (r-l < 2 or dp[r-1][l+1] == 1):
+                    dp[r][l] = 1
+                    if r-l+1 > max_len:
+                        max_len = r-l+1
+                        res = s[l:r+1]
+        return res
+```
+
+#### [214. 最短回文串](https://leetcode-cn.com/problems/shortest-palindrome/)
+暴力法。 TODO： KMP
+```python
+class Solution:
+    def shortestPalindrome(self, s: str) -> str:
+        max_index = 0
+        for i in range(len(s)):
+            sub_s = s[:i+1]
+            if sub_s == sub_s[::-1]:
+                max_index = i+1
+        return s[max_index:][::-1] + s
+```
+
+#### [131. 分割回文串](https://leetcode-cn.com/problems/palindrome-partitioning/)
+TODO: dfs 回溯还不太明白
+```python
+class Solution:
+    def partition(self, s: str) -> List[List[str]]:
+        dp = [[0] * len(s) for _ in range(len(s))]
+        for r in range(len(s)):
+            for l in range(r+1):
+                if s[r] == s[l] and (r-l < 2 or dp[r-1][l+1] == 1):
+                    dp[r][l] = 1
+
+        res = []
+        def helper(i, tmp):
+            if i == len(s):
+                res.append(tmp)
+            for j in range(i, len(s)):
+                if dp[j][i]:
+                    helper(j+1, tmp + [s[i:j+1]])
+        helper(0, [])
+        return res
+```
+
+#### [132. 分割回文串 II](https://leetcode-cn.com/problems/palindrome-partitioning-ii/)
+TODO: 再重新好好思考下
+```python
+class Solution:
+    def minCut(self, s: str) -> int:
+        min_s = list(range(len(s)))
+        n = len(s)
+        dp = [[False] * n for _ in range(n)]
+        for i in range(n):
+            for j in range(i+1):
+                if s[i] == s[j] and (i - j < 2 or dp[j + 1][i - 1]):
+                    dp[j][i] = True
+                    # 说明不用分割
+                    if j == 0:
+                        min_s[i] = 0
+                    else:
+                        min_s[i] = min(min_s[i], min_s[j - 1] + 1)
+        return min_s[-1]
+```
+
+#### [20. 有效的括号](https://leetcode-cn.com/problems/valid-parentheses/)
+```python
+class Solution:
+    def isValid(self, s: str) -> bool:
+        stack = []
+        mapping = {")": "(", "}": "{", "]":"["}
+        for item in s:
+            if stack:
+                if item in mapping and mapping[item] == stack[-1]:
+                    stack.pop()
+                else:
+                    stack.append(item)
+            else:
+                stack.append(item)
+        return True if len(stack) == 0 else False
+```
+
+#### [22. 括号生成](https://leetcode-cn.com/problems/generate-parentheses/)
+二叉树dfs用的妙
+```python
+class Solution:
+    def generateParenthesis(self, n: int) -> List[str]:
+        """用dfs逆向枚举， r<l剪枝"""
+        ans = []
+        def dfs(l, r, s):
+            # 到底了向结果添加
+            if l == r == 0:
+                ans.append(s)
+            # 保证括号有效，相当于剪枝操作
+            if r < l:
+                return
+            if l > 0:
+                dfs(l-1, r, s+"(")
+            if r > 0:
+                dfs(l, r-1, s+")")
+        dfs(n, n, "")
+        return ans
+```
+
+#### [32. 最长有效括号](https://leetcode-cn.com/problems/longest-valid-parentheses/)
+还需要再好好理解一下
+```python
+class Solution:
+    def longestValidParentheses(self, s: str) -> int:
+        """用stack记录index"""
+        stack = [-1]
+        max_len = 0
+        for i, item in enumerate(s):
+            if item == "(":
+                stack.append(i)
+            else:
+                stack.pop()
+                if len(stack) == 0:
+                    stack.append(i)
+                else:
+                    len_ = i - stack[-1]
+                    max_len = max(len_, max_len)
+        return max_len
+```
+
+#### [241. 为运算表达式设计优先级](https://leetcode-cn.com/problems/different-ways-to-add-parentheses/)
+好好体会下枚举，晚上自己重写一遍
+```python
+class Solution:
+    def diffWaysToCompute(self, input: str) -> List[int]:
+        # 递归 + 备忘录
+        self.formula = input
+        self.memo = {}
+        return self._diffWaysToCompute(0, len(input))
+
+    def _diffWaysToCompute(self, lo, hi):
+        if self.formula[lo:hi].isdigit():
+            return [int(self.formula[lo:hi])]
+        if((lo, hi) in self.memo):
+            return self.memo.get((lo, hi))
+        ret = []
+        for i, char in enumerate(self.formula[lo:hi]):
+            if char in ['+', '-', '*']:
+                leftResult = self._diffWaysToCompute(lo, i + lo)
+                rightResult = self._diffWaysToCompute(lo + i + 1, hi)
+                ret.extend([eval(str(i) + char + str(j)) for i in leftResult for j in rightResult])
+                self.memo[(lo, hi)] = ret
+        return ret
+```
+
+#### [301. 删除无效的括号](https://leetcode-cn.com/problems/remove-invalid-parentheses/)
+枚举+bfs搜索
+```python
+class Solution:
+    def removeInvalidParentheses(self, s: str) -> List[str]:
+        def is_valid(str_):
+            stack = []
+            flag = 0
+            for item in str_:
+                if stack and stack[-1] == "(" and item ==")":
+                    stack.pop()
+                elif item in ["(", ")"]:
+                    stack.append(item)
+                    flag = 1
+            return True if len(stack)==0 and flag else False
+
+        result = set()
+        from collections import deque
+        queue = deque([s])
+        seen = set()
+
+        while(queue):
+            for _ in range(len(queue)):
+                str_ = queue.pop()
+                if is_valid(str_):
+                    result.add(str_)
+                    return list(result)
+                for i in range(len(str_)):
+                    left = str_[:i] + str_[i+1:]
+                    if is_valid(left):
+                        result.add(left)
+                    else:
+                        if left not in seen:
+                            queue.appendleft(left)
+                            seen.add(left) # must prune
+            if len(result)>0:
+                return list(result)
+
+        return ["".join([item for item in s if item not in ["(",")"]])]
+```
+TODO: 好好练练递归，再把种树作一遍
+
+[392. 判断子序列](https://leetcode-cn.com/problems/is-subsequence/)
+```python
+class Solution:
+    def isSubsequence(self, s: str, t: str) -> bool:
+        # i, j = 0, 0
+        # while i < len(s) and j < len(t):
+        #     if s[i] == t[j]:
+        #         i += 1
+        #     j += 1
+        # return True if i == len(s) else False
+        """find比双指针快，巧用find  arg2  起始索引"""
+        if s == '':
+            return True
+        loc = -1
+        for i in s:
+            loc = t.find(i,loc+1)
+            if loc == -1:
+                return False
+        return True
+```
+
+[115. 不同的子序列](https://leetcode-cn.com/problems/distinct-subsequences/)
+TODO: 需要重做，重新理解
+```python
+class Solution:
+    def numDistinct(self, s: str, t: str) -> int:
+        n1 = len(s)
+        n2 = len(t)
+        dp = [[0] * (n1 + 1) for _ in range(n2 + 1)]
+        for j in range(n1 + 1):
+            dp[0][j] = 1
+        for i in range(1, n2 + 1):
+            for j in range(1, n1 + 1):
+                if t[i - 1] == s[j - 1]:
+                    dp[i][j] = dp[i - 1][j - 1]  + dp[i][j - 1]
+                else:
+                    dp[i][j] = dp[i][j - 1]
+        print(dp)
+        return dp[-1][-1]
+```
+
+### Backtracking
+#### [78. 子集](https://leetcode-cn.com/problems/subsets/)
+```python
+class Solution:
+    def subsets(self, nums: List[int]) -> List[List[int]]:
+        result = []
+        n = len(nums)
+        def helper(i, res):
+            result.append(res)
+            for j in range(i, n):
+                helper(j+1, res+[nums[j]])
+
+        helper(0, [])
+        return result
+```
+
+#### [90. 子集 II](https://leetcode-cn.com/problems/subsets-ii/)
+```python
+class Solution:
+    def subsetsWithDup(self, nums: List[int]) -> List[List[int]]:
+        nums.sort()
+        n = len(nums)
+        result = []
+        def helper(i, res):
+            result.append(res)
+            for j in range(i, n):
+                if j==i or nums[j] != nums[j-1]:
+                    helper(j+1, res+[nums[j]])
+
+        helper(0, [])
+        return result
+```
+
+#### [39. 组合总和](https://leetcode-cn.com/problems/combination-sum/)
+```python
+class Solution:
+    def combinationSum(self, candidates: List[int], target: int) -> List[List[int]]:
+        # result = []
+        # def helper(target, res):
+        #     # 1. 如果越界，剪枝
+        #     if target < 0:
+        #         return
+        #     # 2. 如果满足条件，添加. 到了结果才剪枝太慢！
+        #     if target == 0:
+        #         res.sort()
+        #         if res not in result:
+        #             result.append(res)
+        #         return
+        #     # 3. 递归
+        #     for num in candidates:
+        #         helper(target-num, res+[num])
+
+        # helper(target, [])
+        # return result
+
+        result = []
+        candidates.sort()
+        n = len(candidates)
+        def helper(target, i, res):
+            if target == 0:
+                result.append(res)
+                return
+            for j in range(i, n):
+                rest = target-candidates[j]
+                if rest < 0: break
+                helper(rest, j, res+[candidates[j]])
+
+        helper(target, 0, [])
+        return result
+```
+
+#### [77. 组合](https://leetcode-cn.com/problems/combinations/)
+```python
+class Solution:
+    def combine(self, n: int, k: int) -> List[List[int]]:
+        result = []
+        def helper(i, res):
+            if len(res) == k:
+                result.append(res)
+                return
+            # 剪枝上限   n+2-(k-len(res))
+            for j in range(i, n+2-(k-len(res))):
+                if len(res)>k: break
+                helper(j+1, res+[j])
+
+        helper(1, [])
+        return result
+```
+
+#### [40. 组合总和 II](https://leetcode-cn.com/problems/combination-sum-ii/)
+```python
+class Solution:
+    def combinationSum2(self, candidates: List[int], target: int) -> List[List[int]]:
+        result = []
+        if not candidates: return result
+        candidates.sort()
+        n = len(candidates)
+        def helper(target, i, res):
+            # if target < 0:
+            #     return
+            if target == 0:
+                result.append(res)
+                return
+
+            for j in range(i, n):
+                # 多个逻辑语句打个括号，避免出bug
+                if (j==i or candidates[j] != candidates[j-1]):
+                    # 提前剪枝，会比进入递归再退出快
+                    rest = target-candidates[j]
+                    # 注意这里是break，不是continue，因为candidates sort过，当前节点rest<0,之后节点肯定也是
+                    if rest < 0: break
+                    helper(rest, j+1, res+[candidates[j]])
+
+        helper(target, 0, [])
+        return result
+```
+
+#### [216. 组合总和 III](https://leetcode-cn.com/problems/combination-sum-iii/)
+```python
+class Solution:
+    def combinationSum3(self, k: int, n: int) -> List[List[int]]:
+        result = []
+        upper = 10 if n >= 10 else n+1
+        def helper(i, res):
+            if len(res) == k and sum(res) == n:
+                result.append(res)
+                return
+            # 剪枝上限  upper+1-(k-len(res))
+            for j in range(i,upper+1-(k-len(res))):
+                if len(res) > k-1: break
+                if sum(res)+j > n: break # 有时候剪枝，反而可能更慢
+                helper(j+1, res+[j])
+
+        helper(1, [])
+        return result
+```
+
+#### [377. 组合总和 Ⅳ](https://leetcode-cn.com/problems/combination-sum-iv/)
+```python
+class Solution:
+    def combinationSum4(self, nums: List[int], target: int) -> int:
+        """回溯+记忆表"""
+        nums.sort()
+        memo = {}
+        # 可代替记忆表，但要注意输入只能是变量，不能是list，dict
+        # import functools
+        # @functools.lru_cache(None)
+        def helper(temp_sum):
+            if temp_sum == target:
+                return 1
+            node_result = 0
+            for num in nums:
+                # temp_sum += num # dangerous
+                if temp_sum+num > target: break
+                if temp_sum+num in memo:
+                    node_result += memo[temp_sum+num]
+                    continue
+                node_result += helper(temp_sum+num)
+            if temp_sum not in memo:
+                memo[temp_sum] = node_result
+            return node_result
+
+        return helper(0)
+```
+
+#### [46. 全排列](https://leetcode-cn.com/problems/permutations/)
+```python
+class Solution:
+    def permute(self, nums: List[int]) -> List[List[int]]:
+        result = []
+        def helper(res):
+            if len(res) == len(nums):
+                result.append(res)
+                return
+
+            for num in nums:
+                if num not in res:
+                    helper(res+[num])
+
+        helper([])
+        return result
+```
+#### [47. 全排列 II](https://leetcode-cn.com/problems/permutations-ii/)
+```python
+class Solution:
+    def permuteUnique(self, nums: List[int]) -> List[List[int]]:
+        from collections import Counter
+        count = Counter(nums)
+        nums.sort()
+        result = []
+        def helper(count, res):
+            if len(res)==len(nums):
+                result.append(res)
+                return
+
+            for i in range(len(nums)):
+                if i == 0 or nums[i] != nums[i - 1]:
+                    # if count[nums[i]] > 0:
+                    #     count_temp = count.copy()
+                    #     count_temp[nums[i]] -= 1
+                    #     helper(count_temp, res+[nums[i]])
+
+                    if count[nums[i]] > 0:
+                        count[nums[i]] -= 1 # must inside if
+                        helper(count, res + [nums[i]])
+                        count[nums[i]] += 1 # recover when backtrack
+
+        helper(count, [])
+        return result
+```

@@ -256,6 +256,41 @@ class MedianFinder:
 # param_2 = obj.findMedian()
 ```
 
+#### [215. 数组中的第K个最大元素](https://leetcode-cn.com/problems/kth-largest-element-in-an-array/)
+1. 规模为k的最小堆
+2. partition 直到 pivot_index = n-k, 可保证左边均小于pivot, 右边均大于等于pivot
+快速选择可以用于查找中位数，任意第k大的数
+在输出的数组中，pivot_index达到其合适位置。所有小于pivot_index的元素都在其左侧，所有大于或等于的元素都在其右侧。如果是快速排序算法，会在这里递归地对两部分进行快速排序，时间复杂度为 O(NlogN)。快速选择由于知道要找的第 N - k 小的元素在哪部分中，不需要对两部分都做处理，这样就将平均时间复杂度下降到 O(N)。
+3. 注意输入的nums数组是被修改过的
+```python
+class Solution:
+    def findKthLargest(self, nums: List[int], k: int) -> int:
+        def partition(array, l, r):
+            pivot = array[l]
+            pivot_index = l
+            for i in range(l+1, r):
+                if array[i] < pivot:
+                    pivot_index += 1
+                    array[i], array[pivot_index] = array[pivot_index], array[i]
+            array[l], array[pivot_index] = array[pivot_index], array[l]
+            return pivot_index
+
+        def select(array, l, r, k_smallest):
+            while (l < r):
+                pivot_index = partition(array, l, r)
+                if pivot_index == k_smallest:
+                    return pivot_index
+                elif pivot_index < k_smallest:
+                    l = pivot_index + 1
+                else:
+                    r = pivot_index
+            return l
+
+        index = select(nums, 0, len(nums), len(nums)-k)
+        return nums[index]
+```
+
+
 ## 队列
 ### 双向队列
 #### [239. 滑动窗口最大值](https://leetcode-cn.com/problems/sliding-window-maximum/)
@@ -531,7 +566,7 @@ class Solution:
 ```
 
 #### [300. 最长上升子序列](https://leetcode-cn.com/problems/longest-increasing-subsequence/)
-时间复杂度$O(n^2)$, TODO: $O(n\log n)$
+时间复杂度O(n^2), O(n)
 ```python
 class Solution:
     def lengthOfLIS(self, nums: List[int]) -> int:
@@ -542,6 +577,28 @@ class Solution:
                 if nums[j] < nums[i]:
                     dp[i] = max(dp[i], dp[j]+1)
         return max(dp)
+```
+遍历nums，二分查找当前元素在dp中的low bound，替换dp中对应元素为当前元素，如果low bound 超过历史长度，长度+1. O(nlogn), O(n)
+```python
+class Solution:
+    def lengthOfLIS(self, nums: List[int]) -> int:
+        """只能保证长度对，不能保证dp就是其中一个答案"""
+        dp = [0] * len(nums)
+        lenth = 0
+        for num in nums:
+            l, r = 0, lenth
+            while (l < r):
+                m = l + (r-l)//2
+                if dp[m] < num: # <= 非严格上升子序列
+                    l = m + 1
+                else:
+                    r = m
+            if l < lenth:
+                dp[l] = num
+            else:
+                dp[l] = num
+                lenth += 1
+        return lenth
 ```
 
 #### [322. 零钱兑换](https://leetcode-cn.com/problems/coin-change/)
@@ -559,27 +616,30 @@ class Solution:
                 else:
                     dp[i] = min(dp[i], dp[i-coin]+1) # 注意是 dp[i-coin]+1
         return dp[-1] if dp[-1] != float('inf') else -1
-
-import collections
+```
+```python
 class Solution:
     def coinChange(self, coins: List[int], amount: int) -> int:
         if amount == 0: return 0
-        queue = collections.deque()
-        queue.append(amount)
-        seen = set([amount])
-        level = 0
-        while queue:
-            level += 1
-            # deque 在遍历过程中不能修改, 保证level+1
-            for _ in range(len(queue)):
-                parent = queue.popleft()
-                for coin in coins:
-                    child = parent - coin
-                    if child == 0: return level
-                    if child > 0 and child not in seen:
-                        queue.append(child)
-                        seen.add(child)
-        return -1
+        from collections import deque
+        def bfs(amount, level):
+            queue = deque([amount])
+            seen = set([amount])
+            level = 0
+            while queue:
+                for _ in range(len(queue)):
+                    top = queue.pop()
+                    for coin in coins:
+                        res = top - coin
+                        if res == 0:
+                            return level+1
+                        # 剪枝 important
+                        if res > 0 and res not in seen:
+                            seen.add(res)
+                            queue.appendleft(res)
+                level += 1
+            return -1
+        return bfs(amount, 0)
 ```
 
 #### [338. 比特位计数](https://leetcode-cn.com/problems/counting-bits/)
@@ -744,6 +804,20 @@ class Solution:
         return s[min_l:max_r+1] if max_lenth != 0 else s[0]
 ```
 
+#### [121. 买卖股票的最佳时机](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock/)
+```python
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        """profit_1记录数组最小值，profit_0 记录当前值与最小值的差"""
+        if len(prices)==0: return 0
+        profit_0 = 0
+        profit_1 = -max(prices)
+        for item in prices:
+            profit_0 = max(profit_0, profit_1+item)
+            profit_1 = max(profit_1, -item)
+        return profit_0
+```
+
 ## 贪心算法
 在每一步选择中都采取在当前状态下最好或最优（即最有利）的选择，从而希望导致结果是最好或最优的算法,
 贪心使用前提,局部最优可实现全局最优.
@@ -821,31 +895,28 @@ class Solution:
         traversal(root, res)
         return res
 ```
-解法二： 栈加循环
-- 使用颜色标记节点的状态，新节点为白色，已访问的节点为灰色。
-- 如果遇到的节点为白色，则将其标记为灰色，然后将其右子节点、自身、左子节点依次入栈。
-- 如果遇到的节点为灰色，则将节点的值输出。
+遍历
 ```python
 class Solution:
     def inorderTraversal(self, root: TreeNode) -> List[int]:
-        WHITE, GRAY = 0, 1
         stack = []
-        stack.append((root, WHITE))
+        if root: stack.append(root)
         result = []
         while stack:
-            node, color = stack.pop()
-            if node:
-                if color == WHITE:
-                    stack.append((node.right, WHITE))
-                    stack.append((node, GRAY))
-                    stack.append((node.left, WHITE))
-                else:
-                    result.append(node.val)
+            top = stack[-1]
+            if top.left:
+                stack.append(top.left)
+                top.left = None # 设置left已经访问!
+            else:
+                stack.pop()
+                result.append(top.val)
+                if top.right:
+                    stack.append(top.right)
         return result
 ```
 
 #### [144. 二叉树的前序遍历](https://leetcode-cn.com/problems/binary-tree-preorder-traversal/)
-输出顺序：根 -> 左子节点 -> 右子节点
+输出顺序：根 -> 左子节点 -> 右子节点. dfs
 思路：
 - 从根节点开始，若当前节点非空，输出
 - 依次向左，左子为空再向右
@@ -867,19 +938,16 @@ class Solution:
 ```python
 class Solution:
     def preorderTraversal(self, root: TreeNode) -> List[int]:
-        WHITE, GRAY = 0, 1
         stack = []
-        stack.append((root, WHITE))
+        if root: stack.append(root)
         result = []
         while stack:
-            node, color = stack.pop()
-            if node:
-                if color == WHITE:
-                    stack.append((node.right, WHITE))
-                    stack.append((node.left, WHITE))
-                    stack.append((node, GRAY))
-                else:
-                    result.append(node.val)
+            top = stack.pop()
+            result.append(top.val)
+            if top.right:
+                stack.append(top.right)
+            if top.left:
+                stack.append(top.left)
         return result
 ```
 
@@ -899,6 +967,26 @@ class Solution:
         traversal(root, res)
         return res
 ```
+循环，每次添加两个点
+```python
+class Solution:
+    def postorderTraversal(self, root: TreeNode) -> List[int]:
+        result = []
+        if root: stack = [root] * 2
+        else: return result
+
+        while stack:
+            # 每次添加2个点，点2用于循环树, 点1用于result
+            cur_node = stack.pop()
+            if stack and stack[-1] == cur_node:
+                if cur_node.right:
+                    stack += [cur_node.right] * 2
+                if cur_node.left:
+                    stack += [cur_node.left] * 2
+            else:
+                result.append(cur_node.val)
+        return result
+```
 
 ```python
 class Solution:
@@ -919,8 +1007,9 @@ class Solution:
         return result
 ```
 
-#### [102. 二叉树的层次遍历](https://leetcode-cn.com/problems/binary-tree-level-order-traversal/submissions/)
-输出顺序：按层级从左到右
+#### [102. 二叉树的层次遍历](https://leetcode-cn.com/problems/binary-tree-level-order-traversal/)
+输出顺序：按层级从左到右. bfs
+递归
 ```python
 class Solution:
     def levelOrder(self, root: TreeNode) -> List[List[int]]:
@@ -935,26 +1024,79 @@ class Solution:
         traversal(root, level, res)
         return res
 ```
-
+非递归
 ```python
 class Solution:
     def levelOrder(self, root: TreeNode) -> List[List[int]]:
-        WHITE, GRAY = 0, 1
-        stack = []
-        init_level = 0
-        stack.append((root, WHITE, init_level))
+        from collections import deque
+        queue = deque([])
+        if root: queue.appendleft(root)
+        level = 0
         result = []
-        while stack:
-            node, color, level = stack.pop()
-            if node:
-                if color == WHITE:
-                    stack.append((node.right, WHITE, level+1))
-                    stack.append((node.left, WHITE, level+1))
-                    stack.append((node, GRAY, level))
-                else:
-                    if len(result) == level: result.append([])
-                    result[level].append(node.val)
+        while queue:
+            result.append([])
+            # 一次遍历一个level，方便level+1
+            for i in range(len(queue)):
+                top = queue.pop()
+                result[level].append(top.val)
+                if top.left:
+                    queue.appendleft(top.left)
+                if top.right:
+                    queue.appendleft(top.right)
+            level += 1
         return result
+```
+
+#### [994. 腐烂的橘子](https://leetcod322. 零钱兑换e-cn.com/problems/rotting-oranges/)
+坑很多。。
+1. bfs 可以以多个节点为起始，不要被二叉树束缚
+2. 注意已经访问过的节点设置为已访问
+3. 返回level-1
+3. 注意边界条件，左开右闭
+4. 注意检查0， -1 的情况
+```python
+class Solution:
+    def orangesRotting(self, grid: List[List[int]]) -> int:
+        from collections import deque
+
+        grid_h = len(grid)
+        grid_w = len(grid[0]) if grid_h != 0 else 0
+        if grid_h == 0 or grid_w == 0: return 0
+
+        queue = deque()
+        count_fresh = 0
+        for i in range(len(grid)):
+            for j in range(len(grid[0])):
+                if grid[i][j] == 2:
+                    queue.appendleft([i, j])
+                if grid[i][j] == 1:
+                    count_fresh += 1
+        if count_fresh == 0: return 0
+
+        level = 0
+        while queue:
+            for _ in range(len(queue)):
+                i, j = queue.pop()
+                if i+1 < grid_h and grid[i+1][j] == 1:
+                    queue.appendleft([i+1, j])
+                    grid[i+1][j] = 2
+                if i-1 >= 0 and grid[i-1][j] == 1:
+                    queue.appendleft([i-1, j])
+                    grid[i-1][j] = 2
+                if j+1 < grid_w and grid[i][j+1] == 1:
+                    queue.appendleft([i, j+1])
+                    grid[i][j+1] = 2
+                if j-1 >= 0 and grid[i][j-1] == 1:
+                    queue.appendleft([i, j-1])
+                    grid[i][j-1] = 2
+            level += 1
+
+        for i in range(len(grid)):
+            for j in range(len(grid[0])):
+                if grid[i][j] == 1:
+                    return -1
+
+        return level-1
 ```
 
 #### [987. 二叉树的垂序遍历](https://leetcode-cn.com/problems/vertical-order-traversal-of-a-binary-tree/submissions/)
@@ -1116,38 +1258,25 @@ class Solution:
 ```
 
 #### [543. 二叉树的直径](https://leetcode-cn.com/problems/diameter-of-binary-tree)
-注意理解递归，通过后序遍历得到每个当前节点的直径，保存最大直径
+注意理解递归，通过dsf遍历得到每个当前节点的直径，保存最大直径
+重点理解递归的 return, 二叉树遍历的退出,很好的练习
+
 ```python
 class Solution:
-    def __init__(self):
-        self.max_diameter = 0
     def diameterOfBinaryTree(self, root: TreeNode) -> int:
-        # 通过后序遍历获得当前节点左右最深子节点的深度，保存最大的直径长度
+        self.max_diam = 0
         def traversal(node):
-            if node == None: return 0
-            l = traversal(node.left)
-            r = traversal(node.right)
-            self.max_diameter = max(l + r, self.max_diameter)
-            return max(l, r) + 1
-
+            # 递归到底部，返回基础值
+            if node == None:
+                return 0
+            # 从底部归上来，每层如何处理，返回中间值
+            else:
+                L = traversal(node.left)
+                R = traversal(node.right)
+                self.max_diam = max(self.max_diam, L+R)
+                return max(L, R) + 1
         _ = traversal(root)
-        return self.max_diameter
-
-class Solution:
-    def diameterOfBinaryTree(self, root: TreeNode) -> int:
-        def traversal(node, deep):
-            if node != None:
-                l = traversal(node.left, deep+1)
-                r = traversal(node.right, deep+1)
-
-                self.diam = max(self.diam, (l + r - 2 * deep))
-                return max(l,r)
-            else: return deep-1
-
-        self.diam = 0
-        deep = 0
-        _ = traversal(root, deep)
-        return self.diam
+        return self.max_diam
 ```
 
 ### 图
@@ -1603,30 +1732,64 @@ qsort3(nums, 0, len(nums))
 ```
 #### 归并排序
 ```python
-def mergesort(array):
-    def merge(l, r):
-        result = []
-        l_i, r_i = 0, 0
-        while (l_i < len(l) and r_i < len(r)):
-            if l[l_i] < r[r_i]:
-                result.append(l[l_i])
-                l_i += 1
-            else:
-                result.append(r[r_i])
-                r_i += 1
-        if l_i < len(l):
-            result.extend(l[l_i:])
+def merge(l_arr, r_arr):
+    p_l, p_r, merged_arr = 0, 0, []
+    for i in range(len(l_arr)+len(r_arr)):
+        if p_l == len(l_arr):
+            merged_arr.append(r_arr[p_r])
+            p_r += 1
+        elif p_r == len(r_arr):
+            merged_arr.append(l_arr[p_l])
+            p_l += 1
+        elif l_arr[p_l] < r_arr[p_r]:
+            merged_arr.append(l_arr[p_l])
+            p_l += 1
         else:
-            result.extend(r[r_i:])
-        return result
+            merged_arr.append(r_arr[p_r])
+            p_r += 1
+    return merged_arr
 
-    if len(array) <= 1:
-        return array
-    m = len(array) // 2
-    l = mergesort(array[:m])
-    r = mergesort(array[m:])
-    return merge(l, r)
+def mergeSort(arr):
+    if len(arr) == 1:
+        return arr
+    m = len(arr)//2
+    l_arr = mergeSort(arr[:m])
+    r_arr = mergeSort(arr[m:])
+    if l_arr[-1] <= r_arr[0]:
+        return l_arr + r_arr
+    return merge(l_arr, r_arr)
 ```
+
+```python
+def merge(arr, l, m, r):
+            temp = arr[l:r]
+            p_l, p_r = 0, m-l
+            for i in range(l, r):
+                if p_l == m-l:
+                    arr[i] = temp[p_r]
+                    p_r += 1
+                elif p_r == r-l:
+                    arr[i] = temp[p_l]
+                    p_l += 1
+                elif temp[p_l] < temp[p_r]:
+                    arr[i] = temp[p_l]
+                    p_l += 1
+                else:
+                    arr[i] = temp[p_r]
+                    p_r += 1
+
+def mergeSort(arr, l, r):
+    if l < r-1:
+        m = l + (r-l)//2
+        mergeSort(arr, l, m)
+        mergeSort(arr, m, r)
+        if arr[m-1] > arr[m]:
+            merge(arr, l, m, r)
+
+mergeSort(nums, 0, len(nums))
+```
+
+
 #### 冒泡排序
 ```python
 def bubblesort(array):
@@ -1779,7 +1942,7 @@ def radixSort(array):
 def low_bound(arr, l, r, target):
     """查找第一个 >= target的数的index"""
     while (l < r):
-        m = l + (r - l) // 2
+        m = l + (r-l)//2
         if arr[m] < target:
             l = m + 1
         else:
@@ -1789,7 +1952,7 @@ def low_bound(arr, l, r, target):
 def up_bound(arr, l, r, target):
     """查找第一个 > target的数的index"""
     while (l < r):
-        m = l + (r - l) // 2
+        m = l + (r-l)//2
         if arr[m] <= target:
             l = m + 1
         else:
@@ -1845,6 +2008,148 @@ def low_bound(array, l, r, o):
 ```
 
 ## 字符串
+### 前缀树
+[208. 实现 Trie (前缀树)](https://leetcode-cn.com/problems/implement-trie-prefix-tree/)
+key是字符，value是node， class node 基本是个字典，有着判断是否结束的属性
+```python
+class Node:
+    def __init__(self):
+        self.is_end = False
+        self.dict = {}
+
+class Trie:
+    def __init__(self):
+        self.root = Node()
+
+    def insert(self, word: str) -> None:
+        cur_node = self.root
+        for alpha in word:
+            if alpha not in cur_node.dict:
+                cur_node.dict[alpha] = Node()
+            cur_node = cur_node.dict[alpha]
+        cur_node.is_end = True
+
+    def search(self, word: str) -> bool:
+        cur_node = self.root
+        for alpha in word:
+            if alpha not in cur_node.dict:
+                return False
+            cur_node = cur_node.dict[alpha]
+        return cur_node.is_end
+
+
+    def startsWith(self, prefix: str) -> bool:
+        cur_node = self.root
+        for alpha in prefix:
+            if alpha not in cur_node.dict:
+                return False
+            else:
+                cur_node = cur_node.dict[alpha]
+        return True
+```
+#### [211. 添加与搜索单词 - 数据结构设计](https://leetcode-cn.com/problems/add-and-search-word-data-structure-design/)
+注意体会递归的设计, 挺多坑的
+```python
+class Node:
+    def __init__(self):
+        self.dict = {}
+        self.is_end = False
+
+class WordDictionary:
+    def __init__(self):
+        self.root = Node()
+
+    def addWord(self, word: str) -> None:
+        cur_node = self.root
+        for alpha in word:
+            if alpha not in cur_node.dict:
+                cur_node.dict[alpha] = Node()
+            cur_node = cur_node.dict[alpha]
+        if not cur_node.is_end:
+            cur_node.is_end = True
+
+    def search(self, word: str) -> bool:
+        return self.helper(self.root, 0, word)
+
+    def helper(self, cur_node, i, word):
+        if i == len(word):
+            return cur_node.is_end # if no more in word
+        if word[i] != '.':
+            if word[i] not in cur_node.dict:
+                return False
+            return self.helper(cur_node.dict[word[i]], i+1, word)
+
+        else:
+            for key in cur_node.dict:
+                if self.helper(cur_node.dict[key], i+1, word) == True:
+                    return True # be careful, don't return False
+            return False # if no more in trie
+```
+
+#### [212. 单词搜索 II](https://leetcode-cn.com/problems/word-search-ii/)
+这道题整体思路是 1. 构建words的字典树 trie  2. 在board上深度优先遍历
+但具体实现上，很多坑，在这里总结一下,好好体会递归
+1. trie 中 在board上找到的单词结尾要设成已访问，保证结果无重复
+2. 在递归进入board下一个节点的前，要把当前节点设成已访问，不然未来可能重复访问该节点
+3. 基于当前节点的深度优先搜索结束后，恢复board当前节点的值，便于之后单词的搜索
+
+```python
+class Node:
+    def __init__(self):
+        self.dict = {}
+        self.is_end = False
+
+class Trie:
+    def __init__(self):
+        self.root = Node()
+
+    def insert(self, word):
+        cur_node = self.root
+        for alpha in word:
+            if alpha not in cur_node.dict:
+                cur_node.dict[alpha] = Node()
+            cur_node = cur_node.dict[alpha]
+        cur_node.is_end = True
+
+
+class Solution:
+    def findWords(self, board: List[List[str]], words: List[str]) -> List[str]:
+        self.h = len(board)
+        self.w = len(board[0])
+        self.res = []
+        trie = Trie()
+        for word in words:
+            trie.insert(word)
+        for i in range(len(board)):
+            for j in range(len(board[0])):
+                cur_node = trie.root
+                self.dfs(i, j, cur_node, board, "")
+        return self.res
+
+    def dfs(self, i, j, cur_node, board, word=""):
+        char = board[i][j]
+        if char in cur_node.dict:
+            word = word + char
+            if cur_node.dict[char].is_end:
+                self.res.append(word)
+                cur_node.dict[char].is_end = False # 保证无重复
+
+            cur_node = cur_node.dict[char]
+
+            board[i][j] = None # 关键！每个单词，不走回头路
+
+            if i+1 < self.h and board[i+1][j]!=None:
+                self.dfs(i+1, j, cur_node, board, word)
+            if i > 0 and board[i-1][j]!=None:
+                self.dfs(i-1, j, cur_node, board, word)
+            if j+1 < self.w and board[i][j+1]!=None:
+                self.dfs(i, j+1, cur_node, board, word)
+            if j > 0 and board[i][j-1]!=None:
+                self.dfs(i, j-1, cur_node, board, word)
+
+            board[i][j] = char # 关键！在内存中恢复board
+```
+
 #### [443. 压缩字符串](https://leetcode-cn.com/problems/string-compression/)
 ```python
 class Solution:
@@ -1931,6 +2236,7 @@ class Solution:
 先考虑双指针构成的list窗口能不能求解，再考虑把窗口化为字典
 #### [76. 最小覆盖子串](https://leetcode-cn.com/problems/minimum-window-substring)
 双指针，滑动窗口求解
+TODO： 整理一下
 ```python
 class Solution:
     def minWindow(self, s: str, t: str) -> str:
@@ -2005,7 +2311,60 @@ class Solution:
                     p1 += 1
 
         return result
+
+class Solution:
+    def minWindow(self, s: str, t: str) -> str:
+        from collections import Counter
+        dict_t = Counter(t)
+        require = len(dict_t)
+        contained = 0
+        l, r = 0, 0
+        min_len = len(s)
+        start, end = 0, 0
+
+        while (r < len(s)):
+            if s[r] in dict_t:
+                dict_t[s[r]] -= 1
+                if dict_t[s[r]] == 0:
+                    contained += 1
+            r += 1
+            while (l<r and contained == require):
+                if r-l <= min_len:
+                    min_len = r-l
+                    start = l
+                    end = r
+                if s[l] in dict_t:
+                    dict_t[s[l]] += 1
+                    if dict_t[s[l]] > 0:
+                        contained -= 1
+                l += 1
+
+        if start == 0 and end == 0: return ""
+        return s[start:end]
 ```
+
+#### [30. 串联所有单词的子串](https://leetcode-cn.com/problems/substring-with-concatenation-of-all-words/)
+words 构造一个字典， 遍历s，以word的长度，构造list进而构造字典，比较与words_dict是否相等
+```python
+class Solution:
+    def findSubstring(self, s: str, words: List[str]) -> List[int]:
+        from collections import Counter
+        if len(words) == 0: return []
+        word_len = len(words[0])
+        words_len = len(words) * word_len
+        words_dict = Counter(words)
+        l, r = 0, words_len
+        start = 0
+        result = []
+        while (start+words_len <= len(s)):
+            s_subs = [s[start+i*word_len:start+(i+1)*word_len] for i in range(len(words))]
+            s_dict = Counter(s_subs)
+            if s_dict == words_dict:
+                result.append(start)
+            start += 1
+        return result
+```
+
 #### [438. 找到字符串中所有字母异位词](https://leetcode-cn.com/problems/find-all-anagrams-in-a-string)、
 方法一，通过双重for找到第一个满足的后，往后依次遍历。最直观但是超时
 ```python
@@ -2107,19 +2466,38 @@ class Solution:
         return result
 ```
 #### [3. 无重复字符的最长子串](https://leetcode-cn.com/problems/longest-substring-without-repeating-characters)
+滑动窗口双指针，r向前，遇到重复字符后，l向前，过程中记录最大长度
 ```python
 class Solution:
     def lengthOfLongestSubstring(self, s: str) -> int:
-        p1, p2 = 0, 0
-        max_len = 0
-        while (p2 < len(s)):
-            if s[p2] not in s[p1:p2]:
-                p2 += 1
-                max_len = max(max_len, p2-p1)
+        l, r, max_len = 0, 0, 0
+        while (r < len(s)):
+            if s[r] in s[l:r]:
+                l += 1
             else:
-                while (s[p2] in s[p1:p2]):
-                    p1 += 1
+                max_len = max(max_len, r-l+1)
+                r += 1
         return max_len
+```
+
+#### [面试题57 - II. 和为s的连续正数序列](https://leetcode-cn.com/problems/he-wei-sde-lian-xu-zheng-shu-xu-lie-lcof/)
+这题也能滑动窗口，构造1-target的list，sum[l:r]<target, r向前走，sum[l:r]>target, l向前走， sum[l:r]>target，记录，l向前走
+```python
+class Solution:
+    def findContinuousSequence(self, target: int) -> List[List[int]]:
+        """滑动窗口"""
+        target_list = [i+1 for i in range(target)]
+        l, r = 0, 1
+        result = []
+        while (r < len(target_list)):
+            if sum(target_list[l:r]) < target:
+                r += 1
+            elif sum(target_list[l:r]) > target:
+                l += 1
+            else:
+                result.append([i for i in target_list[l:r]])
+                l += 1 # important
+        return result
 ```
 
 ## 递归算法复杂度分析 -- 主定理

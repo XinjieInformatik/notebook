@@ -29,7 +29,8 @@ return -> list(tuple)
 impoort collections
 dict_ = collections.Counter(str or list)
 print(dict_) # 默认从大到小显示，但是遍历时，按初始顺序！
-dict_.most_common(3) # 前3大, list(tuple)
+dict_.most_common(3) # 前3大, list(tuple),(key,times)
+max(dict_,key=dict_.get) # 最大times对应的key
 
 ```
 
