@@ -1815,3 +1815,159 @@ class Solution:
         helper(count, [])
         return result
 ```
+
+#### [60. 第k个排列](https://leetcode-cn.com/problems/permutation-sequence/)
+```python
+class Solution:
+    def getPermutation(self, n: int, k: int) -> str:
+        """剪枝  和  continue 的运用，好好体会！ 用剪枝退出递归！"""
+        def get_factorial(n):
+            if n<2: return 1
+            result = 1
+            for i in range(2,n+1):
+                result *= i
+            return result
+
+        nums = ""
+        for i in range(n):
+            nums += str(i+1)
+
+        self.result = ""
+        self.find = False
+        def helper(res, k):
+            if len(res) == n:
+                self.result = res
+                self.find = True
+                return
+            value = get_factorial(n-len(res)-1)
+
+            for i, num in enumerate(nums):
+                if num in res: continue
+                if k > value:
+                    k -= value
+                    continue
+                if not self.find:
+                    helper(res+str(num), k)
+
+        helper("", k)
+        return self.result
+```
+
+#### [139. 单词拆分](https://leetcode-cn.com/problems/word-break/)
+```python
+class Solution:
+    def wordBreak(self, s: str, wordDict: List[str]) -> bool:
+        """ 1. 先把总体思路写出来，有时候多余的剪枝，反而导致程序更慢
+        2. set, dict 的查询比 list 快
+        3. 从上到下的回溯，把尝试的结果记录下来，便于后面提前退出递归 """
+        # max_len = 0
+        # for item in wordDict:
+        #     max_len = max(max_len, len(item))
+        memo = {}
+        wordDict = set(wordDict)
+        def helper(start_idx,s):
+            if start_idx == len(s): return True
+            if start_idx in memo: return memo[start_idx]
+            for i in range(start_idx+1, len(s)+1):
+                # if i-start_idx > max_len: return False
+                if s[start_idx:i] in wordDict and helper(i,s):
+                    memo[start_idx] = True
+                    return True
+            memo[start_idx] = False
+            return False
+
+        return helper(0, s)
+```
+
+#### [140. 单词拆分 II](https://leetcode-cn.com/problems/word-break-ii/)
+https://leetcode-cn.com/problems/word-break-ii/solution/pythonji-yi-hua-dfsjian-zhi-90-by-mai-mai-mai-mai-/ TODO: 再做
+
+#### [365. 水壶问题](https://leetcode-cn.com/problems/water-and-jug-problem/)
+```python
+class Solution:
+  def canMeasureWater(self, x: int, y: int, z: int) -> bool:
+      """超时"""
+      if z > x+y: return False
+      if z == 0: return True
+
+      flag = True
+      old_waters = [x]
+      new_waters = [y]
+      while flag:
+          waters = old_waters + new_waters
+          newnew_waters = []
+          for old_water in old_waters:
+              for new_water in new_waters:
+                  newnew_water = abs(old_water - new_water)
+                  if newnew_water == z: return True
+                  if newnew_water + old_water == z: return True
+                  if newnew_water not in waters:
+                      newnew_waters.append(newnew_water)
+          old_waters = waters
+          new_waters = newnew_waters
+          if len(newnew_waters) == 0: flag = False
+
+      return False
+```
+```python
+class Solution:
+    def canMeasureWater(self, x: int, y: int, z: int) -> bool:
+        """搜索问题用bfs, dfs.
+        枚举当前状态下的所有可能.
+        1. 装满任意一个水壶
+        2. 清空任意一个水壶
+        3. 从一个水壶向另外一个水壶倒水，直到装满或者倒空"""
+
+        stack = []
+        stack.append([0, 0])
+        seen = set()
+        while stack:
+            x_remain, y_remain = stack.pop()
+            if (x_remain, y_remain) in seen:
+                continue
+            if x_remain == z or y_remain == z or x_remain+y_remain == z:
+                return True
+            seen.add((x_remain, y_remain))
+            stack.append([x, y_remain])
+            stack.append([x_remain, y])
+            stack.append([0, y_remain])
+            stack.append([x_remain, 0])
+            water_transfer = min(x_remain, y-y_remain) # x -> y
+            stack.append([x_remain-water_transfer, y_remain+water_transfer])
+            water_transfer = min(y_remain, x-x_remain) # y -> x
+            stack.append([x_remain+water_transfer, y_remain-water_transfer])
+
+        return False
+```
+```python
+class Solution:
+    def canMeasureWater(self, x: int, y: int, z: int) -> bool:
+        """搜索问题用bfs, dfs. 最短路经，bfs更快.
+        枚举当前状态下的所有可能.
+        1. 装满任意一个水壶
+        2. 清空任意一个水壶
+        3. 从一个水壶向另外一个水壶倒水，直到装满或者倒空"""
+
+        from collections import deque
+        queue = deque()
+        queue.appendleft([0, 0])
+        seen = set()
+        while queue:
+            for _ in range(len(queue)):
+                x_remain, y_remain = queue.pop()
+                if (x_remain, y_remain) in seen:
+                    continue
+                if x_remain == z or y_remain == z or x_remain+y_remain == z:
+                    return True
+                seen.add((x_remain, y_remain))
+                queue.appendleft([x, y_remain])
+                queue.appendleft([x_remain, y])
+                queue.appendleft([0, y_remain])
+                queue.appendleft([x_remain, 0])
+                water_transfer = min(x_remain, y-y_remain) # x -> y
+                queue.appendleft([x_remain-water_transfer, y_remain+water_transfer])
+                water_transfer = min(y_remain, x-x_remain) # y -> x
+                queue.appendleft([x_remain+water_transfer, y_remain-water_transfer])
+
+        return False
+```

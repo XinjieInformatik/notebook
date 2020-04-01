@@ -134,10 +134,9 @@ class Solution:
             arr[new_index] = new_val # 这里采用的是类似插入排序的赋值交换
 
         def sift_down(arr, root, k):
-            """ O(logk). 右节点index 2*root+1，左节点 2*root+1, 父节点 (child-1)//2"""
+            """ O(logk). 左节点index 2*root+1, 右节点 2*root+2, 父节点 (child-1)//2"""
             root_val = arr[root]
             while (2*root+1 < k):
-                # 右节点 2*root+1，左节点 2*root+1, 父节点 (child-1)//2
                 child = 2 * root + 1
                 # 小顶锥 用 >，大顶锥 用 <
                 if child+1 < k and arr[child][1] > arr[child+1][1]:
@@ -163,6 +162,43 @@ class Solution:
                 sift_down(min_heap, 0, k)
 
         return [item[0] for item in min_heap]
+```
+
+#### [面试题40. 最小的k个数](https://leetcode-cn.com/problems/zui-xiao-de-kge-shu-lcof/)
+```python
+class Solution:
+    def getLeastNumbers(self, arr: List[int], k: int) -> List[int]:
+        def sift_up(arr, k):
+            new_index, new_val = k-1, arr[k-1]
+            while (new_index>0 and arr[(new_index-1)//2]<new_val):
+                arr[new_index] = arr[(new_index-1)//2]
+                new_index = (new_index-1)//2
+            arr[new_index] = new_val
+
+        def sift_down(arr, root, k):
+            root_val = arr[root]
+            while (2*root+1 < k):
+                child = 2*root+1
+                if child+1 < k and arr[child] < arr[child+1]:
+                    child += 1
+                if root_val < arr[child]:
+                    arr[root] = arr[child]
+                    root = child
+                else: break
+            arr[root] = root_val
+
+        if k == 0: return []
+        max_heap = []
+        for i in range(k):
+            max_heap.append(arr[i])
+            sift_up(max_heap, i+1)
+
+        for item in arr[k:]:
+            if item < max_heap[0]:
+                max_heap[0] = item
+                sift_down(max_heap, 0, k)
+
+        return max_heap
 ```
 
 #### [295. 数据流的中位数](https://leetcode-cn.com/problems/find-median-from-data-stream/)
@@ -380,6 +416,26 @@ class Solution:
             f0 = f1
             f1 = f2
         return f2
+```
+
+```python
+class Solution:
+    def climbStairs(self, n: int) -> int:
+        memo = {}
+        # import functools
+        # @functools.lru_cache(None)
+        def helper(step):
+            if step == 0:
+                return 1
+            if step in memo:
+                return memo[step]
+            res = 0
+            for i in range(1,3,1):
+                if step-i < 0: continue
+                res += helper(step-i)
+            memo[step] = res
+            return res
+        return helper(n)
 ```
 
 #### [198. 打家劫舍](https://leetcode-cn.com/problems/house-robber)
@@ -1418,6 +1474,23 @@ class Solution:
         if split_list:
             return len(split_list[-1])
         else: return 0
+```
+#### [1111. 有效括号的嵌套深度](https://leetcode-cn.com/problems/maximum-nesting-depth-of-two-valid-parentheses-strings/)
+脑经急转弯
+```python
+class Solution:
+    def maxDepthAfterSplit(self, seq: str) -> List[int]:
+        ans = []
+        depth = 0
+        for item in seq:
+            if item == "(":
+                depth += 1
+                ans.append(depth % 2)
+            if item == ")":
+                ans.append(depth % 2)
+                depth -= 1
+
+        return ans
 ```
 #### [67. 二进制求和](https://leetcode-cn.com/problems/add-binary)
 ```python
