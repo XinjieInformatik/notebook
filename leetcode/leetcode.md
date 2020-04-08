@@ -88,6 +88,50 @@ class Solution:
 
         return result
 ```
+#### [42. 接雨水](https://leetcode-cn.com/problems/trapping-rain-water/)
+超时
+```python
+class Solution:
+    def trap(self, height: List[int]) -> int:
+        from collections import deque
+        if len(height) == 0: return 0
+        max_h = max(height)
+        water_count = 0
+        for level_h in range(1,max_h+1):
+            stack = deque([])
+            for index in range(len(height)):
+                if len(stack)==0 and height[index] >= level_h:
+                    stack.append(index)
+                elif len(stack)==1 and height[index] >= level_h:
+                    if index-stack[-1] > 1:
+                        stack.append(index)
+                    else:
+                        stack[0] = index
+                if len(stack)==2:
+                    left_index = stack.popleft()
+                    right_index = stack[0]
+                    water_count += (right_index - left_index - 1)
+        return water_count
+```
+```python
+class Solution:
+    def trap(self, height: List[int]) -> int:
+      """维护一个高度单调递减的栈"""
+        if len(height) == 0: return 0
+        water_count = 0
+        stack = []
+        for index in range(len(height)):
+            cur_height = height[index]
+            # 维护一个高度单调递减的栈
+            while stack and cur_height > height[stack[-1]]:
+                top = stack.pop()
+                if len(stack)==0: break
+                h = min(height[stack[-1]], cur_height) - height[top]
+                dist = index - stack[-1] - 1
+                water_count += dist * h
+            stack.append(index)
+        return water_count
+```
 
 ## 堆
 #### [347. 前 K 个高频元素](https://leetcode-cn.com/problems/top-k-frequent-elements)
@@ -421,20 +465,22 @@ class Solution:
 ```python
 class Solution:
     def climbStairs(self, n: int) -> int:
-        memo = {}
-        # import functools
-        # @functools.lru_cache(None)
+        """ functools.lru_cache 用于回溯时，
+        将已访问节点的值放入memo避免重复计算,
+        重复节点不会再访问"""
+        import functools
+        @functools.lru_cache(None)
         def helper(step):
+            print(step)
             if step == 0:
                 return 1
-            if step in memo:
-                return memo[step]
+            if step < 0:
+                return 0
             res = 0
-            for i in range(1,3,1):
-                if step-i < 0: continue
+            for i in range(1,3):
                 res += helper(step-i)
-            memo[step] = res
             return res
+
         return helper(n)
 ```
 
@@ -565,6 +611,23 @@ class Solution:
                     dp.append(i+1)
         if dp[-1] == len(s): return True
         else: return False
+```
+```python
+class Solution:
+    def wordBreak(self, s: str, wordDict: List[str]) -> bool:
+        n = len(s)
+        wordDict = set(wordDict)
+        import functools
+        @functools.lru_cache(None)
+        def helper(start):
+            if start == n:
+                return True
+            for i in range(start+1,n+1):
+                if s[start:i] in wordDict and helper(i):
+                    return True
+            return False
+
+        return helper(0)
 ```
 
 

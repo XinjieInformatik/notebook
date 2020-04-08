@@ -129,6 +129,37 @@ class Solution:
                 return i
         return n
 ```
+##### [面试题 01.07. 旋转矩阵](https://leetcode-cn.com/problems/rotate-matrix-lcci/)
+```python
+class Solution:
+    def rotate(self, matrix: List[List[int]]) -> None:
+        """
+        Do not return anything, modify matrix in-place instead.
+        """
+        # import copy
+        # matrix_copy = copy.deepcopy(matrix)
+        # rows = len(matrix)
+        # if rows == 0: return matrix
+        # cols = len(matrix[0])
+        # i, j = 0, 0
+        # for col in range(cols):
+        #     for row in range(rows-1,-1,-1):
+        #         matrix[i%rows][j%cols] = matrix_copy[row][col]
+        #         j += 1
+        #     i += 1
+
+        # 先转置（以对称轴旋转）再以中轴旋转
+        rows = len(matrix)
+        if rows == 0: return matrix
+        cols = len(matrix[0])
+        for row in range(rows):
+            for col in range(row+1,cols):
+                matrix[row][col], matrix[col][row] = matrix[col][row], matrix[row][col]
+        for row in range(rows):
+            for col in range(cols//2):
+                matrix[row][col], matrix[row][cols-1-col] = matrix[row][cols-1-col], matrix[row][col]
+```
+
 ##### [299. 猜数字游戏](https://leetcode-cn.com/problems/bulls-and-cows/)
 数据结构 Counter &, |, (a&b).values()
 ```python
@@ -1878,6 +1909,23 @@ class Solution:
 
         return helper(0, s)
 ```
+```python
+class Solution:
+    def wordBreak(self, s: str, wordDict: List[str]) -> bool:
+        n = len(s)
+        wordDict = set(wordDict)
+        import functools
+        @functools.lru_cache(None)
+        def helper(start):
+            if start == n:
+                return True
+            for i in range(start+1,n+1):
+                if s[start:i] in wordDict and helper(i):
+                    return True
+            return False
+
+        return helper(0)
+```
 
 #### [140. 单词拆分 II](https://leetcode-cn.com/problems/word-break-ii/)
 https://leetcode-cn.com/problems/word-break-ii/solution/pythonji-yi-hua-dfsjian-zhi-90-by-mai-mai-mai-mai-/ TODO: 再做
@@ -1968,6 +2016,509 @@ class Solution:
                 queue.appendleft([x_remain-water_transfer, y_remain+water_transfer])
                 water_transfer = min(y_remain, x-x_remain) # y -> x
                 queue.appendleft([x_remain+water_transfer, y_remain-water_transfer])
+
+        return False
+```
+
+#### [200. 岛屿数量](https://leetcode-cn.com/problems/number-of-islands/)
+```python
+class Solution:
+    def numIslands(self, grid: List[List[str]]) -> int:
+        height = len(grid)
+        if height == 0: return 0
+        width = len(grid[0])
+        visited = set()
+        directions = [[1,0],[-1,0],[0,1],[0,-1]]
+        def bfs(i,j):
+            from collections import deque
+
+            queue = deque([(i,j)])
+            visited.add((i,j))
+
+            while queue:
+                top = queue.pop()
+                for direction in directions:
+                    row = top[0]+direction[0]
+                    col = top[1]+direction[1]
+                    if row < height and row >= 0 and col < width and col >= 0:
+                        if (row,col) not in visited and grid[row][col] == "1":
+                            queue.appendleft((row,col))
+                            visited.add((row,col))
+
+        count = 0
+        for i in range(height):
+            for j in range(width):
+                if grid[i][j] == "1" and (i,j) not in visited:
+                    count += 1
+                    bfs(i,j)
+
+        return count
+```
+
+#### [130. 被围绕的区域](https://leetcode-cn.com/problems/surrounded-regions/)
+TODO: 并查集
+```python
+class Solution:
+    def solve(self, board: List[List[str]]) -> None:
+        """
+        Do not return anything, modify board in-place instead.
+        """
+        height = len(board)
+        if height==0: return board
+        width = len(board[0])
+        directions = [(1,0),(-1,0),(0,1),(0,-1)]
+        visited = set()
+        def dfs(i,j):
+            if i == 0 or i == height-1 or j == 0 or j == width-1:
+                return False, None
+            if (i,j) in visited:
+                return False, None
+            queue = [(i,j)]
+            visited.add((i,j))
+            result = [(i,j)]
+            flag = True
+            while queue:
+                top = queue.pop()
+                for direction in directions:
+                    row = top[0] + direction[0]
+                    col = top[1] + direction[1]
+                    if row<0 or row>=height or col<0 or col>=width:
+                        continue
+                    if (row,col) not in visited and board[row][col] == "O":
+                        if row == 0 or row == height-1 or col == 0 or col == width-1:
+                            flag = False
+                        queue.append((row,col))
+                        visited.add((row,col))
+                        result.append((row,col))
+            return flag, result
+
+        for i in range(height):
+            for j in range(width):
+                if board[i][j] == "O":
+                    flag, result = dfs(i,j)
+                    if flag:
+                        for item in result:
+                            row, col = item
+                            board[row][col] = "X"
+```
+
+#### [127. 单词接龙](https://leetcode-cn.com/problems/word-ladder/)
+超时
+```python
+class Solution:
+    def ladderLength(self, beginWord: str, endWord: str, wordList: List[str]) -> int:
+        def check(s1,s2):
+            count = 0
+            n = len(s1)
+            for i in range(n):
+                if s1[i] == s2[i]:
+                    count += 1
+            return True if count == n-1 else False
+
+        if endWord not in wordList: return 0
+        from collections import deque
+        queue = deque([beginWord])
+        visited = set([beginWord])
+        level = 0
+        while queue:
+            level += 1
+            for _ in range(len(queue)):
+                top = queue.pop()
+                if top == endWord: return level
+                for item in wordList:
+                    if item not in visited and check(item, top):
+                        queue.appendleft(item)
+                        visited.add(item)
+        return 0
+```
+双向BFS，可运行时间还是太慢，勉强通过
+```python
+class Solution:
+    def ladderLength(self, beginWord: str, endWord: str, wordList: List[str]) -> int:
+        def check(s1,s2):
+            count = 0
+            n = len(s1)
+            for i in range(n):
+                if s1[i] == s2[i]:
+                    count += 1
+            return True if count == n-1 else False
+
+        def bfs(queue, visited, visited_other):
+            for _ in range(len(queue)):
+                top = queue.pop()
+                if top in visited_other: return True
+                for item in wordList:
+                    if item not in visited and check(item, top):
+                        queue.appendleft(item)
+                        visited.add(item)
+
+        if endWord not in wordList: return 0
+        from collections import deque
+        queue_begin = deque([beginWord])
+        visited_begin = set([beginWord])
+        queue_end = deque([endWord])
+        visited_end = set([endWord])
+
+        level = 0
+        while queue_begin and queue_end:
+            if bfs(queue_begin, visited_begin, visited_end):
+                return level*2+1
+            if bfs(queue_end, visited_end, visited_begin):
+                return level*2+2
+            level += 1
+
+        return 0
+```
+```python
+from collections import defaultdict
+class Solution(object):
+    def ladderLength(self, beginWord, endWord, wordList):
+        if endWord not in wordList or not endWord or not beginWord or not wordList:
+            return 0
+
+        L = len(beginWord)
+
+        # 通过defaultdict(list)构造邻接矩阵，缩小遍历范围，好方法
+        all_combo_dict = defaultdict(list)
+        for word in wordList:
+            for i in range(L):
+                all_combo_dict[word[:i] + "*" + word[i+1:]].append(word)
+
+        queue = [(beginWord, 1)]
+        visited = {beginWord: True}
+        while queue:
+            current_word, level = queue.pop(0)
+            for i in range(L):
+                intermediate_word = current_word[:i] + "*" + current_word[i+1:]
+
+                for word in all_combo_dict[intermediate_word]:
+                    if word == endWord:
+                        return level + 1
+                    if word not in visited:
+                        visited[word] = True
+                        queue.append((word, level + 1))
+                all_combo_dict[intermediate_word] = []
+
+        return 0
+```
+#### [51. N皇后](https://leetcode-cn.com/problems/n-queens/)
+```python
+class Solution:
+    def solveNQueens(self, n: int) -> List[List[str]]:
+        results = []
+        def result_to_board(result):
+            board = [["."]*n for _ in range(n)]
+            board_ = [""] * n
+            for row, col in result:
+                board[row-1][col-1] = "Q"
+            for i in range(n):
+                board_[i] = "".join(board[i])
+            return board_
+
+        def check(row, col, result):
+            for exit_row, exit_col in result:
+                if row == exit_row or col == exit_col:
+                    return False
+                if abs(row-exit_row) == abs(col-exit_col):
+                    return False
+            return True
+
+        def helper(row, result):
+            if row == n+1:
+                results.append(result_to_board(result))
+                return
+            for col in range(1, n+1):
+                if check(row, col, result):
+                    result.append((row, col))
+                    helper(row+1, result)
+                    result.pop()
+
+        helper(1, [])
+        return results
+```
+
+#### [52. N皇后 II](https://leetcode-cn.com/problems/n-queens-ii/)
+TODO: 理解位运算
+```python
+class Solution:
+    def totalNQueens(self, n):
+        def backtrack(row = 0, hills = 0, next_row = 0, dales = 0, count = 0):
+            """
+            :type row: 当前放置皇后的行号
+            :type hills: 主对角线占据情况 [1 = 被占据，0 = 未被占据]
+            :type next_row: 下一行被占据的情况 [1 = 被占据，0 = 未被占据]
+            :type dales: 次对角线占据情况 [1 = 被占据，0 = 未被占据]
+            :rtype: 所有可行解的个数
+            """
+            if row == n:  # 如果已经放置了 n 个皇后
+                count += 1  # 累加可行解
+            else:
+                # 当前行可用的列
+                # ! 表示 0 和 1 的含义对于变量 hills, next_row and dales的含义是相反的
+                # [1 = 未被占据，0 = 被占据]
+                free_columns = columns & ~(hills | next_row | dales)
+
+                # 找到可以放置下一个皇后的列
+                while free_columns:
+                    # free_columns 的第一个为 '1' 的位
+                    # 在该列我们放置当前皇后
+                    curr_column = - free_columns & free_columns
+
+                    # 放置皇后
+                    # 并且排除对应的列
+                    free_columns ^= curr_column
+
+                    count = backtrack(row + 1,
+                                      (hills | curr_column) << 1,
+                                      next_row | curr_column,
+                                      (dales | curr_column) >> 1,
+                                      count)
+            return count
+
+        # 棋盘所有的列都可放置，
+        # 即，按位表示为 n 个 '1'
+        # bin(cols) = 0b1111 (n = 4), bin(cols) = 0b111 (n = 3)
+        # [1 = 可放置]
+        columns = (1 << n) - 1
+        return backtrack()
+```
+#### [127. 单词接龙](https://leetcode-cn.com/problems/word-ladder/)
+```python
+class Solution(object):
+    def ladderLength(self, beginWord, endWord, wordList):
+        from collections import defaultdict, deque
+        word_adjacency = defaultdict(list)
+        word_len = len(beginWord)
+        for word in wordList:
+            for i in range(word_len):
+                mask = word[:i] + "*" + word[i+1:]
+                word_adjacency[mask].append(word)
+
+        queue = deque([(beginWord, 1)])
+        visited = set([beginWord])
+
+        while queue:
+            # print(queue)
+            top, level = queue.pop()
+            for i in range(word_len):
+                mask = top[:i] + "*" + top[i+1:]
+                for word in word_adjacency[mask]:
+                    if word == endWord: return level+1
+                    if word not in visited:
+                        queue.appendleft((word, level+1))
+                        visited.add(word)
+
+        return 0
+```
+[126. 单词接龙 II](https://leetcode-cn.com/problems/word-ladder-ii/)
+TODO: 再做一遍
+```python
+class Solution:
+    def findLadders(self, beginWord: str, endWord: str, wordList: List[str]) -> List[List[str]]:
+        if endWord not in wordList: return []
+        from collections import deque, defaultdict
+        n = len(beginWord)
+        # construct adjacency matrix
+        adjacency = defaultdict(list)
+        for word in wordList:
+            for i in range(n):
+                mask = word[:i] + "*" + word[i+1:]
+                adjacency[mask].append(word)
+
+        level = 1
+        queue = deque([(beginWord, level)])
+        visited = {beginWord:level}
+        level_words = defaultdict(list)
+        endlevel = None
+
+        # bfs
+        while queue:
+            for _ in range(len(queue)):
+                top, level = queue.pop()
+                if endlevel and level >= endlevel: continue
+                for i in range(n):
+                    mask = top[:i] + "*" + top[i+1:]
+                    words = adjacency[mask]
+                    for word in words:
+                        if word == endWord:
+                            endlevel = level+1
+                        if word not in visited:
+                            queue.appendleft((word, level+1))
+                            visited[word] = level+1
+                            # level_words[level].append(word)
+                        if visited[word] == level+1:
+                            level_words[top].append(word) # TODO: check
+
+
+        # dfs
+        # print(level_words)
+        results = []
+        def dfs(top, result):
+            if result and result[-1] == endWord:
+                results.append(result)
+                return
+            for word in level_words[top]:
+                dfs(word, result+[word])
+        dfs(beginWord, [beginWord])
+        return results
+```
+
+### Dynamic Programming
+#### [70. 爬楼梯](https://leetcode-cn.com/problems/climbing-stairs/)
+```python
+class Solution:
+    def climbStairs(self, n: int) -> int:
+        """ functools.lru_cache 用于回溯时，
+        将已访问节点的值放入memo避免重复计算,
+        重复节点不会再访问"""
+        import functools
+        @functools.lru_cache(None)
+        def helper(step):
+            print(step)
+            if step == 0:
+                return 1
+            if step < 0:
+                return 0
+            res = 0
+            for i in range(1,3):
+                res += helper(step-i)
+            return res
+
+        return helper(n)
+```
+
+#### [62. 不同路径](https://leetcode-cn.com/problems/unique-paths/)
+```python
+class Solution:
+    def uniquePaths(self, m: int, n: int) -> int:
+        directions = [(1,0), (0,1)]
+        import functools
+        @functools.lru_cache(None)
+        def helper(row, col):
+            if row == n and col == m:
+                return 1
+            res = 0
+            for direction in directions:
+                i, j = direction
+                if row+i <= n and col+j <= m:
+                    res += helper(row+i, col+j)
+            return res
+
+        return helper(1,1)
+```
+
+#### [63. 不同路径 II](https://leetcode-cn.com/problems/unique-paths-ii/)
+```python
+class Solution:
+    def uniquePathsWithObstacles(self, obstacleGrid: List[List[int]]) -> int:
+        n = len(obstacleGrid)
+        if n < 0: return 0
+        m = len(obstacleGrid[0])
+        directions = [(1,0),(0,1)]
+        import functools
+        @functools.lru_cache(None)
+        def helper(row_, col_):
+            if row_>=n or col_>=m or obstacleGrid[row_][col_] == 1:
+                return 0
+            if row_ == n-1 and col_ == m-1:
+                return 1
+            res = 0
+            for direction in directions:
+                row, col = row_+direction[0], col_+direction[1]
+                res += helper(row, col)
+            return res # don't forget
+        return helper(0,0)
+```
+
+#### [120. 三角形最小路径和](https://leetcode-cn.com/problems/triangle/)
+遍历所有节点，更新全局变量self.min_path
+```python
+class Solution:
+    def minimumTotal(self, triangle: List[List[int]]) -> int:
+        results = []
+        total_level = len(triangle)
+        self.min_path = float("inf")
+
+        # import functools
+        # @functools.lru_cache(None)
+        def helper(level, index, count):
+            if level == total_level:
+                self.min_path = min(count, self.min_path)
+                return
+            # print(triangle[level][index])
+            helper(level+1, index+1, count+triangle[level][index])
+            helper(level+1, index, count+triangle[level][index])
+
+        helper(0,0,0)
+        return self.min_path
+```
+从上至下的动态规划，利用functools.lru_cache避免重复遍历
+```python
+class Solution:
+    def minimumTotal(self, triangle: List[List[int]]) -> int:
+        results = []
+        total_level = len(triangle)
+        import functools
+        @functools.lru_cache(None)
+        def helper(level, index):
+            if level == total_level:
+                return 0
+            print(triangle[level][index])
+            left  = helper(level+1, index) + triangle[level][index]
+            right = helper(level+1, index+1) + triangle[level][index]
+            return min(left, right)
+
+        return helper(0,0)
+```
+利用memo记录可重复利用的结果，不再对已有结果的重复遍历
+相比与递归与剪枝，
+动态规划是一个从下到上，记录下节点的结果，避免从上节点向下重复遍历，实现剪枝
+```python
+class Solution:
+    def minimumTotal(self, triangle: List[List[int]]) -> int:
+        results = []
+        total_level = len(triangle)
+        """lru_cache 节省的遍历在于共享节点"""
+        memo = {}
+        def helper(level, index):
+            if level == total_level:
+                return 0
+            # print(triangle[level][index])
+            if (level+1,index) in memo:
+                left = memo[(level+1,index)]
+            else:
+                left  = helper(level+1, index) + triangle[level][index]
+                memo[(level+1,index)] = left
+            if (level+1,index+1) in memo:
+                right = memo[(level+1,index+1)]
+            else:
+                right = helper(level+1, index+1) + triangle[level][index]
+                memo[(level+1,index+1)] = right
+            return min(left, right)
+
+        return helper(0,0)
+```
+
+#### [279. 完全平方数](https://leetcode-cn.com/problems/perfect-squares/)
+```python
+class Solution:
+    def numSquares(self, n: int) -> int:
+        from collections import deque
+        queue = deque([n])
+        visited = set([n])
+        level = 0
+        while queue:
+            level += 1
+            for _ in range(len(queue)):
+                top = queue.pop()
+                number = int(top ** 0.5)
+                for item in range(number, 0, -1):
+                    res = top - item**2
+                    # 马上检查return，会比在top处快很多！
+                    if res == 0: return level
+                    if res not in visited:
+                        queue.appendleft(res)
+                        visited.add(res)
 
         return False
 ```
