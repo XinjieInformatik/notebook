@@ -207,6 +207,23 @@ class Solution:
 
         return [item[0] for item in min_heap]
 ```
+```python
+heapq 构造小顶堆， 若从大到小输出heappush负数
+class Solution:
+    def topKFrequent(self, nums: List[int], k: int) -> List[int]:
+        import heapq
+        from collections import Counter
+
+        feuq = Counter(nums)
+        heap = []
+        for key, val in feuq.items():
+            heapq.heappush(heap, (-val, key))
+        result = []
+        for _ in range(k):
+            result.append(heapq.heappop(heap)[1])
+
+        return result
+```
 
 #### [面试题40. 最小的k个数](https://leetcode-cn.com/problems/zui-xiao-de-kge-shu-lcof/)
 ```python

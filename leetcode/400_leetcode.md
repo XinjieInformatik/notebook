@@ -2522,3 +2522,200 @@ class Solution:
 
         return False
 ```
+
+#### [64. 最小路径和](https://leetcode-cn.com/problems/minimum-path-sum/)
+```python
+class Solution:
+    def minPathSum(self, grid: List[List[int]]) -> int:
+        rows = len(grid)
+        if rows == 0: return 0
+        cols = len(grid[0])
+        directions = [(1,0), (0,1)]
+
+        memo = {}
+        def helper(row, col):
+            if row == rows-1 and col == cols-1:
+                value = grid[row][col]
+                memo[(row, col)] = value
+                return value
+            path = float("inf")
+            for direction in directions:
+                next_row = row + direction[0]
+                next_col = col + direction[1]
+                if next_row < 0 or next_row >= rows or next_col < 0 or next_col >= cols:
+                    continue
+                if (next_row, next_col) in memo:
+                    value = memo[(next_row, next_col)]
+                    path_ = value + grid[row][col]
+                else:
+                    value = helper(next_row, next_col)
+                    memo[(next_row, next_col)] = value
+                    path_ = value + grid[row][col]
+                path = min(path, path_)
+            return path
+
+        return helper(0,0)
+
+class Solution:
+    def minPathSum(self, grid: List[List[int]]) -> int:
+        rows = len(grid)
+        if rows == 0: return 0
+        cols = len(grid[0])
+        directions = [(1,0), (0,1)]
+
+        import functools
+        @functools.lru_cache(None)
+        def helper(row, col):
+            if row == rows-1 and col == cols-1:
+                value = grid[row][col]
+                return value
+            path = float("inf")
+            for direction in directions:
+                next_row = row + direction[0]
+                next_col = col + direction[1]
+                if next_row < 0 or next_row >= rows or next_col < 0 or next_col >= cols:
+                    continue
+                value = helper(next_row, next_col)
+                path_ = value + grid[row][col]
+                path = min(path, path_)
+            return path
+
+        return helper(0,0)
+```
+
+#### [72. 编辑距离](https://leetcode-cn.com/problems/edit-distance/)
+TODO: do this
+
+
+#### [174. 地下城游戏](https://leetcode-cn.com/problems/dungeon-game/)
+```python
+class Solution:
+    def calculateMinimumHP(self, dungeon: List[List[int]]) -> int:
+        """回溯return时加逻辑，保证正向走的时候血量的局部值
+        """
+        rows = len(dungeon)
+        if rows == 0: return 1
+        cols = len(dungeon[0])
+        directions = [(1,0),(0,1)]
+        import functools
+        @functools.lru_cache(None)
+        def helper(row, col):
+            if row == rows-1 and col == cols-1:
+                return -dungeon[row][col]
+            needs = float("inf")
+            for direction in directions:
+                next_row = row + direction[0]
+                next_col = col + direction[1]
+                if next_row<0 or next_row>=rows or next_col<0 or next_col>=cols:
+                    continue
+                res = helper(next_row, next_col)
+                next_value = -dungeon[next_row][next_col]
+                res = max(res, next_value)
+                needs = min(needs, res)
+            return max(needs - dungeon[row][col], -dungeon[row][col])
+        return max(1, helper(0,0) + 1)
+```
+
+#### [221. 最大正方形](https://leetcode-cn.com/problems/maximal-square/)
+`if matrix[row][col] == "1":
+    dp[row][col] = min(left_top, top, left) + 1`
+```python
+class Solution:
+    def maximalSquare(self, matrix: List[List[str]]) -> int:
+        rows = len(matrix)
+        if rows == 0: return 0
+        cols = len(matrix[0])
+        dp = [[0] * cols for _ in range(rows)]
+        max_area = 0
+        for row in range(rows):
+            for col in range(cols):
+                if matrix[row][col] == "1":
+                    left_top = dp[row-1][col-1] if (row-1)>=0 and (col-1)>=0 else 0
+                    top = dp[row-1][col] if (row-1)>=0 else 0
+                    left = dp[row][col-1] if (col-1)>=0 else 0
+                    dp[row][col] = min(left_top, top, left) + 1
+                    max_area = max(max_area, dp[row][col]**2)
+        print(dp)
+        return max_area
+```
+
+#### [355. 设计推特](https://leetcode-cn.com/problems/design-twitter/)
+```python
+from collections import defaultdict
+class Twitter:
+    def __init__(self):
+        """
+        Initialize your data structure here.
+        """
+        self.users = defaultdict(set)
+        self.news  = defaultdict(list)
+        self.new_id = 0
+        self.top_new = 10
+
+    def postTweet(self, userId: int, tweetId: int) -> None:
+        """
+        Compose a new tweet.
+        """
+        self.news[userId].append((tweetId, self.new_id))
+        self.new_id += 1
+
+    def getNewsFeed(self, userId: int) -> List[int]:
+        """
+        Retrieve the 10 most recent tweet ids in the user's news feed. Each item in the news feed must be posted by users who the user followed or by the user herself. Tweets must be ordered from most recent to least recent.
+        """
+        follows = self.users[userId]
+        follows.add(userId)
+        news = []
+        for user in follows:
+            news.extend(self.news[user])
+        news = sorted(news, key = lambda ele: (ele[1]), reverse=True)
+        top_new = min(self.top_new, len(news))
+        return [news[i][0] for i in range(top_new)]
+
+    def follow(self, followerId: int, followeeId: int) -> None:
+        """
+        Follower follows a followee. If the operation is invalid, it should be a no-op.
+        """
+        self.users[followerId].add(followeeId)
+
+    def unfollow(self, followerId: int, followeeId: int) -> None:
+        """
+        Follower unfollows a followee. If the operation is invalid, it should be a no-op.
+        """
+        if followeeId in self.users[followerId]:
+            self.users[followerId].remove(followeeId)
+
+
+
+# Your Twitter object will be instantiated and called as such:
+# obj = Twitter()
+# obj.postTweet(userId,tweetId)
+# param_2 = obj.getNewsFeed(userId)
+# obj.follow(followerId,followeeId)
+# obj.unfollow(followerId,followeeId)
+```
+
+#### [85. 最大矩形](https://leetcode-cn.com/problems/maximal-rectangle/)
+```python
+class Solution:
+    def maximalRectangle(self, matrix: List[List[str]]) -> int:
+        rows = len(matrix)
+        if rows == 0: return 0
+        cols = len(matrix[0])
+        heights = [0] * (cols+2)
+        max_area = 0
+        for row in range(rows):
+            stack = [0]
+            for col in range(cols+2):
+                if col < cols:
+                    if matrix[row][col] == "1":
+                        heights[col+1] += 1
+                    else:
+                        heights[col+1] = 0
+                while heights[col] < heights[stack[-1]]:
+                    cur_h = heights[stack.pop()]
+                    cur_w = col - stack[-1] - 1
+                    max_area = max(max_area, cur_h * cur_w)
+                stack.append(col)
+        return max_area
+```
