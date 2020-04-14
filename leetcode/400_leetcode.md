@@ -2719,3 +2719,118 @@ class Solution:
                 stack.append(col)
         return max_area
 ```
+
+#### [198. 打家劫舍](https://leetcode-cn.com/problems/house-robber)
+状态转移方程 cur_max = max(pprev_max + nums[i], prev_max)
+```python
+class Solution:
+    def rob(self, nums: List[int]) -> int:
+        # 动态规划两部曲，1.定义初始值 2.定义状态转移方程
+        cur_max = 0
+        prev_max = 0
+        pprev_max = 0
+
+        for i in range(len(nums)):
+            cur_max = max(pprev_max + nums[i], prev_max)
+            pprev_max = prev_max
+            prev_max = cur_max
+
+        return cur_max
+
+class Solution:
+    def rob(self, nums: List[int]) -> int:
+        n = len(nums)
+        if n == 0: return 0
+        if n < 3: return max(nums)
+        dp = [0] * (n+1)
+        dp[1] = nums[0]
+        for i in range(2, n+1):
+            steal_pre = dp[i-1]
+            steal_this = dp[i-2] + nums[i-1]
+            dp[i] = max(steal_pre, steal_this)
+
+        return dp[-1]
+```
+
+#### [213. 打家劫舍 II](https://leetcode-cn.com/problems/house-robber-ii/)
+```python
+class Solution:
+    def rob(self, nums: List[int]) -> int:
+        n = len(nums)
+        if n == 0: return 0
+        if n < 3: return max(nums)
+
+        def helper(amounts):
+            n = len(amounts)
+            if n == 1: return amounts[0]
+            dp = [0] * (n+1)
+            dp[1] = amounts[0] # becareful
+            for i in range(2, n+1):
+                steal_pre = dp[i-1]
+                steal_this = dp[i-2] + amounts[i-1]
+                dp[i] = max(steal_pre, steal_this)
+            return dp[-1]
+
+        return max(helper(nums[1:]), helper(nums[:-1]))
+```
+
+#### [91. 解码方法](https://leetcode-cn.com/problems/decode-ways/)
+```python
+class Solution:
+    def numDecodings(self, s: str) -> int:
+        ac_list = range(1,27)
+        n = len(s)
+        import functools
+        @functools.lru_cache(None)
+        def helper(index):
+            if index == n:
+                return 1
+            ans = 0
+            if int(s[index]) in ac_list:
+                ans += helper(index+1)
+            else: return 0 # becareful
+            if index+2 <= n and int(s[index:index+2]) in ac_list:
+                ans += helper(index+2)
+            return ans
+        return helper(0)
+```
+
+#### [44. 通配符匹配](https://leetcode-cn.com/problems/wildcard-matching/)
+TODO: do once more
+```python
+class Solution:
+    def isMatch(self, s: str, p: str) -> bool:
+        import functools
+        @functools.lru_cache(None)
+        def helper(s, p):
+            if len(s) == 0:
+                if len(p) == 0:
+                    return True
+                elif set(p) == {"*"}:
+                    return True
+                else: return False
+            if s and p and (s[0] == p[0] or p[0] == "?") and helper(s[1:], p[1:]):
+                return True
+            elif p and p[0] == "*" and (helper(s[1:], p) or helper(s, p[1:])):
+                return True
+            return False
+
+        return helper(s, p)
+
+    def isMatch(self, s: str, p: str) -> bool:
+        sn = len(s)
+        pn = len(p)
+        dp = [[False] * (pn + 1) for _ in range(sn + 1)]
+        dp[0][0] = True
+        for j in range(1, pn + 1):
+            if p[j - 1] == "*":
+                dp[0][j] = dp[0][j - 1]
+
+        for i in range(1, sn + 1):
+            for j in range(1, pn + 1):
+                if (s[i - 1] == p[j - 1] or p[j - 1] == "?"):
+                    dp[i][j] = dp[i - 1][j - 1]
+                elif p[j - 1] == "*":
+                    dp[i][j] = dp[i - 1][j] or dp[i][j - 1]
+        return dp[-1][-1]
+```

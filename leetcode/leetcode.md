@@ -517,7 +517,44 @@ class Solution:
             prev_max = cur_max
 
         return cur_max
+
+class Solution:
+    def rob(self, nums: List[int]) -> int:
+        n = len(nums)
+        if n == 0: return 0
+        if n < 3: return max(nums)
+        dp = [0] * (n+1)
+        dp[1] = nums[0]
+        for i in range(2, n+1):
+            steal_pre = dp[i-1]
+            steal_this = dp[i-2] + nums[i-1]
+            dp[i] = max(steal_pre, steal_this)
+
+        return dp[-1]
 ```
+
+#### [213. 打家劫舍 II](https://leetcode-cn.com/problems/house-robber-ii/)
+```python
+class Solution:
+    def rob(self, nums: List[int]) -> int:
+        n = len(nums)
+        if n == 0: return 0
+        if n < 3: return max(nums)
+
+        def helper(amounts):
+            n = len(amounts)
+            if n == 1: return amounts[0]
+            dp = [0] * (n+1)
+            dp[1] = amounts[0] # becareful
+            for i in range(2, n+1):
+                steal_pre = dp[i-1]
+                steal_this = dp[i-2] + amounts[i-1]
+                dp[i] = max(steal_pre, steal_this)
+            return dp[-1]
+
+        return max(helper(nums[1:]), helper(nums[:-1]))
+```
+
 
 #### [152. 乘积最大子序列](https://leetcode-cn.com/problems/maximum-product-subarray/)
 ```python
@@ -1709,6 +1746,68 @@ class Solution:
             else:
                 sum_dict[sum_] += 1
         return count
+```
+
+#### [445. 两数相加 II](https://leetcode-cn.com/problems/add-two-numbers-ii/)
+```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.next = None
+
+class Solution:
+    def reverse(self, head: ListNode):
+        pre_node = None
+        node = head
+        while node:
+            next_node = node.next
+            node.next = pre_node
+            pre_node = node
+            node = next_node
+        return pre_node
+
+    def addTwoNumbers(self, l1: ListNode, l2: ListNode) -> ListNode:
+        l1 = self.reverse(l1)
+        l2 = self.reverse(l2)
+
+        node1, node2 = l1, l2
+        carry = 0
+        ans = None
+        while node1 or node2 or carry!=0:
+            node1_val = node1.val if node1 else 0
+            node2_val = node2.val if node2 else 0
+            value = node1_val + node2_val + carry
+            carry = value // 10
+            node3 = ListNode(value%10)
+            # 头插法
+            node3.next = ans
+            ans = node3
+            if node1: node1 = node1.next
+            if node2: node2 = node2.next
+
+        return ans
+
+    def addTwoNumbers(self, l1: ListNode, l2: ListNode) -> ListNode:
+        s1, s2 = [], []
+        while l1:
+            s1.append(l1.val)
+            l1 = l1.next
+        while l2:
+            s2.append(l2.val)
+            l2 = l2.next
+        ans = None
+        carry = 0
+        while s1 or s2 or carry != 0:
+            a = 0 if not s1 else s1.pop()
+            b = 0 if not s2 else s2.pop()
+            cur = a + b + carry
+            carry = cur // 10
+            cur %= 10
+            curnode = ListNode(cur)
+            curnode.next = ans
+            ans = curnode
+        return ans
 ```
 
 #### [83. 删除排序链表中的重复元素](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list/)
