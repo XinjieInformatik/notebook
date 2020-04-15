@@ -1220,7 +1220,49 @@ class Solution:
         return result
 ```
 
-#### [994. 腐烂的橘子](https://leetcod322. 零钱兑换e-cn.com/problems/rotting-oranges/)
+#### [542. 01 矩阵](https://leetcode-cn.com/problems/01-matrix/)
+```python
+from collections import deque
+class Solution:
+    def updateMatrix(self, matrix: List[List[int]]) -> List[List[int]]:
+        rows = len(matrix)
+        if rows == 0:
+            return []
+        cols = len(matrix[0])
+
+        def bfs(i, j):
+            queue = deque([(i, j)])
+            visited = set([(i, j)])
+            directions = [(1, 0), (0, 1), (-1, 0), (0, -1)]
+            level = 0
+            while queue:
+                level += 1
+                for _ in range(len(queue)):
+                    row, col = queue.pop()
+                    for direction in directions:
+                        next_row = row + direction[0]
+                        next_col = col + direction[1]
+                        if next_row < 0 or next_row >= rows or next_col < 0 or next_col >= cols:
+                            continue
+                        if matrix[next_row][next_col] == 0:
+                            return level
+                        if matrix[next_row][next_col] == 1 and (next_row, next_col) not in visited:
+                            queue.appendleft((next_row, next_col))
+                            visited.add((next_row, next_col))
+
+
+        result = [[0] * cols for _ in range(rows)]
+        for i in range(rows):
+            for j in range(cols):
+                if matrix[i][j] == 0:
+                    result[i][j] = 0
+                else:
+                    result[i][j] = bfs(i, j)
+
+        return result
+```
+
+#### [994. 腐烂的橘子](https://leetcode-cn.com/problems/rotting-oranges/)
 坑很多。。
 1. bfs 可以以多个节点为起始，不要被二叉树束缚
 2. 注意已经访问过的节点设置为已访问

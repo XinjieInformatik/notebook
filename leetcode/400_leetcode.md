@@ -2834,3 +2834,105 @@ class Solution:
                     dp[i][j] = dp[i - 1][j] or dp[i][j - 1]
         return dp[-1][-1]
 ```
+
+### 6 个动态规划股票题
+#### [121. 买卖股票的最佳时机](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock/)
+```python
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        if len(prices) == 0: return 0
+        profit_1 = -prices[0]
+        profit_0 = 0
+        for price in prices:
+            profit_1 = max(profit_1, -price)
+            profit_0 = max(profit_0, profit_1+price)
+        return profit_0
+```
+
+#### [122. 买卖股票的最佳时机 II](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-ii/)
+```python
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        if len(prices)==0:
+            return 0
+        profit_1 = -prices[0]
+        profit_0 = 0
+        for price in prices:
+            profit_1 = max(profit_1, profit_0-price)
+            profit_0 = max(profit_0, profit_1+price)
+        return profit_0
+```
+
+#### [123. 买卖股票的最佳时机 III](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-iii/)
+```python
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        if len(prices) == 0: return 0
+        profit_01 = -prices[0]
+        profit_00 = 0
+        profit_11 = -prices[0]
+        profit_10 = 0
+        for price in prices:
+            profit_01 = max(profit_01, -price)
+            profit_00 = max(profit_00, profit_01+price)
+            profit_11 = max(profit_11, profit_00-price)
+            profit_10 = max(profit_10, profit_11+price)
+        return profit_10
+```
+
+#### [188. 买卖股票的最佳时机 IV](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-iv/)
+```python
+class Solution:
+    def maxProfit(self, k: int, prices: List[int]) -> int:
+        if len(prices)==0 or k==0:
+            return 0
+        if k > len(prices):
+            # 无限次交易处理
+            profit_1 = -prices[0]
+            profit_0 = 0
+            for price in prices:
+                profit_1 = max(profit_1, profit_0-price)
+                profit_0 = max(profit_0, profit_1+price)
+            return profit_0
+
+        profit_1_k = [-prices[0]] * (k+1)
+        profit_0_k = [0] * (k+1)
+        for price in prices:
+            for i in range(1, k+1):
+                profit_1_k[i] = max(profit_1_k[i], profit_0_k[i-1]-price)
+                profit_0_k[i] = max(profit_0_k[i], profit_1_k[i]+price)
+
+        return profit_0_k[-1]
+```
+
+#### [309. 最佳买卖股票时机含冷冻期](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/)
+```python
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        if len(prices) == 0:
+            return 0
+        profit_1 = -prices[0]
+        profit_0 = 0
+        profit_freeze = 0
+        for price in prices:
+            profit_pre = profit_0
+            profit_1 = max(profit_1, profit_freeze-price)
+            profit_0 = max(profit_0, profit_1+price)
+            profit_freeze = profit_pre
+
+        return profit_0
+```
+
+#### [714. 买卖股票的最佳时机含手续费](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/)
+```python
+class Solution:
+    def maxProfit(self, prices: List[int], fee: int) -> int:
+        if len(prices) == 0:
+            return 0
+        profit_1 = -prices[0]
+        profit_0 = 0
+        for price in prices:
+            profit_1 = max(profit_1, profit_0-price)
+            profit_0 = max(profit_0, profit_1+price-fee)
+        return profit_0
+```
