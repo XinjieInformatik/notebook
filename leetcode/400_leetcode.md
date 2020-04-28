@@ -2936,3 +2936,587 @@ class Solution:
             profit_0 = max(profit_0, profit_1+price-fee)
         return profit_0
 ```
+
+## LinkedList
+#### [206. 反转链表](https://leetcode-cn.com/problems/reverse-linked-list/)
+```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.next = None
+
+class Solution:
+    def reverseList(self, head: ListNode) -> ListNode:
+        cur_node = head
+        pre_node = None
+        while cur_node:
+            next_node = cur_node.next
+            cur_node.next = pre_node
+            pre_node = cur_node
+            cur_node = next_node
+        return pre_node
+```
+
+#### [141. 环形链表](https://leetcode-cn.com/problems/linked-list-cycle/)
+```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.next = None
+
+class Solution:
+    def hasCycle(self, head: ListNode) -> bool:
+        """双指针 or hashmap"""
+        fast_p = head
+        slow_p = head
+        while fast_p:
+            if fast_p.next == None:
+                return False
+            fast_p = fast_p.next.next
+            slow_p = slow_p.next
+            if fast_p == slow_p:
+                return True
+
+        lookup = set()
+        node = head
+        while node:
+            node_id = id(node)
+            node = node.next
+            if node_id not in lookup:
+                lookup.add(node_id)
+            else:
+                return True
+        return False
+```
+
+#### [24. 两两交换链表中的节点](https://leetcode-cn.com/problems/swap-nodes-in-pairs/)
+![20200417203727916](assets/20200417203727916.png)
+```python
+class Solution:
+    def swapPairs(self, head: ListNode) -> ListNode:
+        while head==None or head.next==None:
+            return head
+        dummy = ListNode(-1)
+        res = dummy
+        while head and head.next:
+            dummy.next = head.next
+            head.next = head.next.next
+            dummy.next.next = head
+
+            dummy = head
+            head = head.next
+        return res.next
+```
+
+#### [328. 奇偶链表](https://leetcode-cn.com/problems/odd-even-linked-list/)
+```python
+class Solution:
+  def oddEvenList(self, head: ListNode) -> ListNode:
+      if head==None or head.next==None:
+          return head
+      odd = head
+      even = head.next
+      odd_head = odd
+      even_head = even
+      while even and even.next:
+          # becareful, odd first, even second
+          odd.next = odd.next.next
+          odd = odd.next
+          even.next = even.next.next
+          even = even.next
+
+      odd.next = even_head
+      return odd_head
+```
+
+#### [92. 反转链表 II](https://leetcode-cn.com/problems/reverse-linked-list-ii/)
+```python
+class Solution:
+    def reverseBetween(self, head: ListNode, m: int, n: int) -> ListNode:
+        node = head
+        node_prev_m = None
+        index = 1
+        node_m = None
+        while node:
+            if index < m-1:
+                node = node.next
+            elif index == m-1:
+                node_prev_m = node
+                node = node.next
+            elif index == m:
+                node_m = node
+                prev_node = node
+                node = node.next
+            elif m < index <= n:
+                next_node = node.next
+                node.next = prev_node
+                prev_node = node
+                if index == n:
+                    node_m.next = next_node
+                    if node_prev_m:
+                        node_prev_m.next = node
+                node = next_node
+            else:
+                break
+            index += 1
+        return prev_node if m==1 else head
+```
+
+#### [19. 删除链表的倒数第N个节点](https://leetcode-cn.com/problems/remove-nth-node-from-end-of-list/)
+```python
+class Solution:
+    def removeNthFromEnd(self, head: ListNode, n: int) -> ListNode:
+        """用dummy节点避免要删除头结点的情况"""
+        dummy = ListNode(-1)
+        dummy.next = head
+        slow_p = dummy
+        fast_p = dummy
+        while (n > 0):
+            fast_p = fast_p.next
+            n -= 1
+        while (fast_p):
+            if fast_p.next == None:
+                slow_p.next = slow_p.next.next
+                break
+            fast_p = fast_p.next
+            slow_p = slow_p.next
+        return dummy.next
+```
+
+#### [83. 删除排序链表中的重复元素](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list/)
+```python
+class Solution:
+    def deleteDuplicates(self, head: ListNode) -> ListNode:
+        if not head: return head
+        node = head
+        visited = set()
+        while node.next:
+            cur_node = node
+            if node.val not in visited:
+                visited.add(node.val)
+            else:
+                while node and node.val in visited:
+                    node = node.next
+                cur_node.next = node
+            if node == None: break
+        return head
+```
+
+#### [203. 移除链表元素](https://leetcode-cn.com/problems/remove-linked-list-elements/)
+```python
+class Solution:
+    def removeElements(self, head: ListNode, val: int) -> ListNode:
+        dummy = ListNode(-1)
+        dummy.next = head
+        prev, cur = dummy, head
+        while cur:
+            if cur.val == val:
+                prev.next = cur.next
+            else:
+                prev = cur
+            cur = cur.next
+        return dummy.next
+```
+
+#### [82. 删除排序链表中的重复元素 II](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list-ii/)
+TODO: do it again
+```python
+class Solution:
+    def deleteDuplicates(self, head: ListNode) -> ListNode:
+        if head == None or head.next == None:
+            return head
+        dummy = ListNode(-1)
+        dummy.next = head
+        slow = dummy
+        fast = dummy.next
+        while fast:
+            while fast.next and slow.next.val == fast.next.val:
+                fast = fast.next
+            if slow.next == fast:
+                slow = fast
+            else:
+                slow.next = fast.next
+            fast = fast.next
+        return dummy.next
+```
+
+#### [2. 两数相加](https://leetcode-cn.com/problems/add-two-numbers/)
+```python
+class Solution:
+    def addTwoNumbers(self, l1: ListNode, l2: ListNode) -> ListNode:
+        carry = 0
+        dummy = head = ListNode(-1)
+        while (l1 or l2 or carry):
+            l1_val = l1.val if l1 else 0
+            l2_val = l2.val if l2 else 0
+            carry, value = divmod((l1_val + l2_val + carry), 10)
+            dummy.next = ListNode(value)
+            dummy = dummy.next
+            if l1:
+                l1 = l1.next
+            if l2:
+                l2 = l2.next
+        return head.next
+```
+
+#### [160. 相交链表](https://leetcode-cn.com/problems/intersection-of-two-linked-lists/)
+```python
+class Solution:
+    def getIntersectionNode(self, headA: ListNode, headB: ListNode) -> ListNode:
+        nodeA, nodeB = headA, headB
+        while nodeA != nodeB:
+            nodeA = nodeA.next if nodeA else headB
+            nodeB = nodeB.next if nodeB else headA
+        return nodeA
+
+        # nodeA = headA
+        # nodeB = headB
+        # lenthA = 0
+        # lenthB = 0
+        # while nodeA:
+        #     nodeA = nodeA.next
+        #     lenthA += 1
+        # while nodeB:
+        #     nodeB = nodeB.next
+        #     lenthB += 1
+
+        # nodeA, nodeB = headA, headB
+        # gap = abs(lenthA - lenthB)
+        # if lenthA > lenthB:
+        #     while gap > 0:
+        #         nodeA = nodeA.next
+        #         gap -= 1
+        # else:
+        #     while gap > 0:
+        #         nodeB = nodeB.next
+        #         gap -= 1
+
+        # while nodeA and nodeB:
+        #     if nodeA == nodeB:
+        #         return nodeA
+        #     nodeA = nodeA.next
+        #     nodeB = nodeB.next
+
+        # return None
+```
+
+#### [21. 合并两个有序链表](https://leetcode-cn.com/problems/merge-two-sorted-lists/)
+```python
+class Solution:
+    def mergeTwoLists(self, l1: ListNode, l2: ListNode) -> ListNode:
+        """注意哨兵dummy节点的运用"""
+        dummy = ListNode(-1)
+        prev_node = dummy
+        while l1 and l2:
+            if l1.val < l2.val:
+                prev_node.next = l1
+                l1 = l1.next
+            else:
+                prev_node.next = l2
+                l2 = l2.next
+            prev_node = prev_node.next
+        prev_node.next = l1 if l1 else l2
+        return dummy.next
+```
+#### [234. 回文链表](https://leetcode-cn.com/problems/palindrome-linked-list/)
+思路一：快慢指针找到中点，翻转后半个链表，再逐一比较前后两个半个链表
+思路二：加入.val 到list中， 判断 [:] == [::-1]
+```python
+class Solution:
+    def isPalindrome(self, head: ListNode) -> bool:
+        slow = head
+        fast = head
+        # look up middle point
+        while fast:
+            if fast.next == None:
+                break
+            fast = fast.next.next
+            slow = slow.next
+        # reverse fast linkedlist
+        prev = None
+        cur = slow
+        while cur:
+            nxt = cur.next
+            cur.next = prev
+            prev = cur
+            cur = nxt
+        # compare reversed and head linkedlist
+        while head and prev:
+            if head.val != prev.val:
+                return False
+            head = head.next
+            prev = prev.next
+
+        return True
+```
+#### [143. 重排链表](https://leetcode-cn.com/problems/reorder-list/)
+```python
+class Solution:
+    def reorderList(self, head: ListNode) -> None:
+        """反转后半部分，重新链接"""
+        slow = head
+        fast = head
+        while fast:
+            if fast.next == None: break
+            fast = fast.next.next
+            slow = slow.next
+
+        prev = None
+        cur = slow
+        while cur:
+            nxt = cur.next
+            cur.next = prev
+            prev = cur
+            cur = nxt
+
+        dummy = ListNode(-1)
+        count = 0
+        while prev and head:
+            if count % 2 == 0:
+                dummy.next = head
+                head = head.next
+            else:
+                dummy.next = prev
+                prev = prev.next
+            dummy = dummy.next
+            count += 1
+
+        return dummy.next
+```
+
+#### [148. 排序链表](https://leetcode-cn.com/problems/sort-list/submissions/)
+```python
+class Solution:
+    def sortList(self, head: ListNode) -> ListNode:
+        """递归版本"""
+        def helper(head):
+            if not head or not head.next:
+                return head
+            # important to set fast = head.next, so that
+            # slow is one node before mid node for cut the linked list.
+            fast, slow = head.next, head
+            while fast and fast.next:
+                fast = fast.next.next
+                slow = slow.next
+            mid = slow.next
+            slow.next = None
+            left = self.sortList(head)
+            right = self.sortList(mid)
+            # merge two linkedlist
+            dummy = head_node = ListNode(-1)
+            while right and left:
+                if right.val > left.val:
+                    dummy.next = left
+                    left = left.next
+                else:
+                    dummy.next = right
+                    right = right.next
+                dummy = dummy.next
+            dummy.next = left if left else right
+            return head_node.next
+        return helper(head)
+
+    def sortList(self, head: ListNode) -> ListNode:
+        """非递归版本"""
+        h, length, intv = head, 0, 1
+        while h:
+            h = h.next
+            length += 1
+        res = ListNode(0)
+        res.next = head
+        # merge the list in different intv.
+        while intv < length:
+            pre = res
+            h = res.next
+            while h:
+                # get the two merge head `h1`, `h2`
+                h1, i = h, intv
+                while i and h:
+                    h = h.next
+                    i -= 1
+                if i: break # no need to merge because the `h2` is None.
+                h2, i = h, intv
+                while i and h:
+                    h = h.next
+                    i -= 1
+                c1, c2 = intv, intv - i # the `c2`: length of `h2` can be small than the `intv`.
+                # merge the `h1` and `h2`.
+                while c1 and c2:
+                    if h1.val < h2.val:
+                        pre.next = h1
+                        h1 = h1.next
+                        c1 -= 1
+                    else:
+                        pre.next = h2
+                        h2 = h2.next
+                        c2 -= 1
+                    pre = pre.next
+                pre.next = h1 if c1 else h2
+                while c1 > 0 or c2 > 0:
+                    pre = pre.next
+                    c1 -= 1
+                    c2 -= 1
+                pre.next = h
+            intv *= 2
+
+        return res.next
+```
+
+#### [61. 旋转链表](https://leetcode-cn.com/problems/rotate-list/)
+```python
+class Solution:
+    def rotateRight(self, head: ListNode, k: int) -> ListNode:
+        if head==None or head.next==None: return head
+        lenth = 0
+        node = head
+        while node:
+            node = node.next
+            lenth += 1
+        k = k % lenth
+        while k > 0:
+            prev, cur = ListNode(-1), head
+            prev.next = head
+            while cur.next:
+                prev = prev.next
+                cur = cur.next
+            prev.next = None
+            cur.next = head
+            head = cur
+            k -= 1
+        return head
+```
+
+#### [86. 分隔链表](https://leetcode-cn.com/problems/partition-list/)
+```python
+class Solution:
+    def partition(self, head: ListNode, x: int) -> ListNode:
+        """linkedlist partition"""
+        before_head = dummy_before = ListNode(-1)
+        after_head = dummy_after = ListNode(-1)
+        node = head
+        while node:
+            if node.val < x:
+                dummy_before.next = node
+                dummy_before = dummy_before.next
+            else:
+                dummy_after.next = node
+                dummy_after = dummy_after.next
+            node = node.next
+        dummy_before.next = after_head.next
+        dummy_after.next = None # important, end the linkedlist
+        return before_head.next
+```
+
+#### [25. K 个一组翻转链表](https://leetcode-cn.com/problems/reverse-nodes-in-k-group/)
+```python
+class Solution:
+    def reverseKGroup(self, head: ListNode, k: int) -> ListNode:
+        """stack"""
+        dummy = dummy_head = ListNode(-1)
+        node = head
+        stack = []
+        count = 0
+        while node:
+            temp = node
+            while count < k and node:
+                stack.append(node)
+                node = node.next
+                count += 1
+            if count < k:
+                dummy.next = temp
+                break
+            while stack:
+                dummy.next = stack.pop()
+                dummy = dummy.next
+                dummy.next = None
+            count = 0
+        return dummy_head.next
+```
+
+#### [199. 二叉树的右视图](https://leetcode-cn.com/problems/binary-tree-right-side-view/)
+```python
+from collections import deque
+class Solution:
+    def rightSideView(self, root: TreeNode) -> List[int]:
+        result = []
+        def bfs(node):
+            queue = deque([node])
+            while queue:
+                for i in range(len(queue)):
+                    top = queue.pop()
+                    if i == 0:
+                        result.append(top.val)
+                    if top.right:
+                        queue.appendleft(top.right)
+                    if top.left:
+                        queue.appendleft(top.left)
+        visited = set()
+        def dfs(node, level):
+            if level not in visited:
+                result.append(node.val)
+                visited.add(level)
+            if node.right:
+                dfs(node.right, level+1)
+            if node.left:
+                dfs(node.left, level+1)
+        if root == None:
+            return result
+        # bfs(root)
+        dfs(root, level=0)
+        return result
+```
+
+#### [23. 合并K个排序链表](https://mail.ipa.fraunhofer.de/OWA/?bO=1#path=/mail)
+```python
+import heapq
+class Solution:
+    def mergeKLists(self, lists: List[ListNode]) -> ListNode:
+        heap = []
+        for i in range(len(lists)):
+            if lists[i]:
+                heapq.heappush(heap, (lists[i].val, i))
+                lists[i] = lists[i].next
+        dummy = dummy_head = ListNode(-1)
+        while heap:
+            val, i = heapq.heappop(heap)
+            dummy.next = ListNode(val)
+            dummy = dummy.next
+            if lists[i]:
+                heapq.heappush(heap, (lists[i].val, i))
+                lists[i] = lists[i].next
+        return dummy_head.next
+```
+
+#### [147. 对链表进行插入排序](https://leetcode-cn.com/problems/insertion-sort-list/)
+
+![20200423_170807_57](assets/20200423_170807_57.png)
+
+```python
+class Solution:
+    def insertionSortList(self, head: ListNode) -> ListNode:
+        fhead = ListNode(float('-Inf'))
+        fhead.next = head
+        pcur = fhead
+        cur = head
+
+        while cur:
+            if pcur.val <= cur.val:
+                pcur = pcur.next
+                cur = pcur.next
+                continue
+
+            pcur.next = cur.next
+            cur.next = None
+
+            p = fhead
+            while p.next and p.next.val <= cur.val:
+                p = p.next
+
+            cur.next = p.next
+            p.next = cur
+            cur = pcur.next
+
+        return fhead.next
+```

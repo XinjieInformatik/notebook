@@ -815,6 +815,36 @@ class Solution:
         return bfs(amount, 0)
 ```
 
+#### [面试题 08.11. 硬币](https://leetcode-cn.com/problems/coin-lcci/)
+```python
+import functools
+class Solution:
+    def waysToChange(self, n: int) -> int:
+        coins = [25, 10, 5, 1]
+        n_coin = len(coins)
+        mod = 10**9 + 7
+        @functools.lru_cache(None)
+        def helper(cur_value, index):
+            if cur_value < 0:
+                return 0
+            if cur_value == 0:
+                return 1
+            res = 0
+            for i in range(index, n_coin):
+                res += helper(cur_value-coins[i], i)
+            return res
+        return helper(n, index=0) % mod
+    def waysToChange(self, n: int) -> int:
+        mod = 10**9 + 7
+        coins = [25, 10, 5, 1]
+
+        f = [1] + [0] * n
+        for coin in coins:
+            for i in range(coin, n + 1):
+                f[i] += f[i - coin]
+        return f[n] % mod
+```
+
 #### [338. 比特位计数](https://leetcode-cn.com/problems/counting-bits/)
 ```python
 class Solution:
@@ -1312,6 +1342,87 @@ class Solution:
                     return -1
 
         return level-1
+```
+
+#### [LCP 09. 最小跳跃次数](https://leetcode-cn.com/problems/zui-xiao-tiao-yue-ci-shu/)
+```python
+from collections import deque
+class Solution:
+    def minJump(self, jump: List[int]) -> int:
+        """
+        1. visited 数组 比 set 快
+        2. left_max = max(left_max, top) 比 left_max = top 快10倍
+        """
+        queue = deque([0])
+        n = len(jump)
+        visited = [0] * n
+        level = 0
+        left_max = 0
+        while queue:
+            level += 1
+            for _ in range(len(queue)):
+                top = queue.pop()
+                # jump to right
+                next_index = top + jump[top]
+                if next_index < n:
+                    if not visited[next_index]:
+                        queue.appendleft(next_index)
+                        visited[next_index] = 1
+                else:
+                    return level
+                # jump to left
+                for i in range(left_max+1, top):
+                    if not visited[i]:
+                        queue.appendleft(i)
+                        visited[i] = 1
+                left_max = max(left_max, top)
+```
+
+#### [864. 获取所有钥匙的最短路径](https://leetcode-cn.com/problems/shortest-path-to-get-all-keys/)
+三维的bfs
+```python
+from collections import deque
+class Solution:
+    def shortestPathAllKeys(self, grid: List[str]) -> int:
+        rows, cols = len(grid), len(grid[0])
+        start_row, start_col, key_num = 0, 0, 0
+        for row in range(rows):
+            for col in range(cols):
+                cell = grid[row][col]
+                if cell.islower():
+                    key_num += 1
+                if cell == "@":
+                    start_row, start_col = row, col
+        keys, step, visited = tuple(), 0, set()
+        visited.add((start_row, start_col, keys))
+        queue = deque([(start_row, start_col, keys, step)])
+        directions = [(1,0),(0,1),(-1,0),(0,-1)]
+        while queue:
+            row, col, keys, step = queue.pop()
+            for direction in directions:
+                next_row, next_col = row + direction[0], col + direction[1]
+                add_keys = keys
+                # 遇到边界
+                if next_row < 0 or next_row >= rows or next_col < 0 or next_col >= cols:
+                    continue
+                cell = grid[next_row][next_col]
+                # 遇到墙壁
+                if cell == "#":
+                    continue
+                # 遇到新钥匙，添加
+                if cell.islower() and cell not in add_keys:
+                    add_keys = add_keys + (cell,)
+                    if len(add_keys) == key_num:
+                        return step+1
+                # 遇到锁没相应钥匙
+                if "A" <= cell <= "F" and cell.lower() not in add_keys:
+                    continue
+                # 已经访问过
+                if (next_row, next_col, add_keys) in visited:
+                    continue
+                queue.appendleft((next_row, next_col, add_keys, step+1))
+                visited.add((next_row, next_col, add_keys))
+        return -1
 ```
 
 #### [987. 二叉树的垂序遍历](https://leetcode-cn.com/problems/vertical-order-traversal-of-a-binary-tree/submissions/)
@@ -2056,21 +2167,21 @@ def mergeSort(arr):
 
 ```python
 def merge(arr, l, m, r):
-            temp = arr[l:r]
-            p_l, p_r = 0, m-l
-            for i in range(l, r):
-                if p_l == m-l:
-                    arr[i] = temp[p_r]
-                    p_r += 1
-                elif p_r == r-l:
-                    arr[i] = temp[p_l]
-                    p_l += 1
-                elif temp[p_l] < temp[p_r]:
-                    arr[i] = temp[p_l]
-                    p_l += 1
-                else:
-                    arr[i] = temp[p_r]
-                    p_r += 1
+    temp = arr[l:r]
+    p_l, p_r = 0, m-l
+    for i in range(l, r):
+        if p_l == m-l:
+            arr[i] = temp[p_r]
+            p_r += 1
+        elif p_r == r-l:
+            arr[i] = temp[p_l]
+            p_l += 1
+        elif temp[p_l] < temp[p_r]:
+            arr[i] = temp[p_l]
+            p_l += 1
+        else:
+            arr[i] = temp[p_r]
+            p_r += 1
 
 def mergeSort(arr, l, r):
     if l < r-1:
@@ -2255,6 +2366,95 @@ def up_bound(arr, l, r, target):
 
 index = low_bound(result, 0, len(result), array[i])
 ```
+
+#### [LCP 08. 剧情触发时间](https://leetcode-cn.com/problems/ju-qing-hong-fa-shi-jian/)
+```python
+class Solution:
+    def getTriggerTime(self, increase: List[List[int]], requirements: List[List[int]]) -> List[int]:
+        """前缀和+二分"""
+        n_increase = len(increase) + 1
+        pre_sum_C = [0] * n_increase
+        pre_sum_R = [0] * n_increase
+        pre_sum_H = [0] * n_increase
+        for i in range(1, n_increase):
+            pre_sum_C[i] = pre_sum_C[i-1] + increase[i-1][0]
+            pre_sum_R[i] = pre_sum_R[i-1] + increase[i-1][1]
+            pre_sum_H[i] = pre_sum_H[i-1] + increase[i-1][2]
+
+        def low_bound(arr, l, r, target):
+            while (l < r):
+                m = l + (r-l) // 2
+                if arr[m] < target:
+                    l = m + 1
+                else:
+                    r = m
+            return l
+        result = []
+        for i in range(len(requirements)):
+            min_C = low_bound(pre_sum_C, 0, n_increase, requirements[i][0])
+            min_R = low_bound(pre_sum_R, 0, n_increase, requirements[i][1])
+            min_H = low_bound(pre_sum_H, 0, n_increase, requirements[i][2])
+            activate = max(min_C, min_R, min_H)
+            res = -1 if activate >= n_increase else activate
+            result.append(res)
+        return result
+```
+
+#### [LCP 12. 小张刷题计划](https://leetcode-cn.com/problems/xiao-zhang-shua-ti-ji-hua/)
+```python
+class Solution:
+    def minTime(self, time: List[int], m: int) -> int:
+        if m >= len(time):
+            return 0
+        def check(mid, m):
+            """if can fill m arrs, return True
+               else return False"""
+            prefix = 0
+            max_time = 0
+            for num in time:
+                max_time = max(max_time, num)
+                prefix += num
+                if prefix - max_time > mid:
+                    m -= 1
+                    prefix = num
+                    max_time = num # becareful
+                    if m == 0:
+                        return True
+            return False
+
+        low_bound, up_bound = min(time), sum(time)
+        while low_bound < up_bound:
+            mid = low_bound + (up_bound - low_bound) // 2
+            if check(mid, m):
+                low_bound = mid + 1
+            else:
+                up_bound = mid
+        return low_bound
+```
+
+[668. 乘法表中第k小的数](https://leetcode-cn.com/problems/kth-smallest-number-in-multiplication-table/)
+这题没想到可以用二分，加了个判断可以快很多。 mid // n 可以定位mid所在行之前的行数，计数count += mid//n * n , 然后从mid//n + 1 开始遍历即可
+```python
+class Solution:
+    def findKthNumber(self, m: int, n: int, k: int) -> int:
+        left, right = 1, m*n
+        while left < right:
+            mid = left + (right-left)//2
+            count = 0
+            # 减少遍历次数
+            start = mid // n
+            count += start * n
+            for i in range(start+1, m+1):
+                # 统计的个数不能超过范围n,所以取min
+                # count += min(mid // i, n)
+                count += mid//i
+            if count < k:
+                left = mid + 1
+            else:
+                right = mid
+        return left
+```
+
 #### [69. x 的平方根](https://leetcode-cn.com/problems/sqrtx/)
 ```python
 def mySqrt(x):
@@ -2299,6 +2499,93 @@ def low_bound(array, l, r, o):
         # l, r 的赋值规则也要符合左闭右开
         if array[m] < o: l = m + 1
         else: r = m
+```
+
+#### [33. 搜索旋转排序数组](https://leetcode-cn.com/problems/search-in-rotated-sorted-array/)
+在两个排序数组中使用二分搜索查找， 注意区间缩小的判断
+```python
+class Solution:
+    def search(self, nums: List[int], target: int) -> int:
+        left, right = 0, len(nums)
+        while left < right:
+            mid = left + (right - left) // 2
+            if nums[mid] == target:
+                return mid
+            elif nums[left] < nums[mid]:
+                if nums[mid] < target < nums[left]:
+                    left = mid + 1
+                else:
+                    right = mid
+            else:
+                if nums[mid] < target < nums[left]:
+                    left = mid + 1  
+                else:
+                    right = mid
+        return -1
+```
+
+#### [81. 搜索旋转排序数组 II](https://leetcode-cn.com/problems/search-in-rotated-sorted-array-ii/)
+核心 if nums[mid] == nums[left]: left += 1
+```python
+class Solution:
+    def search(self, nums: List[int], target: int) -> bool:
+        left, right = 0, len(nums)
+        while left < right:
+            mid = left + (right - left) // 2
+            if nums[mid] == target:
+                return True
+            elif nums[mid] == nums[left]:
+                left += 1
+            elif nums[mid] < nums[left]:
+                if nums[mid] < target:
+                    if nums[left] <= target:
+                        right = mid
+                    else:
+                        left = mid + 1
+                else:
+                    right = mid
+            else:
+                if nums[mid] < target:
+                    left = mid + 1
+                else:
+                    if nums[left] <= target:
+                        right = mid
+                    else:
+                        left = mid + 1
+        return False
+```
+#### [153. 寻找旋转排序数组中的最小值](https://leetcode-cn.com/problems/find-minimum-in-rotated-sorted-array/)
+注意将mid前置，以right来判断
+```python
+class Solution:
+    def findMin(self, nums: List[int]) -> int:
+        # right-1 将mid前置
+        left, right = 0, len(nums)-1
+        while left < right:
+            mid = left + (right - left) // 2
+            # 必须与right比较，因为left=mid+1总是比right
+            if nums[mid] > nums[right]:
+                left = mid + 1
+            else:
+                right = mid
+        return nums[left]
+```
+
+#### [154. 寻找旋转排序数组中的最小值 II](https://leetcode-cn.com/problems/find-minimum-in-rotated-sorted-array-ii/)
+核心 if nums[mid] == nums[right]: right = right - 1
+```python
+class Solution:
+    def findMin(self, nums: List[int]) -> int:
+        left, right = 0, len(nums)-1
+        while left < right:
+            mid = left + (right-left)//2
+            if nums[mid] > nums[right]:
+                left = mid + 1
+            elif nums[mid] < nums[right]:
+                right = mid
+            else:
+                right = right - 1
+        return nums[left]
 ```
 
 ## 字符串
@@ -2808,3 +3095,65 @@ T(n) = 2T(n/2) + O(n) --> T(n) = O(nlogn)
 
 二分查找
 T(n) = T(n/2) + O(1) --> T(n) = O(logn)
+
+#### [56. 合并区间](https://leetcode-cn.com/problems/merge-intervals/)
+```python
+class Solution:
+    def merge(self, intervals: List[List[int]]) -> List[List[int]]:
+        if len(intervals) <= 1: return intervals
+        result = []
+        intervals = sorted(intervals, key=lambda ele: (ele[0]))
+        is_not_end = True
+        index = 0
+        while is_not_end:
+            if intervals[index][1] >= intervals[index+1][0]:
+                up_bound = max(intervals[index][1], intervals[index+1][1])
+                low_bound = min(intervals[index][0], intervals[index+1][0])
+                intervals[index+1] = [low_bound, up_bound]
+                intervals.pop(index)
+            else:
+                index += 1
+            if index+1 >= len(intervals):
+                is_not_end = False
+        return intervals
+
+    def merge(self, intervals: List[List[int]]) -> List[List[int]]:
+        intervals.sort(key=lambda x: x[0])
+          merged = []
+          for interval in intervals:
+              # 如果列表为空，或者当前区间与上一区间不重合，直接添加
+              if not merged or merged[-1][1] < interval[0]:
+                  merged.append(interval)
+              else:
+                  # 否则的话，我们就可以与上一区间进行合并
+                  merged[-1][1] = max(merged[-1][1], interval[1])
+          return merged
+```
+
+### 树状数组
+```python
+class FenwickTree:
+  def __init__(self, n):
+    self.size = n
+
+```
+
+### 线段树
+
+### 位操作
+python 中 bin 可以十进制转二进制。二进制"0b"，八进制"0"，十六进制"0x"开头。
+位运算说明
+```python
+x >> y # x 右移 y 位
+x << y # x 左移 y 位
+x & y # 只有 1 and 1 = 1，其他情况位0
+x | y # 只有 0 or 0 = 0，其他情况位1
+~x # 反转操作，对 x 求的每一位求补，结果是 -x - 1
+x ^ y # 或非运算，如果 y 对应位是0，那么结果位取 x 的对应位，如果 y 对应位是1，取 x 对应位的补
+```
+
+向右移1位可以看成除以2，向左移一位可以看成乘以2。移动n位可以看成乘以或者除以2的n次方。
+```python
+8 >> 2 <=> 8 / 2 / 2 <=> 0b1000 >> 2 = 0b10 = 2
+8 << 2 <=> 8 * 2 * 2 <=> 0b1000 << 2 = 0b100000 = 32
+```
