@@ -4,28 +4,44 @@
 
 FLOPS：floating point operations per second的缩写，每秒浮点运算次数，理解为计算速度。是一个衡量硬件性能的指标。
 
-FLOPs：floating point operations的缩写（s表复数），浮点运算数，理解为计算量。可以用来衡量算法/模型的复杂度。
+`FLOPs`：floating point operations的缩写（s表复数），浮点运算数，理解为计算量。可以用来衡量算法/模型的复杂度。
 
-### FLOPs 计算公式
+## 普通卷积层
+### FLOPs 计算
 
-不考虑bias，只考虑滑动窗口中的k * k此乘法与k * k-1次加法运算 (batch size = 1)
+`不考虑bias`，只考虑滑动窗口中的$k_h * k_w * c_{in-channel}$次乘法与$k_h * k_w * c_{in-channel} - 1$次加法运算 (batch size = 1)。 H, W 是feature map 的 高宽。
 
-$$ (2 * k^2 * c_{in-channel} - 1) * h_{out} * w_{out} * c_{out-channel} $$
+$$ (2 * k_h * k_w * c_{in-channel} - 1) * H_{out} * W_{out} * c_{out-channel} $$
 
-<img src="http://latex.codecogs.com/gif.latex?$$&space;(2&space;*&space;k^2&space;*&space;c_{in-channel}&space;-&space;1)&space;*&space;h_{out}&space;*&space;w_{out}&space;*&space;c_{out-channel}&space;$$" title="$$ (2 * k^2 * c_{in-channel} - 1) * h_{out} * w_{out} * c_{out-channel} $$" />
+`考虑bias`，z在上面的基础上 * 1的融合运算(img2col) + bias, 于是多了2次运算-1变+1
 
-考虑bias，z在上面的基础上 * 1 + bias
+$$ (2 * k_h * k_w * c_{in-channel} + 1) * H_{out} * W_{out} * c_{out-channel} $$
 
-$$ (2 * k^2 * c_{in-channel} + 1) * h_{out} * w_{out} * c_{out-channel} $$
+`tf.profiler.profile` 提供的FLOPs计算API
 
-<img src="http://latex.codecogs.com/gif.latex?$$&space;(2&space;*&space;k^2&space;*&space;c_{in-channel}&space;&plus;&space;1)&space;*&space;h_{out}&space;*&space;w_{out}&space;*&space;c_{out-channel}&space;$$" title="$$ (2 * k^2 * c_{in-channel} + 1) * h_{out} * w_{out} * c_{out-channel} $$" />
+$$ (2 * k_h * k_w * c_{in-channel}) * H_{out} * W_{out} * c_{out-channel} $$
+$$ 2 * param * H_{out} * W_{out} $$
 
-tf.profiler.profile 提供的FLOPs计算API
+### Params 参数计算
+`不考虑bias`
+$$ k_h * k_w * c_{in-channel} * c_{out-channel} $$
 
-$$ (2 * k^2 * c_{in-channel}) * h_{out} * w_{out} * c_{out-channel} $$
+`考虑bias`
+$$ (k_h * k_w * c_{in-channel} + 1) * c_{out-channel} $$
 
-<img src="http://latex.codecogs.com/gif.latex?$$&space;(2&space;*&space;k^2&space;*&space;c_{in-channel})&space;*&space;h_{out}&space;*&space;w_{out}&space;*&space;c_{out-channel}&space;$$" title="$$ (2 * k^2 * c_{in-channel}) * h_{out} * w_{out} * c_{out-channel} $$" />
+## depthwise separable conv.
+### FLOPs 计算
+按mobilenetv2论文里的写法 忽略了bias
+$$ (2 * k_h * k_w + c_{out-channel}) * H_{out} * W_{out} * c_{in-channel} $$
 
+与普通卷积相比(忽略bias)计算量FLOPs
+$$ \frac{k_h * k_w + c_{out-channel}}{k_h * k_w * c_{out-channel}} $$
+### Params 计算
+`不考虑bias`
+$$ k_h * k_w * c_{in-channel} + 1 * 1 * c_{in-channel} * c_{out-channel} $$
+
+与普通卷积相比(不考虑bias)参数量
+$$ \frac{1}{c_{out-channel}} + \frac{1}{k_h * k_w} $$
 
 ### 简单的前向传播卷积实现
 ```python

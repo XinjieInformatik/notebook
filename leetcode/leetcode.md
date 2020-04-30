@@ -1725,6 +1725,20 @@ class Solution:
         return result
 ```
 ### 杂
+#### [406. 根据身高重建队列](https://leetcode-cn.com/problems/queue-reconstruction-by-height/)
+重点：高的可以忽视前面低的人
+```python
+class Solution:
+    def reconstructQueue(self, people: List[List[int]]) -> List[List[int]]:
+        # 从大往小贪心排
+        people = sorted(people, key=lambda ele: (-ele[0], ele[1]))
+        result = []
+        for item in people:
+            index = item[1]
+            result.insert(index,item)
+        return result
+```
+
 #### [58. 最后一个单词的长度](https://leetcode-cn.com/problems/length-of-last-word)
 ```python
 class Solution:

@@ -1930,6 +1930,36 @@ class Solution:
 #### [140. 单词拆分 II](https://leetcode-cn.com/problems/word-break-ii/)
 https://leetcode-cn.com/problems/word-break-ii/solution/pythonji-yi-hua-dfsjian-zhi-90-by-mai-mai-mai-mai-/ TODO: 再做
 
+#### [473. 火柴拼正方形]()
+```python
+class Solution:
+    def makesquare(self, nums: List[int]) -> bool:
+        total = sum(nums)
+        if total % 4 != 0: return False
+        target = total//4
+        nums.sort(reverse=True)
+        memo = {}
+        def dfs(nums, consum, cnt):
+            if not nums:
+                if cnt == 4: return True
+                return False
+            if (nums, consum, cnt) in memo:
+                return memo[(nums, consum, cnt)]
+            for i in range(len(nums)):
+                if consum + nums[i] == target:
+                    if dfs(nums[:i] + nums[i+1:], 0, cnt + 1):
+                        memo[(nums, consum, cnt)] = True
+                        return True
+                elif consum + nums[i] < target:
+                    if dfs(nums[:i]+nums[i+1:], consum + nums[i], cnt):
+                        memo[(nums, consum, cnt)] = True
+                        return True
+                else: break
+            memo[(nums, consum, cnt)] = False
+            return False
+        nums = tuple(nums)
+        return dfs(nums, 0, 0)
+```
 #### [365. 水壶问题](https://leetcode-cn.com/problems/water-and-jug-problem/)
 ```python
 class Solution:
