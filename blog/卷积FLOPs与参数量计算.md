@@ -10,67 +10,67 @@ FLOPS：floating point operations per second的缩写，每秒浮点运算次数
 ### FLOPs 计算
 
 `不考虑bias`，只考虑滑动窗口中的$k_h * k_w * c_{in-channel}$次乘法与$k_h * k_w * c_{in-channel} - 1$次加法运算 (batch size = 1)。 H, W 是feature map 的 高宽。
-
-$$% (2 * k_h * k_w * c_{in-channel} - 1) * H_{out} * W_{out} * c_{out-channel} $$
-
+<!--
+$$ (2 * k_h * k_w * c_{in-channel} - 1) * H_{out} * W_{out} * c_{out-channel} $$
+-->
 ![20200430_102656_30](assets/20200430_102656_30.png)
 
 `考虑bias`，z在上面的基础上 * 1的融合运算(img2col) + bias, 于是多了2次运算-1变+1
-
-$$% (2 * k_h * k_w * c_{in-channel} + 1) * H_{out} * W_{out} * c_{out-channel} $$
-
+<!--
+$$ (2 * k_h * k_w * c_{in-channel} + 1) * H_{out} * W_{out} * c_{out-channel} $$
+-->
 ![20200430_102714_54](assets/20200430_102714_54.png)
 
 `tf.profiler.profile` 提供的FLOPs计算API
-
-$$% (2 * k_h * k_w * c_{in-channel}) * H_{out} * W_{out} * c_{out-channel} $$
-
+<!--
+$$ (2 * k_h * k_w * c_{in-channel}) * H_{out} * W_{out} * c_{out-channel} $$
+-->
 ![20200430_103107_82](assets/20200430_103107_82.png)
-
-$$% 2 * param * H_{out} * W_{out} $$
-
+<!--
+$$ 2 * param * H_{out} * W_{out} $$
+-->
 ![20200430_103128_99](assets/20200430_103128_99.png)
 
 ### Params 参数计算
 
 `不考虑bias`
-
-$$% k_h * k_w * c_{in-channel} * c_{out-channel} $$
-
+<!--
+$$ k_h * k_w * c_{in-channel} * c_{out-channel} $$
+-->
 ![20200430_103154_34](assets/20200430_103154_34.png)
 
 `考虑bias`
-
-$$% (k_h * k_w * c_{in-channel} + 1) * c_{out-channel} $$
-
+<!--
+$$ (k_h * k_w * c_{in-channel} + 1) * c_{out-channel} $$
+-->
 ![20200430_103214_14](assets/20200430_103214_14.png)
 
 ## Depthwise separable conv.
 ### FLOPs 计算
 
 按mobilenetv2论文里的写法 忽略了bias
-
-$$% (2 * k_h * k_w + c_{out-channel}) * H_{out} * W_{out} * c_{in-channel} $$
-
+<!--
+$$ (2 * k_h * k_w + c_{out-channel}) * H_{out} * W_{out} * c_{in-channel} $$
+-->
 ![20200430_103302_77](assets/20200430_103302_77.png)
 
 与普通卷积相比(忽略bias)计算量FLOPs
-
-$$% \frac{k_h * k_w + c_{out-channel}}{k_h * k_w * c_{out-channel}} $$
-
+<!--
+$$ \frac{k_h * k_w + c_{out-channel}}{k_h * k_w * c_{out-channel}} $$
+-->
 ![20200430_103337_12](assets/20200430_103337_12.png)
 
 ### Params 计算
 `不考虑bias`
-
-$$% k_h * k_w * c_{in-channel} + 1 * 1 * c_{in-channel} * c_{out-channel} $$
-
+<!--
+$$ k_h * k_w * c_{in-channel} + 1 * 1 * c_{in-channel} * c_{out-channel} $$
+-->
 ![20200430_103359_82](assets/20200430_103359_82.png)
 
 与普通卷积相比(不考虑bias)参数量
-
-$$% \frac{1}{c_{out-channel}} + \frac{1}{k_h * k_w} $$
-
+<!--
+$$ \frac{1}{c_{out-channel}} + \frac{1}{k_h * k_w} $$
+-->
 ![20200430_103414_78](assets/20200430_103414_78.png)
 
 ### 简单的前向传播卷积实现
