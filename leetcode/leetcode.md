@@ -88,6 +88,109 @@ class Solution:
 
         return result
 ```
+#### [496. 下一个更大元素 I](https://leetcode-cn.com/problems/next-greater-element-i/)
+```python
+class Solution:
+    def nextGreaterElement(self, nums1: List[int], nums2: List[int]) -> List[int]:
+        memo = {}
+        stack = []
+        # 维护递减的单调栈
+        for num in nums2:
+            while stack and num > stack[-1]:
+                val = stack.pop()
+                memo[val] = num
+            stack.append(num)
+
+        result = []
+        for num in nums1:
+            if num in memo:
+                result.append(memo[num])
+            else:
+                result.append(-1)
+
+        return result
+```
+
+#### [503. 下一个更大元素 II](https://leetcode-cn.com/problems/next-greater-element-ii/)
+```python
+class Solution:
+    def nextGreaterElements(self, nums: List[int]) -> List[int]:
+        n = len(nums)
+        result = [-1 for _ in range(n)]
+        nums = nums * 2
+        stack = []
+        for i, num in enumerate(nums):
+            while stack and num > stack[-1][1]:
+                index, val = stack.pop()
+                if index < n:
+                    result[index] = num
+            stack.append((i, num))
+        return result
+```
+
+#### [556. 下一个更大元素 III](https://leetcode-cn.com/problems/next-greater-element-iii/)
+求下一个全排列，一个全部倒序的数没有下一个全排列。
+- 从后往前遍历找到第一个非逆序的数,inv_index。stack 逆序存储一个递增的单调栈
+- 从第一个非逆序的数往后找到第一个大于它的数(可以用二分查找优化)
+- 交换位置，第一个数往后逆序排序，因为已经使用栈，因此不用再逆序了
+见官方题解动画 https://leetcode-cn.com/problems/next-greater-element-iii/solution/xia-yi-ge-geng-da-yuan-su-iii-by-leetcode/
+
+```python
+class Solution:
+    def nextGreaterElement(self, n: int) -> int:
+        str_n = str(n)
+        len_n = len(str_n)
+        stack = []
+        inv_index = None
+        for i in range(len_n-1, -1, -1):
+            val = int(str_n[i])
+            if stack and val < stack[-1]:
+                inv_index = i
+                stack.insert(0, val)
+                break
+            stack.append(val)
+
+        if inv_index != None:
+            ex_index = 0
+            for i in range(1, len(stack)):
+                if stack[i] > stack[0]:
+                    ex_index = i
+                    break
+            stack[ex_index], stack[0] = stack[0], stack[ex_index]
+            str_n_new = str_n[:inv_index] + "".join(map(str, stack))
+            n_new = int(str_n_new)
+            return n_new if n_new < 1<<31 else -1
+        else:
+            return -1
+```
+
+#### [31. 下一个排列](https://leetcode-cn.com/problems/next-permutation/)
+与上一题唯一不同就是原地修改
+```python
+class Solution:
+    def upper_bound(self, arr, left, right, target):
+        while left < right:
+            mid = left + (right-left) // 2
+            if arr[mid] <= target:
+                left = mid + 1
+            else:
+                right = mid
+        return left
+
+    def nextPermutation(self, nums: List[int]) -> None:
+        inv_index = None
+        for i in range(len(nums)-1,0,-1):
+            if nums[i] > nums[i-1]:
+                inv_index = i
+                break
+        if inv_index != None:
+            nums[inv_index:] = sorted(nums[inv_index:])
+            swap_index = self.upper_bound(nums, inv_index, len(nums), nums[inv_index-1])
+            nums[inv_index-1], nums[swap_index] = nums[swap_index], nums[inv_index-1]
+        else:
+            nums.sort()
+```
+
 #### [42. 接雨水](https://leetcode-cn.com/problems/trapping-rain-water/)
 超时
 ```python
@@ -132,12 +235,36 @@ class Solution:
             stack.append(index)
         return water_count
 ```
+#### [85. 最大矩形](https://leetcode-cn.com/problems/maximal-rectangle/)
+```python
+class Solution:
+    def maximalRectangle(self, matrix: List[List[str]]) -> int:
+        rows = len(matrix)
+        if rows == 0: return 0
+        cols = len(matrix[0])
+        heights = [0] * (cols+2)
+        max_area = 0
+        for row in range(rows):
+            stack = [0]
+            for col in range(cols+2):
+                if col < cols:
+                    if matrix[row][col] == "1":
+                        heights[col+1] += 1
+                    else:
+                        heights[col+1] = 0
+                while heights[col] < heights[stack[-1]]:
+                    cur_h = heights[stack.pop()]
+                    cur_w = col - stack[-1] - 1
+                    max_area = max(max_area, cur_h * cur_w)
+                stack.append(col)
+        return max_area
+```
 
 ## 堆
 #### [347. 前 K 个高频元素](https://leetcode-cn.com/problems/top-k-frequent-elements)
 这题是对**堆，优先队列**很好的练习，因此有必要自己用python实现研究一下。**堆 处理海量数据的topK，分位数**非常合适，**优先队列**应用在元素优先级排序，比如本题的频率排序非常合适。与基于比较的排序算法 时间复杂度**O(nlogn)** 相比, 使用**堆，优先队列**复杂度可以下降到 **O(nlogk)**,在总体数据规模 n 较大，而维护规模 k 较小时，时间复杂度优化明显。
 **堆，优先队列**的本质其实就是个完全二叉树，有其下重要性质
-1. 父节点index为 (i-1) // 2
+1. 父节点index为i. (子节点index-1) // 2
 2. 左子节点index为 2*i + 1
 3. 右子节点index为 2*i + 2
 4. 大顶堆中每个父节点大于子节点，小顶堆每个父节点小于子节点
@@ -191,7 +318,7 @@ class Solution:
                 else: break # 如果到这里没乱序，不用再检查后续子节点
             arr[root] = root_val
 
-        # 注意构造规模为k的堆, 时间复杂度O(n)，因为堆的规模是从0开始增长的
+        # 注意构造规模为k的堆, 时间复杂度O(k)，因为堆的规模是从0开始增长的
         freq_list = list(freq_count.items())
         min_heap = []
         for i in range(k):
@@ -208,15 +335,15 @@ class Solution:
         return [item[0] for item in min_heap]
 ```
 ```python
-heapq 构造小顶堆， 若从大到小输出heappush负数
+heapq 构造小顶堆, 若从大到小输出, heappush(-val)
 class Solution:
     def topKFrequent(self, nums: List[int], k: int) -> List[int]:
         import heapq
         from collections import Counter
 
-        feuq = Counter(nums)
+        freq = Counter(nums)
         heap = []
-        for key, val in feuq.items():
+        for key, val in freq.items():
             heapq.heappush(heap, (-val, key))
         result = []
         for _ in range(k):
@@ -2413,6 +2540,31 @@ class Solution:
             result.append(res)
         return result
 ```
+### 二分估计查找
+下面两题用的是二分估计查找的思路，数组并不有序，但是可以通过mid去计算基于mid下k,m的估计值，与实际值比较，
+收紧区间，达到查找的目的。典型的特点是，[left,right]是值区间，而不是index区间。
+####　[668. 乘法表中第k小的数](https://leetcode-cn.com/problems/kth-smallest-number-in-multiplication-table/)
+这题没想到可以用二分，加了个判断可以快很多。 mid // n 可以定位mid所在行之前的行数，计数count += mid//n * n , 然后从mid//n + 1 开始遍历即可
+```python
+class Solution:
+    def findKthNumber(self, m: int, n: int, k: int) -> int:
+        left, right = 1, m*n
+        while left < right:
+            mid = left + (right-left)//2
+            count = 0
+            # 减少遍历次数
+            start = mid // n
+            count += start * n
+            for i in range(start+1, m+1):
+                # 统计的个数不能超过范围n,所以取min
+                # count += min(mid // i, n)
+                count += mid//i
+            if count < k:
+                left = mid + 1
+            else:
+                right = mid
+        return left
+```
 
 #### [LCP 12. 小张刷题计划](https://leetcode-cn.com/problems/xiao-zhang-shua-ti-ji-hua/)
 ```python
@@ -2444,29 +2596,6 @@ class Solution:
             else:
                 up_bound = mid
         return low_bound
-```
-
-[668. 乘法表中第k小的数](https://leetcode-cn.com/problems/kth-smallest-number-in-multiplication-table/)
-这题没想到可以用二分，加了个判断可以快很多。 mid // n 可以定位mid所在行之前的行数，计数count += mid//n * n , 然后从mid//n + 1 开始遍历即可
-```python
-class Solution:
-    def findKthNumber(self, m: int, n: int, k: int) -> int:
-        left, right = 1, m*n
-        while left < right:
-            mid = left + (right-left)//2
-            count = 0
-            # 减少遍历次数
-            start = mid // n
-            count += start * n
-            for i in range(start+1, m+1):
-                # 统计的个数不能超过范围n,所以取min
-                # count += min(mid // i, n)
-                count += mid//i
-            if count < k:
-                left = mid + 1
-            else:
-                right = mid
-        return left
 ```
 
 #### [69. x 的平方根](https://leetcode-cn.com/problems/sqrtx/)
@@ -3170,4 +3299,30 @@ x ^ y # 或非运算，如果 y 对应位是0，那么结果位取 x 的对应�
 ```python
 8 >> 2 <=> 8 / 2 / 2 <=> 0b1000 >> 2 = 0b10 = 2
 8 << 2 <=> 8 * 2 * 2 <=> 0b1000 << 2 = 0b100000 = 32
+```
+
+#### [318. 最大单词长度乘积](https://leetcode-cn.com/problems/maximum-product-of-word-lengths/)
+单词仅包含小写字母，可以使用 26 个字母的位掩码对单词的每个字母处理，判断是否存在某个字母。如果单词中存在字母 a，则将位掩码的第一位设为 1，否则设为 0。如果单词中存在字母 b，则将位掩码的第二位设为 1，否则设为 0。依次类推，一直判断到字母 z。
+```python
+class Solution:
+    def maxProduct(self, words: List[str]) -> int:
+        n = len(words)
+        masks = [0] * n
+        lens = [0] * n
+        bit_number = lambda ch : ord(ch) - ord('a')
+
+        for i in range(n):
+            bitmask = 0
+            for ch in words[i]:
+                # 将字母对应位设置为1
+                bitmask |= 1 << bit_number(ch)
+            masks[i] = bitmask
+            lens[i] = len(words[i])
+
+        max_val = 0
+        for i in range(n):
+            for j in range(i + 1, n):
+                if masks[i] & masks[j] == 0:
+                    max_val = max(max_val, lens[i] * lens[j])
+        return max_val
 ```
