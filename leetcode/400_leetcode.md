@@ -3550,3 +3550,24 @@ class Solution:
 
         return fhead.next
 ```
+
+## Tree
+#### [98. 验证二叉搜索树](https://leetcode-cn.com/problems/validate-binary-search-tree/)
+递归写法
+```python
+class Solution:
+    def isValidBST(self, root: TreeNode) -> bool:
+        def helper(node, lower, upper):
+            if node == None:
+                return True
+            val = node.val
+            if val <= lower or val >= upper:
+                return False
+            if not helper(node.left, lower, val):
+                return False
+            if not helper(node.right, val, upper):
+                return False
+            return True
+
+        return helper(root, float("-inf"), float("inf"))
+```

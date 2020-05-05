@@ -578,6 +578,55 @@ class Solution:
 ```
 参看 [官方题解](https://leetcode-cn.com/problems/jump-game/solution/tiao-yue-you-xi-by-leetcode/) 四种方案思路很清楚
 
+#### [45. 跳跃游戏 II](https://leetcode-cn.com/problems/jump-game-ii/)
+
+```python
+from collections import deque
+class Solution:
+    def jump(self, nums: List[int]) -> int:
+        """bfs超时"""
+        # if len(nums) <= 1: return 0
+        # queue = deque([[0, nums[0]]])
+        # visited = [0 for _ in range(len(nums))]
+        # level = 0
+        # while queue:
+        #     level += 1
+        #     for _ in range(len(queue)):
+        #         index, top = queue.pop()
+        #         for next_index in range(index+top, index, -1):
+        #             if next_index >= len(nums)-1:
+        #                 return level
+        #             if not visited[next_index]:
+        #                 queue.appendleft([next_index, nums[next_index]])
+        # return 0
+        """贪心"""
+        # if len(nums) <= 1: return 0
+        # p, longest, longest_index, cnt, reach_list = 0, 0, 0, 0, []
+        # while p < len(nums):
+        #     reach_list = list(range(p+1, p+nums[p]+1))
+        #     if reach_list[-1] >= len(nums)-1:
+        #         return cnt + 1
+        #     for index in reach_list:
+        #         if index+nums[index] > longest:
+        #             longest = index+nums[index]
+        #             longest_index = index
+        #         if longest >= len(nums)-1:
+        #             return cnt + 2
+        #     cnt += 1
+        #     p = longest_index
+        # return -1
+        """贪心"""
+        n = len(nums)
+        maxPos, end, step = 0, 0, 0
+        for i in range(n - 1):
+            if maxPos >= i:
+                maxPos = max(maxPos, i + nums[i])
+                if i == end:
+                    end = maxPos
+                    step += 1
+        return step
+```
+
 #### [70. 爬楼梯](https://leetcode-cn.com/problems/climbing-stairs/)
 动态规划, 它的最优解可以从其子问题的最优解来有效地构建。
 
@@ -682,6 +731,68 @@ class Solution:
         return max(helper(nums[1:]), helper(nums[:-1]))
 ```
 
+#### [53. 最大子序和](https://leetcode-cn.com/problems/maximum-subarray/)
+```python
+class Solution:
+    def maxSubArray(self, nums: List[int]) -> int:
+        n = len(nums)
+        prev = 0
+        max_sum = min(nums)
+        for i in range(n):
+            cur = max(nums[i], prev+nums[i])
+            max_sum = max(max_sum, cur)
+            prev = cur
+        return max_sum
+```
+
+#### [300. 最长上升子序列](https://leetcode-cn.com/problems/longest-increasing-subsequence/)
+```python
+class Solution:
+    def lengthOfLIS(self, nums: List[int]) -> int:
+        """O(n^2)双重循环遍历,遍历中更新povit,维护povit_prev"""
+        n = len(nums)
+        max_len = 0
+        for i in range(n):
+            cnt = 1
+            povit = povit_prev = nums[i]
+            for j in range(i+1, n):
+                if povit_prev < nums[j] < povit:
+                    povit = nums[j]
+                elif nums[j] > povit:
+                    povit_prev = povit
+                    povit = nums[j]
+                    cnt += 1
+            max_len = max(max_len, cnt)
+            if max_len >= (n-i): break
+        return max_len
+```
+最长上升子序列决定了可以在子序列里二分查找！
+```python
+class Solution:
+    def lengthOfLIS(self, nums: List[int]) -> int:
+        """O(nlogn). 用dp存储遍历到i的最长上升子序列，并二分查找更新dp,
+        如果index大于lenth,拓展lenth"""
+        def low_bound(arr, right, target):
+            left, right = 0, right
+            while left < right:
+                mid = left + (right-left)//2
+                if arr[mid] < target:
+                    left = mid + 1
+                else:
+                    right = mid
+            return left
+
+        dp = [0] * len(nums)
+        lenth = 0
+        for num in nums:
+            index = low_bound(dp, lenth, num)
+            if index < lenth:
+                dp[index] = num
+            else:
+                dp[index] = num
+                lenth += 1
+        return lenth
+```
 
 #### [152. 乘积最大子序列](https://leetcode-cn.com/problems/maximum-product-subarray/)
 ```python
