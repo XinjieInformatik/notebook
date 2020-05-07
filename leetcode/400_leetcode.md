@@ -3571,3 +3571,175 @@ class Solution:
 
         return helper(root, float("-inf"), float("inf"))
 ```
+
+#### [100. 相同的树](https://leetcode-cn.com/problems/same-tree/)
+同时遍历两个节点，不相同return False 退出递归，相同return True,继续检查
+```python
+class Solution:
+    def isSameTree(self, p: TreeNode, q: TreeNode) -> bool:
+        def helper(node1, node2):
+            if node1 == None and node2 == None:
+                return True
+            elif node1 == None or node2 == None:
+                return False
+            if node1.val != node2.val:
+                return False
+            if not helper(node1.left, node2.left):
+                return False
+            if not helper(node1.right, node2.right):
+                return False
+            return True
+
+        return helper(p, q)
+```
+
+#### [101. 对称二叉树](https://leetcode-cn.com/problems/symmetric-tree/)
+在同一棵树的两个节点上递归，分左右走
+对称条件 1.左右节点值相同 2.左子节点左，右子节点右相同 3.左子节点右，右子节点左相同
+如果该节点None return, 检查节点处比检查孩子节点处方便很多
+```python
+class Solution:
+    def isSymmetric(self, root: TreeNode) -> bool:
+        def helper(node_left, node_right):
+            if not node_left and not node_right:
+                return True
+            elif not node_left or not node_right:
+                return False
+            if node_left.val == node_right.val:
+                if helper(node_left.left, node_right.right) and helper(node_left.right, node_right.left):
+                    return True
+            return False
+
+        return helper(root, root)
+```
+
+#### [226. 翻转二叉树](https://leetcode-cn.com/problems/invert-binary-tree/)
+前序遍历，交换左右子节点
+```python
+class Solution:
+    def invertTree(self, root: TreeNode) -> TreeNode:
+        def helper(node):
+            if node:
+                traversal(node.left)
+                traversal(node.right)
+                node.left, node.right = node.right, node.left
+        helper(root)
+        return root
+```
+
+#### [572. 另一个树的子树](https://leetcode-cn.com/problems/subtree-of-another-tree/)
+```python
+class Solution:
+    def isSubtree(self, s: TreeNode, t: TreeNode) -> bool:
+        def same_tree(node1, node2):
+            """ 如果遇到不同的返回，直到遍历完才返回True """
+            if node1 == None and node2 == None:
+                return True
+            elif node1 == None or node2 == None:
+                return False
+            if node1.val != node2.val:
+                return False
+            if not same_tree(node1.left, node2.left):
+                return False
+            if not same_tree(node1.right, node2.right):
+                return False
+            return True
+
+        def helper(node1, node2):
+            """ same_tree返回True，返回，不再遍历后面的节点。
+            same_tree返回False，继续往下检查 """
+            if node1 == None or node2 == None:
+                return False
+            if node1.val == node2.val and same_tree(node1, node2):
+                return True
+            if helper(node1.left, node2):
+                return True
+            if helper(node1.right, node2):
+                return True
+            return False
+
+        return helper(s, t)
+```
+
+#### [257. 二叉树的所有路径](https://leetcode-cn.com/problems/binary-tree-paths/)
+深度优先，广度优先均可
+1. 注意这里res的缓存作用，到叶子节点记录当前path
+2. 到叶子节点为止，用node.left .right == None 来判断
+3.
+```python
+class Solution:
+    def binaryTreePaths(self, root):
+        if not root: return []
+        paths = []
+        next_sign = "->"
+        def helper(node, res):
+            if node.left == None and node.right == None:
+                paths.append(res)
+                return
+            if node.left:
+                helper(node.left, res+next_sign+str(node.left.val))
+            if node.right:
+                helper(node.right, res+next_sign+str(node.right.val))
+        helper(root, str(root.val))
+        return paths
+```
+
+#### [112. 路径总和](https://leetcode-cn.com/problems/path-sum/)
+注意和257一样，到叶子节点的判断要使用 node.left .right == None
+并且都通过node.left .right 限制helper的进入。不要使用两棵树elif的写法
+```python
+class Solution:
+    def hasPathSum(self, root: TreeNode, sum: int) -> bool:
+        def helper(node, res):
+            if node.left == None and node.right == None:
+                return res+node.val==sum
+            if node.left and helper(node.left, res+node.val):
+                return True
+            if node.right and helper(node.right, res+node.val):
+                return True
+            return False
+
+        if not root: return False
+        return helper(root, 0)
+```
+
+#### [113. 路径总和 II](https://leetcode-cn.com/problems/path-sum-ii/)
+注意 if not root: return [] 的判断，注意 res += [node.val]。
+```python
+class Solution:
+    def pathSum(self, root: TreeNode, sum_: int) -> List[List[int]]:
+        paths = []
+        def helper(node, res):
+            if node.left == None and node.right == None:
+                res += [node.val]
+                if sum(res) == sum_:
+                    paths.append(res)
+                return
+            if node.left:
+                helper(node.left, res+[node.val])
+            if node.right:
+                helper(node.right, res+[node.val])
+
+        if not root: return []
+        helper(root, [])
+        return paths
+```
+
+#### [129. 求根到叶子节点数字之和](https://leetcode-cn.com/problems/sum-root-to-leaf-numbers/)
+和路径之和112，113一样
+```python
+class Solution:
+    def sumNumbers(self, root: TreeNode) -> int:
+        results = []
+        def helper(node, s):
+            if not node.left and not node.right:
+                s += str(node.val)
+                results.append(int(s))
+            if node.left:
+                helper(node.left, s+str(node.val))
+            if node.right:
+                helper(node.right, s+str(node.val))
+        if not root: return 0
+        helper(root, "")
+        return sum(results)
+```

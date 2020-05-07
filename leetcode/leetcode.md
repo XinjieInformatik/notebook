@@ -2772,7 +2772,7 @@ class Solution:
                     right = mid
             else:
                 if nums[mid] < target < nums[left]:
-                    left = mid + 1  
+                    left = mid + 1
                 else:
                     right = mid
         return -1
@@ -3436,4 +3436,26 @@ class Solution:
                 if masks[i] & masks[j] == 0:
                     max_val = max(max_val, lens[i] * lens[j])
         return max_val
+```
+
+#### [983. 最低票价](https://leetcode-cn.com/problems/minimum-cost-for-tickets/)
+动态规划，dp 长度为days[-1]+1, 值为0，对于days里的每一天，状态只可能从1，7，30天前转移过来。
+在三种状态下取最小的cost即可
+```python
+class Solution:
+    def mincostTickets(self, days: List[int], costs: List[int]) -> int:
+        dp = [0] * (days[-1]+1)
+        day_index = 0
+        for i in range(days[-1]):
+            i += 1
+            if i != days[day_index]:
+                dp[i] = dp[i-1]
+                continue
+            else:
+                day_index += 1
+                dp[i] = min(
+                            dp[max(0,i-1)]+costs[0],
+                            dp[max(0,i-7)]+costs[1],
+                            dp[max(0,i-30)]+costs[2])
+        return dp[-1]
 ```
