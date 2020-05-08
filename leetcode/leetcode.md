@@ -854,7 +854,8 @@ class Solution:
 ```
 
 #### [221. 最大正方形](https://leetcode-cn.com/problems/maximal-square/)
-
+用二位dp存储最大边长信息，当前网格的值为min(dp[左上，左，上])，遍历记录最大边长即可
+注意对越界的限制
 $$
 \mathrm{dp}(i, j)=\min (\mathrm{dp}(i-1, j), \mathrm{dp}(i-1, j-1), \mathrm{dp}(i, j-1))+1
 $$
@@ -864,22 +865,21 @@ $$
 ```python
 class Solution:
     def maximalSquare(self, matrix: List[List[str]]) -> int:
-        h = len(matrix)
-        try:
-            w = len(matrix[0])
-        except:
-            return 0
-        dp = [[0] * w for i in range(h)]
-        max_value = 0
-        for i in range(h):
-            for j in range(w):
-                if matrix[i][j] == '1':
-                    top = 0 if i==0 else dp[i-1][j]
-                    left = 0 if j==0 else dp[i][j-1]
-                    top_left = 0 if (i==0 and j==0) else dp[i-1][j-1]
-                    dp[i][j] = min(top_left, top, left) + 1
-                    max_value = dp[i][j] if dp[i][j] > max_value else max_value
-        return max_value**2
+        rows = len(matrix)
+        if not rows: return 0
+        cols = len(matrix[0])
+        dp = [[0]*cols for i in range(rows)]
+        max_area = 0
+        for i in range(rows):
+            for j in range(cols):
+                if matrix[i][j] == "1":
+                    topleft = dp[i-1][j-1] if i-1>=0 and j-1>=0 else 0
+                    top = dp[i-1][j] if i-1>=0 else 0
+                    left = dp[i][j-1] if j-1>=0 else 0
+                    dp[i][j] = min(topleft, top, left) + 1
+                    max_area = max(max_area, dp[i][j])
+        # print(dp)
+        return max_area**2
 ```
 
 #### [139. 单词拆分](https://leetcode-cn.com/problems/word-break/)

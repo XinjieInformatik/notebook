@@ -3743,3 +3743,118 @@ class Solution:
         helper(root, "")
         return sum(results)
 ```
+
+#### [111. 二叉树的最小深度](https://leetcode-cn.com/problems/minimum-depth-of-binary-tree/)
+1. bfs 广度优先搜索，遇到叶子节点，返回当前level. 比dfs会快一点，提前return
+```python
+from collections import deque
+class Solution:
+    def minDepth(self, root: TreeNode) -> int:
+        def bfs(node):
+            queue = deque([node])
+            level = 0
+            while queue:
+                level += 1
+                for _ in range(len(queue)):
+                    top = queue.pop()
+                    if not top.left and not top.right:
+                        return level
+                    if top.left:
+                        queue.appendleft(top.left)
+                    if top.right:
+                        queue.appendleft(top.right)
+            return -1
+        if not root: return 0
+        return bfs(root)
+```
+2. dfs 深度优先搜索，返回左右节点的min(depth)
+注意只有单边节点的node是非法的，depth记为inf，不做统计
+```python
+from collections import deque
+class Solution:
+    def minDepth(self, root: TreeNode) -> int:
+        def dfs(node, depth):
+            if node.left == None and node.right == None:
+                return depth+1
+            depth_left, depth_right = float("inf"), float("inf")
+            if node.left:
+                depth_left = dfs(node.left, depth+1)
+            if node.right:
+                depth_right = dfs(node.right, depth+1)
+            return min(depth_left, depth_right)
+        if not root: return 0
+        return dfs(root, 0)
+```
+
+#### [104. 二叉树的最大深度](https://leetcode-cn.com/problems/maximum-depth-of-binary-tree/)
+这道题和111基本一样，不同的是求最大深度，因此bfs遍历完这个树，返回最大层级，dfs取-float("inf")
+特别要注意的是，求最大深度不用像最小深度一样，严格到叶节点就返回，可以到None再返回，因此dfs
+有两种写法
+```python
+from collections import deque
+class Solution:
+    def maxDepth(self, root: TreeNode) -> int:
+        def bfs(node):
+            queue = deque([node])
+            level = 0
+            while queue:
+                level += 1
+                for _ in range(len(queue)):
+                    top = queue.pop()
+                    if top.left:
+                        queue.appendleft(top.left)
+                    if top.right:
+                        queue.appendleft(top.right)
+            return level
+        if not root: return 0
+        return bfs(root)
+```      
+```python
+class Solution:
+    def maxDepth(self, root: TreeNode) -> int:
+        def dfs(node, depth):
+            if not node.left and not node.right:
+                return depth+1
+            depth_left, depth_right = -float("inf"), -float("inf")
+            if node.left:
+                depth_left = dfs(node.left, depth+1)
+            if node.right:
+                depth_right = dfs(node.right, depth+1)
+            return max(depth_left, depth_right)
+        if not root: return 0
+        return dfs(root, 0)
+```
+```python
+class Solution:
+    def maxDepth(self, root: TreeNode) -> int:
+        def dfs(node, depth):
+            if not node:
+                return depth
+            depth_left = dfs(node.left, depth+1)
+            depth_right = dfs(node.right, depth+1)
+            return max(depth_left, depth_right)
+        if not root: return 0
+        return dfs(root, 0)
+```
+
+#### [110. 平衡二叉树](https://leetcode-cn.com/problems/balanced-binary-tree/)
+注意判断 if not is_left_balance的位置，紧接着dfs,如果已经失平衡，就不再进入right子树了。
+```python
+class Solution:
+    def isBalanced(self, root: TreeNode) -> bool:
+        """递归获取深度，层层返回时比较左右子树高度差
+        返回值需要统一，不能混合depth与False"""
+        def dfs(node, depth):
+            if not node:
+                return depth, True
+            depth_left, is_left_balance = dfs(node.left, depth+1)
+            if not is_left_balance:
+                return None, False
+            depth_right, is_right_balance = dfs(node.right, depth+1)
+            if not is_right_balance:
+                return None, False
+            return max(depth_left, depth_right), abs(depth_left - depth_right) <= 1
+        if not root: return True
+        max_depth, is_balance = dfs(root, 0)
+        return is_balance
+```
