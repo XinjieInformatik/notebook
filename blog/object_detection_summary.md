@@ -127,3 +127,73 @@ return loss
 torch.nn.init.normal_(layer.weight, mean=0, std=0.01)
 torch.nn.init.constant_(layer.bias, 0)
 ```
+
+#### IoU
+```python
+import numpy as np
+def iou_calculate(bbox1, bbox2):
+    """
+    Args:
+      bbox1: bounding boxes, size [N, 4] (xmin, ymin, xmax, ymax)
+      bbox2: bounding boxes, size [M, 4]
+    Returns:
+      IoU, size [N,M]
+    """
+    if isinstance(bbox1, list): bbox1 = np.array(bbox1)
+    if isinstance(bbox2, list): bbox2 = np.array(bbox2)
+
+    bbox1_area = (bbox1[..., 2] - bbox1[..., 0]) * (bbox1[..., 3] - bbox1[..., 1]) # (N,)
+    bbox2_area = (bbox2[..., 2] - bbox2[..., 0]) * (bbox2[..., 3] - bbox2[..., 1]) # (M,)
+
+    # left_top, right_bottom coordinates iof intersection point
+    lt_coordinate = np.maximum(bbox1[:, np.newaxis, :2], bbox2[:, :2]) # (N, M, 2)
+    rb_coordinate = np.minimum(bbox1[:, np.newaxis, 2:], bbox2[:, 2:]) # (N, M, 2)
+
+    intersection = np.maximum(rb_coordinate-lt_coordinate, 0) # (N, M, 2)
+    inter_area = intersection[..., 0] * intersection[..., 1]  # (N, M)
+    # always boardcast bbox1[:, np.newaxis] to have dim M
+    union_area = bbox1_area[:, np.newaxis] + bbox2_area - inter_area # (N, M)
+    IoU = inter_area / union_area
+    return IoU
+```
+
+#### NMS
+```python
+def nms(bboxes, iou_thresh):
+    """
+    Args:
+      bboxes: np.array. (N, 6) [xmin, ymin, xmax, ymax, score, class]
+    Returns:
+      bboxes_nms: np.array. (N', 6) [xmin, ymin, xmax, ymax, score, class]
+    """
+    classes = bboxes[:, 5]
+    unique_classes = set(classes)
+    bboxes_nms = []
+    for cls in unique_classes:
+        mask = classes == cls
+        cls_bboxes = bboxes[mask]
+        x1, y1 = cls_bboxes[:, 0], cls_bboxes[:, 1]
+        x2, y2 = cls_bboxes[:, 2], cls_bboxes[:, 3]
+        scores = cls_bboxes[:, 4]
+        areas = (x2 - x1) * (y2 - y1)
+        order = scores.argsort()[::-1]
+        keep = []
+        while order.size > 0:
+            i = order[0]
+            keep.append(i)
+            x1_max = np.maximum(x1[i], x1[order[1:]])
+            y1_max = np.maximum(y1[i], y1[order[1:]])
+            x2_max = np.maximum(x2[i], x2[order[1:]])
+            y2_max = np.maximum(y2[i], y2[order[1:]])
+            w = np.maximum(0, x2_max - x1_max)
+            h = np.maximum(0, y2_max - y1_max)
+            inter_area = w * h
+            union_area = areas[i] + areas[order[1:]] - inter_area
+            iou = inter_area / union_area
+            keep_index = np.where(iou <= iou_thresh)[0]
+            order = order[keep_index + 1]
+        keep_bboxes = cls_bboxes[keep]
+        bboxes_nms.append(keep_bboxes)
+    bboxes_nms = np.vstack(bboxes_nms)
+    return bboxes_nms
+```

@@ -1893,6 +1893,45 @@ class Solution:
         return result
 ```
 
+[473. 火柴拼正方形](https://leetcode-cn.com/problems/matchsticks-to-square/)
+```python
+class Solution:
+    def makesquare(self, nums: List[int]) -> bool:
+        sum_val = sum(nums)
+        if sum_val == 0 or sum_val % 4 != 0: return False
+        target = sum_val // 4
+        nums = sorted(nums, reverse=True)
+
+        n = len(nums)
+        visited = [0] * n
+        def dfs(consum, cnt, index):
+            if cnt == 4:
+                return True
+            if consum == target:
+                return dfs(0, cnt+1, 0)
+            if consum > target:
+                return False
+            i = index
+            while i < n:
+                if visited[i]:
+                    i += 1
+                    continue
+                visited[i] = 1
+                if dfs(consum+nums[i], cnt, i): return True
+                # if seach fails, set visited back to 0
+                visited[i] = 0
+                # if dfs in first and last fails, return False
+                if not consum or consum+nums[i] == target: return False
+                # skip same num
+                skip = i
+                while skip < n and nums[skip] == nums[i]:
+                    skip += 1
+                i = skip
+            return False
+
+        return dfs(0,0,0)
+```
+
 #### [207. 课程表](https://leetcode-cn.com/problems/course-schedule)
 ```python
 class Solution:
@@ -2319,39 +2358,79 @@ class Solution:
 
 
 ## 排序
+排序算法测试
+[912. 排序数组](https://leetcode-cn.com/problems/sort-an-array/)
 ### 比较排序
 #### 快速排序
+```
+快排的最差情况什么时候发生？
+1. 已排序
+2. 数值全部相等（已排序的特殊情况）
+
+快排最好的情况是，每次正好中分，复杂度为O(nlogn)。最差情况，复杂度为O(n^2)，退化成冒泡排序
+
+为了尽量避免最差情况的发生，就要尽量使每次选择的pivot为中位数。
+
+一般常用的方法是，对每一个数列都取一次中位数(O(n))，这样总体的快排时间复杂度仍为O(nlogn)。
+
+更为简化的方法是，取头、中、尾的中位数(O(1))作为pivot
+```
+
 ```python
 def qsort(array, l, r):
-    def partition(array, l, r):
-        """单路快排，缺点：当数据有序程度高，递归调用太深"""
-        pivot = array[l]
-        pivot_index = l
-        # 遍历区间，把<pivot的数交换到数组开头
-        for i in range(l+1, r):
-            if array[i] < pivot:
-                pivot_index += 1
-                array[i], array[pivot_index] = array[pivot_index], array[i]
-        array[l], array[pivot_index] = array[pivot_index], array[l]
-        return pivot_index
+    def partition(arr, left, right):
+        pivot_val = arr[left]
+        pivot_i = left
+        for i in range(left+1, right):
+            if arr[i] < pivot_val:
+                pivot_i += 1
+                arr[pivot_i], arr[i] = arr[i], arr[pivot_i]
+        arr[pivot_i], arr[left] = arr[left], arr[pivot_i]
+        return pivot_i
+```
+选择left, right, mid 的中位数作为pivot，避免复杂度退化n^2
+```python
+    def get_median(l_i, r_i, m_i):
+        l_val, r_val, m_val = nums[l_i], nums[r_i], nums[m_i]
+        max_val = max(l_val, r_val, m_val)
+        if l_val == max_val:
+            mid_i = m_i if m_val > r_val else r_i
+        elif r_val == max_val:
+            mid_i = m_i if m_val > l_val else l_i
+        else:
+            mid_i = l_i if l_val > r_val else r_i
+        return mid_i
+
+    def partition(arr, left, right):
+        m_i = left + (right-left)//2
+        median_i = get_median(left, right-1, m_i)
+        pivot_val = arr[median_i]
+        arr[median_i], arr[left] = arr[left], arr[median_i]
+        pivot_i = left
+        for i in range(left+1, right):
+            if arr[i] < pivot_val:
+                pivot_i += 1
+                arr[pivot_i], arr[i] = arr[i], arr[pivot_i]
+        arr[pivot_i], arr[left] = arr[left], arr[pivot_i]
+        return pivot_i
 ```
 ```python
-    def partition_2(array, l, r):
-        """双路快排"""
-        pivot = array[l]
-        p1 = l + 1
-        p2 = r - 1
-        while (p1 <= p2): # 注意是 <= !
+    def partition2(arr, left, right):
+        """双路快排，减少重复元素partition交换次数，无法解决退化n^2"""
+        pivot = arr[left]
+        l = left + 1
+        r = right - 1
+        while (l <= r): # 注意是 <= !
             # 左指针找到大于pivot的数
-            while (p1 < r and array[p1] <= pivot):
-                p1 += 1
+            while (l < right and arr[l] <= pivot):
+                l += 1
             # 右指针找到小于pivot的数
-            while (p2 > l and array[p2] >= pivot):
-                p2 -= 1
-            if p1 < p2:
-                array[p1], array[p2] = array[p2], array[p1]
-        array[l], array[p2] = array[p2], array[l] # p2
-        return p2
+            while (r > left and arr[r] >= pivot):
+                r -= 1
+            if l < r:
+                arr[l], arr[r] = arr[r], arr[l]
+        arr[left], arr[r] = arr[r], arr[left] # 注意是 r
+        return r
 
     if l < r:
         # partition: 交换，使得pivot左边<pivot,右边>=pivot
@@ -2712,7 +2791,8 @@ class Solution:
 #### [69. x 的平方根](https://leetcode-cn.com/problems/sqrtx/)
 ```python
 def mySqrt(x):
-    l = 0; r = x // 2 + 1
+    l = 0
+    r = x // 2 + 1
     while (l < r):
         m = l + (r - l + 1) // 2
         squre = m ** 2

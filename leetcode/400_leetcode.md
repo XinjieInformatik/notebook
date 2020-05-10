@@ -3614,7 +3614,7 @@ class Solution:
 ```
 
 #### [226. 翻转二叉树](https://leetcode-cn.com/problems/invert-binary-tree/)
-前序遍历，交换左右子节点
+后序遍历，交换左右子节点
 ```python
 class Solution:
     def invertTree(self, root: TreeNode) -> TreeNode:
@@ -3858,3 +3858,217 @@ class Solution:
         max_depth, is_balance = dfs(root, 0)
         return is_balance
 ```
+
+#### [124. 二叉树中的最大路径和](https://leetcode-cn.com/problems/binary-tree-maximum-path-sum/)
+因为求的是任意节点到任意节点的最大路径，因此层层向上返回的时候，有三种可能
+1. return node.val + node.left.val
+2. return node.val + node.right.val
+3. return node.val
+
+```python
+class Solution:
+    def maxPathSum(self, root: TreeNode) -> int:
+        max_path = -float("inf")
+        def dfs(node):
+            if not node:
+                return 0
+            # 如果子树返回值小于0则截断
+            left_value = max(0, dfs(node.left))
+            right_value = max(0, dfs(node.right))
+            # node_val有可能只是该node.val或者node.val+left或者node.val+right
+            node_sum = left_value + right_value + node.val
+            # 在函数和类中用nonlocal, 函数和类外用global 申明一下
+            nonlocal max_path
+            max_path = max(max_path, node_sum)
+            # 选择left,right中大的和node一起向上返回，或者只返回node.val
+            # 注意这里是node.val 不是 node_sum
+            return node.val + max(left_value, right_value)
+
+        dfs(root)
+        return max_path
+```
+
+#### [337. 打家劫舍 III](https://leetcode-cn.com/problems/house-robber-iii/submissions/)
+很好的一个题目，链表上的动态规划
+```python
+class Solution:
+    def rob(self, root: TreeNode) -> int:
+        def helper(node):
+            if not node:
+                return 0, 0
+            left, prev1 = helper(node.left)
+            right, prev2 = helper(node.right)
+            steal_this_node = prev1+prev2+node.val
+            not_steal_this_node = left+right
+            max_profit_in_this_node = max(steal_this_node, not_steal_this_node)
+            return max_profit_in_this_node, not_steal_this_node
+        return helper(root)[0]
+```
+
+#### [107. 二叉树的层次遍历 II](https://leetcode-cn.com/problems/binary-tree-level-order-traversal-ii/)
+```python
+from collections import deque
+class Solution:
+    def levelOrderBottom(self, root: TreeNode) -> List[List[int]]:
+        if not root: return []
+        queue = deque([root])
+        result = []
+        level = 0
+        while queue:
+            result.append([])
+            for _ in range(len(queue)):
+                top = queue.pop()
+                result[level].append(top.val)
+                if top.left:
+                    queue.appendleft(top.left)
+                if top.right:
+                    queue.appendleft(top.right)
+            level += 1
+        return result[::-1]
+```
+
+#### [235. 二叉搜索树的最近公共祖先](https://leetcode-cn.com/problems/lowest-common-ancestor-of-a-binary-search-tree/)
+二叉搜索树，左子树小于根，右子树大于根！利用其搜索的性质
+1. 如果p,q均小于根，父节点向左移
+2. 如果p,q均大于根，父节点向右移
+3. 如果p,q一个大于一个小于根，则该父节点是最近的分叉节点
+
+```python
+class Solution:
+    def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
+        def helper(node):
+            min_val = min(p.val, q.val)
+            max_val = max(p.val, q.val)
+            # 如果p,q均小于根，父节点向左移
+            if max_val < node.val:
+                return helper(node.left)
+            # 如果p,q均大于根，父节点向右移
+            elif min_val > node.val:
+                return helper(node.right)
+            # 如果p,q一个大于一个小于根，则该父节点是最近的分叉节点
+            else:
+                return node
+
+        return helper(root)
+```
+#### [236. 二叉树的最近公共祖先](https://leetcode-cn.com/problems/lowest-common-ancestor-of-a-binary-tree/)
+最近公共祖先 = 最近分叉节点 or 父子相连节点。
+若 node 是 p, q 的 最近公共祖先 ，则只可能为以下情况之一：
+1. p 和 q 在 node 的子树中，且分列 node 的 两侧（即分别在左、右子树中）
+2. p = node, 且 q 在 node 的左或右子树中
+3. q = node, 且 p 在 node 的左或右子树中
+
+![20200509_224853_75](assets/20200509_224853_75.png)
+
+因此用后续遍历，
+1. node == None, return None
+2. left == None and right == None, return None
+2. only left == None, return right
+3. only right == None, return right
+4. left != None and right != None, return node
+
+```python
+class Solution:
+    def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
+        def helper(node):
+            # 提前退出
+            if not node:
+                return
+            if node == p or node == q:
+                return node
+            left = helper(node.left)
+            right = helper(node.right)
+            # 后序遍历的操作
+            if not left and not right:
+                return
+            if not left:
+                return right
+            if not right:
+                return left
+            return node
+
+        return helper(root)
+```
+
+#### [面试题07. 重建二叉树](https://leetcode-cn.com/problems/zhong-jian-er-cha-shu-lcof/)
+```python
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
+class Solution:
+    def buildTree(self, preorder: List[int], inorder: List[int]) -> TreeNode:
+        n = len(preorder)
+        # 建立哈希表，实现O(1)查询
+        lookup_table = {inorder[i]: i for i in range(n)}
+        # 递归中维护子树根index与子树区间范围(相对于preorder)
+        def helper(root_i, left, right):
+            # 如果区间相交，return叶子节点的None
+            if left >= right: return
+            root = TreeNode(preorder[root_i])
+            # 查询子树根在中序遍历中的位置
+            in_i = lookup_table[preorder[root_i]]
+            # 左子树root index 根+1
+            root.left = helper(root_i+1, left, in_i)
+            # 右子树root index 根+左子树长度+1
+            root.right = helper(root_i+in_i-left+1, in_i+1, right)
+            # 层层向上返回子树的根
+            return root
+
+        root = helper(0, 0, n)
+        return root
+```
+
+#### [108. 将有序数组转换为二叉搜索树](https://leetcode-cn.com/problems/convert-sorted-array-to-binary-search-tree/)
+```python
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
+class Solution:
+    def sortedArrayToBST(self, nums: List[int]) -> TreeNode:
+        def helper(left, right):
+            if left >= right: return None
+            mid = left + (right-left)//2
+            root = TreeNode(nums[mid])
+            root.left = helper(left, mid)
+            root.right = helper(mid+1, right)
+            return root
+        return helper(0, len(nums))
+```
+
+#### [109. 有序链表转换二叉搜索树](https://leetcode-cn.com/problems/convert-sorted-list-to-binary-search-tree/)
+```python
+class Solution:
+    def sortedListToBST(self, head: ListNode) -> TreeNode:
+        def find_mid(head):
+            prev, slow, fast = None, head, head
+            while fast and fast.next:
+                prev = slow
+                slow = slow.next
+                fast = fast.next.next
+            # 注意要断开slow左侧，不然进入helper后找到同样的mid
+            if prev: prev.next = None
+            return slow
+
+        def helper(node):
+            if not node:
+                return None
+            mid = find_mid(node)
+            root = TreeNode(mid.val)
+            # 对于长度为1的链表，避免进入死循环
+            if mid == node:
+                return root
+            root.left = helper(node)
+            root.right = helper(mid.next)
+            return root
+        return helper(head)
+```
+
+#### 
