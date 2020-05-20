@@ -1148,7 +1148,33 @@ class Solution:
                 dp[j] = dp[j] + dp[j-num] # 不放num的方法数 + 放num之前容量的方法数
         return dp[-1]
 ```
+#### [680. 验证回文字符串 Ⅱ](https://leetcode-cn.com/problems/valid-palindrome-ii/)
+```python
+class Solution:
+    def validPalindrome(self, s: str) -> bool:
+        def check(l, r):
+            while l < r:
+                if s[l] == s[r]:
+                    l += 1
+                    r -= 1
+                else:
+                    return False
+            return True
 
+        if s == s[::-1]: return True
+        l, r = 0, len(s)-1
+        while l < r:
+            if s[l] == s[r]:
+                l += 1
+                r -= 1
+            else:
+                # if s[l+1:r+1] == s[l+1:r+1][::-1] or s[l:r] == s[l:r][::-1]:
+                if check(l+1, r) or check(l, r-1):
+                    return True
+                else:
+                    return False
+        return True
+```
 #### [647. 回文子串](https://leetcode-cn.com/problems/palindromic-substrings/)
 ```python
 class Solution:
@@ -1619,47 +1645,55 @@ class Solution:
 #### [864. 获取所有钥匙的最短路径](https://leetcode-cn.com/problems/shortest-path-to-get-all-keys/)
 三维的bfs
 ```python
-from collections import deque
 class Solution:
     def shortestPathAllKeys(self, grid: List[str]) -> int:
-        rows, cols = len(grid), len(grid[0])
-        start_row, start_col, key_num = 0, 0, 0
-        for row in range(rows):
-            for col in range(cols):
-                cell = grid[row][col]
+        mapping = {"a":0, "b":1, "c":2, "d":3, "e":4, "f":5}
+        n = len(grid)
+        if n == 0: return -1
+        m = len(grid[0])
+        nk = 0
+        start = []
+        for i in range(n):
+            for j in range(m):
+                cell = grid[i][j]
                 if cell.islower():
-                    key_num += 1
+                    nk |= (1<<mapping[cell])
                 if cell == "@":
-                    start_row, start_col = row, col
-        keys, step, visited = tuple(), 0, set()
-        visited.add((start_row, start_col, keys))
-        queue = deque([(start_row, start_col, keys, step)])
-        directions = [(1,0),(0,1),(-1,0),(0,-1)]
+                    start = [i, j]
+        visited = [[[0 for k in range(1<<len(mapping))] for i in range(m)] for j in range(n)]
+        row, col, k = start[0], start[1], 0
+        queue = collections.deque([(row, col, k)])
+        orients = [[-1,0],[1,0],[0,-1],[0,1]]
+        level = 0
         while queue:
-            row, col, keys, step = queue.pop()
-            for direction in directions:
-                next_row, next_col = row + direction[0], col + direction[1]
-                add_keys = keys
-                # 遇到边界
-                if next_row < 0 or next_row >= rows or next_col < 0 or next_col >= cols:
-                    continue
-                cell = grid[next_row][next_col]
-                # 遇到墙壁
-                if cell == "#":
-                    continue
-                # 遇到新钥匙，添加
-                if cell.islower() and cell not in add_keys:
-                    add_keys = add_keys + (cell,)
-                    if len(add_keys) == key_num:
-                        return step+1
-                # 遇到锁没相应钥匙
-                if "A" <= cell <= "F" and cell.lower() not in add_keys:
-                    continue
-                # 已经访问过
-                if (next_row, next_col, add_keys) in visited:
-                    continue
-                queue.appendleft((next_row, next_col, add_keys, step+1))
-                visited.add((next_row, next_col, add_keys))
+            level += 1
+            for _ in range(len(queue)):
+                row, col, k = queue.pop()
+                # print(grid[row][col])
+                for orient in orients:
+                    nxt_row, nxt_col = row + orient[0], col + orient[1]
+                    nxt_k = k
+                    # 越界
+                    if nxt_row<0 or nxt_row>=n or nxt_col<0 or nxt_col>=m:
+                        continue
+                    cell = grid[nxt_row][nxt_col]
+                    # 该状态访问过
+                    if visited[nxt_row][nxt_col][nxt_k]:
+                        continue
+                    # 遇到墙
+                    if cell == "#":
+                        continue
+                    # 遇到门,没相应的钥匙
+                    if cell.isupper() and (1<<mapping[cell.lower()]) & nxt_k == 0:
+                        continue
+                    # 遇到钥匙
+                    if cell.islower():
+                        nxt_k |= (1<<mapping[cell]) # 重复没关系
+                        if nxt_k == nk:
+                            return level
+
+                    visited[nxt_row][nxt_col][nxt_k] = 1
+                    queue.appendleft((nxt_row, nxt_col, nxt_k))
         return -1
 ```
 
@@ -1962,26 +1996,27 @@ class Solution:
 ```python
 class Solution:
     def findOrder(self, numCourses: int, prerequisites: List[List[int]]) -> List[int]:
-        indegrees = [0 for _ in range(numCourses)]
-        adjacency = [[] for _ in range(numCourses)]
-        for item in prerequisites:
-            curr, pre = item[0], item[1]
-            indegrees[curr] += 1
-            adjacency[pre].append(curr)
-        queue = []
-        for index, degree in enumerate(indegrees):
-            if degree == 0:
-                queue.append(index)
-        result = []
-        while queue:
-            index = queue.pop()
+        adjacency = [[] for i in range(numCourses)]
+        outdegree = [0 for i in range(numCourses)]
+        for condition in prerequisites:
+            curr, prev = condition
+            adjacency[prev].append(curr)
+            outdegree[curr] += 1
+        stack = []
+        for idx, item in enumerate(outdegree):
+            if item == 0:
+                stack.append(idx)
+
+        results = []
+        while stack:
+            prev = stack.pop()
             numCourses -= 1
-            result.append(index)
-            for curr in adjacency[index]:
-                indegrees[curr] -= 1
-                if indegrees[curr] == 0:
-                    queue.append(curr)
-        return result if numCourses == 0 else []
+            results.append(prev)
+            for curr in adjacency[prev]:
+                outdegree[curr] -= 1
+                if outdegree[curr] == 0:
+                    stack.append(curr)
+        return results if numCourses==0 else []
 ```
 #### [1042. 不邻接植花](https://leetcode-cn.com/problems/flower-planting-with-no-adjacent)
 ```python
@@ -3463,13 +3498,45 @@ class Solution:
                   merged[-1][1] = max(merged[-1][1], interval[1])
           return merged
 ```
-
+###
+```python
+class Solution:
+    def myPow(self, x: float, n: int) -> float:
+        """O(logn)"""
+        if x == 0: return 0
+        if n < 0:
+            n, x = -n, 1/x
+        res = 1
+        while n > 0:
+            if n & 1:
+                res *= x
+            x *= x
+            n = n >> 1
+        return res
+```
 ### 树状数组
 ```python
 class FenwickTree:
-  def __init__(self, n):
-    self.size = n
+    def __init__(self, n):
+        self.size = n
+        self.tree = [0 for _ in range(n+1)]
 
+    def lowbit(self, index):
+        """算出x二进制的从右往左出现第一个1以及这个1之后的那些0组成数的二进制对应的十进制的数.以88为例, 88 = 1011000, 第一个1以及他后面的0组成的二进制是1000,对应的十进制是8，所以c一共管理8个a。
+        """
+        return index & (-index)
+
+    def update(self, index, delta):
+        while index <= self.size:
+            self.tree[index] += delta
+            index += self.lowbit(index)
+
+    def query(self, index):
+        res = 0
+        while index > 0:
+            res += self.tree[index]
+            index -= self.lowbit(index)
+        return res
 ```
 
 ### 线段树

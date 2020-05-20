@@ -1,3 +1,9 @@
+# 拼多多
+## 5.6笔试
+1. [945. 使数组唯一的最小增量](https://leetcode-cn.com/problems/minimum-increment-to-make-array-unique/)
+2. [473. 火柴拼正方形](https://leetcode-cn.com/problems/matchsticks-to-square/) 数火柴,必须最优解法,时间复杂度要求高
+3. 斐波那契找循环规律
+4. 最大公约数gcd
 ## pdd 往年笔试题
 
 ## 拼多多春招笔试

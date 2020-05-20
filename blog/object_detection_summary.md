@@ -3,6 +3,7 @@
 希望在这篇文章比较系统的总结一下相关知识。
 希望大家能够通过这篇文章，快速梳理清不同目标检测框架的核心，并能够独立开展自己的研究。
 
+TODO: YOLOv1-v2-v3
 ## 目标检测
 目标检测的目的是输出待检测物体bbox的位置(x1,x2,y1,y2)及其分类。
 ![20200420_170516_55](assets/20200420_170516_55.png)
@@ -162,34 +163,36 @@ def iou_calculate(bbox1, bbox2):
 def nms(bboxes, iou_thresh):
     """
     Args:
-      bboxes: np.array. (N, 6) [xmin, ymin, xmax, ymax, score, class]
+      bboxes: after score. np.array. (N, 6) [xmin, ymin, xmax, ymax, score, class]
+      iou_thresh: float
     Returns:
       bboxes_nms: np.array. (N', 6) [xmin, ymin, xmax, ymax, score, class]
     """
-    classes = bboxes[:, 5]
+    classes = bboxes[:, 5] # (N,)
     unique_classes = set(classes)
     bboxes_nms = []
     for cls in unique_classes:
-        mask = classes == cls
-        cls_bboxes = bboxes[mask]
-        x1, y1 = cls_bboxes[:, 0], cls_bboxes[:, 1]
+        mask = classes == cls # (N,)
+        cls_bboxes = bboxes[mask] # (M, 6)
+        # nms in each class
+        x1, y1 = cls_bboxes[:, 0], cls_bboxes[:, 1] # (M,)
         x2, y2 = cls_bboxes[:, 2], cls_bboxes[:, 3]
-        scores = cls_bboxes[:, 4]
-        areas = (x2 - x1) * (y2 - y1)
-        order = scores.argsort()[::-1]
+        scores = cls_bboxes[:, 4] # (M,)
+        areas = (x2 - x1) * (y2 - y1) # (M,)
+        order = scores.argsort()[::-1] # (M,)
         keep = []
         while order.size > 0:
             i = order[0]
             keep.append(i)
-            x1_max = np.maximum(x1[i], x1[order[1:]])
+            x1_max = np.maximum(x1[i], x1[order[1:]]) # (1,), (M-1,) -> (M-1,)
             y1_max = np.maximum(y1[i], y1[order[1:]])
-            x2_max = np.maximum(x2[i], x2[order[1:]])
-            y2_max = np.maximum(y2[i], y2[order[1:]])
-            w = np.maximum(0, x2_max - x1_max)
-            h = np.maximum(0, y2_max - y1_max)
-            inter_area = w * h
-            union_area = areas[i] + areas[order[1:]] - inter_area
-            iou = inter_area / union_area
+            x2_min = np.minimum(x2[i], x2[order[1:]])
+            y2_min = np.minimum(y2[i], y2[order[1:]])
+            w = np.maximum(0, x2_min - x1_max) # (M-1,)
+            h = np.maximum(0, y2_min - y1_max)
+            inter_area = w * h # (M-1,)
+            union_area = areas[i] + areas[order[1:]] - inter_area # (1,), (M-1,) -> (M-1,)
+            iou = inter_area / union_area # (M-1,)
             keep_index = np.where(iou <= iou_thresh)[0]
             order = order[keep_index + 1]
         keep_bboxes = cls_bboxes[keep]

@@ -859,7 +859,7 @@ class Solution:
     def search(self, nums: List[int], target: int) -> int:
         if len(nums) == 0: return -1
         if len(nums) == 1: return 0 if nums[0] == target else -1
-
+300
         def find_rotation_index(arr, l, r):
             while (l < r):
                 m = l + (r-l)//2
@@ -2392,72 +2392,250 @@ class Solution:
         dfs(beginWord, [beginWord])
         return results
 ```
+### 背包
+TODO: 用dp再写一遍
+#### [416. 分割等和子集](https://leetcode-cn.com/problems/partition-equal-subset-sum/)
+```python
+import functools
+class Solution:
+    def canPartition(self, nums: List[int]) -> bool:
+        target, res = divmod(sum(nums), 2)
+        if res != 0: return False
+        n = len(nums)
+        # nums = sorted(nums, reverse=True)
+        @functools.lru_cache(None)
+        def helper(index, curr):
+            if curr == target:
+                return True
+            if curr > target:
+                return False
+            if index >= n:
+                return False
+            pick = helper(index+1, curr+nums[index])
+            if pick: return True
+            not_pick = helper(index+1, curr)
+            if not_pick: return True
+            return False
+        return helper(0, 0)
+```
+
+#### [474. 一和零](https://leetcode-cn.com/problems/ones-and-zeroes/)
+```python
+import functools
+class Solution:
+    def findMaxForm(self, strs: List[str], m: int, n: int) -> int:
+        @functools.lru_cache(None)
+        def helper(i, m, n):
+            if i == len(strs): return 0
+            if m == 0 and n == 0: return 0
+            zero = strs[i].count("0")
+            one = strs[i].count("1")
+            pick = 0
+            if m >= zero and n >= one:
+                pick = helper(i+1, m-zero, n-one) + 1
+            not_pick = helper(i+1, m, n)
+            return max(pick, not_pick)
+        return helper(0, m, n)
+```
+
+#### [1049. 最后一块石头的重量 II](https://leetcode-cn.com/problems/last-stone-weight-ii/)
+```python
+import functools
+class Solution:
+    def lastStoneWeightII(self, stones: List[int]) -> int:
+        sums = sum(stones)
+        target = sums//2 # 背包重量上限
+        # 该背包问题,重量与价值都是target
+        @functools.lru_cache(None)
+        def helper(index, curr):
+            if curr == target:
+                return curr
+            if curr > target:
+                return curr - stones[index-1]
+            if index == len(stones):
+                return curr
+            pick = helper(index+1, curr+stones[index])
+            not_pick = helper(index+1, curr)
+            return max(pick, not_pick)
+        res = helper(0,0)
+        return sums - 2 * res
+```
+
+#### [494. 目标和](https://leetcode-cn.com/problems/target-sum/)
+```python
+import functools
+class Solution:
+    def findTargetSumWays(self, nums: List[int], S: int) -> int:
+        n = len(nums)
+        @functools.lru_cache(None)
+        def helper(index, curr):
+            if index == n:
+                return 1 if curr == S else 0
+            res = 0
+            res += helper(index+1, curr+nums[index])
+            res += helper(index+1, curr-nums[index])
+            return res
+
+        return helper(0, 0)
+```
+
+#### [312. 戳气球](https://leetcode-cn.com/problems/burst-balloons/)
+```python
+import functools
+class Solution:
+    def maxCoins(self, nums: List[int]) -> int:
+        nums = [1] + nums + [1]
+        @functools.lru_cache(None)
+        def helper(left, right):
+            if left + 1 == right:
+                return 0
+
+            max_val = 0
+            for i in range(left+1, right):
+                val = nums[left] * nums[i] * nums[right] + helper(left, i) + helper(i, right)
+                max_val = max(max_val, val)
+            return max_val
+
+        return helper(0, len(nums)-1)
+```
 
 ### Dynamic Programming
 #### [70. 爬楼梯](https://leetcode-cn.com/problems/climbing-stairs/)
 ```python
 class Solution:
     def climbStairs(self, n: int) -> int:
-        """ functools.lru_cache 用于回溯时，
-        将已访问节点的值放入memo避免重复计算,
-        重复节点不会再访问"""
+        ## dp 1维数组
+        if n == 1: return 1
+        dp = [0] * n
+        dp[0] = 1
+        dp[1] = 2
+        for i in range(2, n):
+            dp[i] = dp[i-1] + dp[i-2]
+        return dp[-1]
+```
+```python
+        ## dp 常数
+        if n == 1: return 1
+        if n == 2: return 2
+        prev = 1
+        curr = 2
+        nxt = 0
+        for i in range(2, n):
+            nxt = prev + curr
+            prev = curr
+            curr = nxt
+        return nxt
+```
+```python
+        ## 枚举+记忆
         import functools
         @functools.lru_cache(None)
         def helper(step):
-            print(step)
-            if step == 0:
+            if step == n:
                 return 1
-            if step < 0:
+            if step > n:
                 return 0
             res = 0
-            for i in range(1,3):
-                res += helper(step-i)
+            res += helper(step+1)
+            res += helper(step+2)
             return res
-
-        return helper(n)
+        return helper(0)
 ```
 
 #### [62. 不同路径](https://leetcode-cn.com/problems/unique-paths/)
 ```python
+import functools
 class Solution:
     def uniquePaths(self, m: int, n: int) -> int:
+        ## 从上到下,记忆化搜索,搜到就+1
         directions = [(1,0), (0,1)]
-        import functools
         @functools.lru_cache(None)
         def helper(row, col):
-            if row == n and col == m:
+            if row == n-1 and col == m-1:
                 return 1
+            if row > n or col > m:
+                return 0
             res = 0
             for direction in directions:
-                i, j = direction
-                if row+i <= n and col+j <= m:
-                    res += helper(row+i, col+j)
+                next_row = direction[0]+row
+                next_col = direction[1]+col
+                if next_row < 0 or next_row >= n:
+                    continue
+                if next_col < 0 or next_col >= m:
+                    continue
+                res += helper(next_row, next_col)
             return res
-
-        return helper(1,1)
+        return helper(0, 0)
+```
+```python
+        ## dp: dp[i][j] = dp[i-1][j] + dp[i][j-1]
+        if n == 0 or m == 0: return 0
+        dp = [[0 for i in range(m)] for j in range(n)]
+        for i in range(n):
+            dp[i][0] = 1
+        for j in range(m):
+            dp[0][j] = 1
+        for i in range(1, n):
+            for j in range(1, m):
+                dp[i][j] = dp[i-1][j] + dp[i][j-1]
+        return dp[n-1][m-1]
 ```
 
 #### [63. 不同路径 II](https://leetcode-cn.com/problems/unique-paths-ii/)
 ```python
+import functools
 class Solution:
     def uniquePathsWithObstacles(self, obstacleGrid: List[List[int]]) -> int:
+        ## 记忆化搜索
         n = len(obstacleGrid)
-        if n < 0: return 0
+        if n == 0: return 0
         m = len(obstacleGrid[0])
         directions = [(1,0),(0,1)]
-        import functools
         @functools.lru_cache(None)
-        def helper(row_, col_):
-            if row_>=n or col_>=m or obstacleGrid[row_][col_] == 1:
+        def helper(row, col):
+            # important!
+            if obstacleGrid[row][col] == 1:
                 return 0
-            if row_ == n-1 and col_ == m-1:
+            if row == n-1 and col == m-1:
                 return 1
             res = 0
             for direction in directions:
-                row, col = row_+direction[0], col_+direction[1]
-                res += helper(row, col)
-            return res # don't forget
+                next_row = row + direction[0]
+                next_col = col + direction[1]
+                if next_row < 0 or next_row >= n:
+                    continue
+                if next_col < 0 or next_col >= m:
+                    continue
+                if obstacleGrid[next_row][next_col] == 1:
+                    continue
+                res += helper(next_row, next_col)
+            return res
         return helper(0,0)
+```
+```python
+        ## dp
+        n = len(obstacleGrid)
+        if n == 0: return 0
+        m = len(obstacleGrid[0])
+        dp = [[0 for i in range(m)] for j in range(n)]
+        # 重要! 如果遇到障碍,则之后的dp均为0
+        flag = False
+        for i in range(n):
+            if obstacleGrid[i][0] == 1:
+                flag = True
+            dp[i][0] = 0 if flag else 1
+        flag = False
+        for j in range(m):
+            if obstacleGrid[0][j] == 1:
+                flag = True
+            dp[0][j] = 0 if flag else 1
+        for i in range(1,n):
+            for j in range(1,m):
+                if obstacleGrid[i][j] == 1:
+                    dp[i][j] = 0
+                else:
+                    dp[i][j] = dp[i-1][j] + dp[i][j-1]
+        return dp[n-1][m-1]
 ```
 
 #### [120. 三角形最小路径和](https://leetcode-cn.com/problems/triangle/)
@@ -2614,8 +2792,54 @@ class Solution:
 ```
 
 #### [72. 编辑距离](https://leetcode-cn.com/problems/edit-distance/)
-TODO: do this
+```python
+class Solution:
+    def minDistance(self, word1: str, word2: str) -> int:
+        n, m = len(word1), len(word2)
+        dp = [[0 for i in range(m+1)] for j in range(n+1)]
+        # init
+        for i in range(n+1):
+            dp[i][0] = i
+        for j in range(m+1):
+            dp[0][j] = j
+        # dp
+        for i in range(1,n+1):
+            for j in range(1,m+1):
+                if word1[i-1] == word2[j-1]:
+                    dp[i][j] = dp[i-1][j-1]
+                else:
+                    dp[i][j] = min(dp[i-1][j-1], dp[i-1][j], dp[i][j-1]) + 1
+        return dp[n][m]
+```
 
+#### [5. 最长回文子串](https://leetcode-cn.com/problems/longest-palindromic-substring/)
+```python
+class Solution:
+    def longestPalindrome(self, s: str) -> str:
+        """动态规划"""
+        n = len(s)
+        dp = [[False]*n for _ in range(n)]
+        for i in range(n):
+            dp[i][i] = True
+        index_i, index_j = 0, 0
+        max_len = 0
+        # 注意是 l -> r, 不然无法满足查表
+        for r in range(n):
+            for l in range(r):
+                if s[l] == s[r]:
+                    if r-l == 1:
+                        dp[l][r] = True
+                    elif dp[l+1][r-1]:
+                        dp[l][r] = True
+                    else:
+                        dp[l][r] = False
+                    if dp[l][r] and r-l+1 > max_len:
+                        index_i, index_j = l, r
+                        max_len = r-l+1
+                else:
+                    dp[l][r] = False
+        return s[index_i:index_j+1]
+```
 
 #### [174. 地下城游戏](https://leetcode-cn.com/problems/dungeon-game/)
 ```python
@@ -3725,6 +3949,26 @@ class Solution:
         return paths
 ```
 
+#### [437. 路径总和 III](https://leetcode-cn.com/problems/path-sum-iii/)
+难点:不是总从根节点出发,巧用前缀和和回溯
+```python
+class Solution:
+    def pathSum(self, root: TreeNode, sum: int) -> int:
+        self.count = 0
+        def helper(node, prefix, cur_sum):
+            if not node: return
+            cur_sum += node.val
+            val = cur_sum - sum
+            if val in prefix:
+                self.count += prefix[val]
+            prefix[cur_sum] = prefix.get(cur_sum, 0) + 1
+            helper(node.left, prefix, cur_sum)
+            helper(node.right, prefix, cur_sum)
+            prefix[cur_sum] -= 1
+        prefix = {0:1}
+        helper(root, prefix, 0)
+        return self.count
+```
 #### [129. 求根到叶子节点数字之和](https://leetcode-cn.com/problems/sum-root-to-leaf-numbers/)
 和路径之和112，113一样
 ```python
@@ -4071,4 +4315,120 @@ class Solution:
         return helper(head)
 ```
 
-#### 
+#### [297. 二叉树的序列化与反序列化](https://leetcode-cn.com/problems/serialize-and-deserialize-binary-tree/)
+和上两题一样,以先序遍历return node的方法建立二叉树,注意用data.pop()的形式
+```python
+class Codec:
+    def serialize(self, root):
+        """Encodes a tree to a single string.
+        :type root: TreeNode
+        :rtype: str
+        """
+        encode_str = ""
+        def helper(node):
+            val = node.val if node != None else "None"
+            nonlocal encode_str
+            encode_str += str(val) + " "
+            if node == None: return
+            helper(node.left)
+            helper(node.right)
+        helper(root)
+        return encode_str
+
+    def deserialize(self, data):
+        """
+        :type data: str
+        :rtype: TreeNode
+        """
+        data_list = data.strip().split(" ")
+        data = deque(data_list)
+        def helper(data):
+            node = data.popleft()
+            if node == "None":
+                return None
+            node = TreeNode(int(node))
+            node.left = helper(data)
+            node.right = helper(data)
+            return node
+
+        root = helper(data)
+        return root
+```
+
+#### [173. 二叉搜索树迭代器](https://leetcode-cn.com/problems/binary-search-tree-iterator/)
+```python
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
+class BSTIterator:
+    def __init__(self, root: TreeNode):
+        self.stack = []
+        self._left_most_inorder(root)
+
+    def _left_most_inorder(self, node):
+        while node:
+            self.stack.append(node)
+            node = node.left
+
+    def next(self) -> int:
+        """
+        @return the next smallest number
+        """
+        top = self.stack.pop()
+        if top.right:
+            self._left_most_inorder(top.right)
+        return top.val
+
+    def hasNext(self) -> bool:
+        """
+        @return whether we have a next smallest number
+        """
+        return len(self.stack) > 0
+```
+
+#### [230. 二叉搜索树中第K小的元素](https://leetcode-cn.com/problems/kth-smallest-element-in-a-bst/)
+```python
+class Solution:
+    def kthSmallest(self, root: TreeNode, k: int) -> int:
+        node = root
+        stack = []
+        def _left_most_inorder(node):
+            while node:
+                stack.append(node)
+                node = node.left
+        # 注意,向左只需要调用一次,在while之外
+        _left_most_inorder(node)
+        while k > 0:
+            node = stack.pop()
+            if node.right:
+                _left_most_inorder(node.right)
+            k -= 1
+        return node.val
+```
+
+#### [96. 不同的二叉搜索树](https://leetcode-cn.com/problems/unique-binary-search-trees/)
+给定一个整数 n，求以 1 ... n 为节点组成的二叉搜索树有多少种？
+
+![20200512_202526_67](assets/20200512_202526_67.png)
+相同长度的序列具有相同数目的二叉搜索树
+![20200512_202604_95](assets/20200512_202604_95.png)
+![20200512_202633_10](assets/20200512_202633_10.png)
+![20200512_202659_98](assets/20200512_202659_98.png)
+对于以ｉ为根的序列，不同二叉树的数目为 左序列*右序列
+![20200512_202718_58](assets/20200512_202718_58.png)
+
+很好的一道题目,用动态规划.
+```python
+class Solution:
+    def numTrees(self, n: int) -> int:
+        if n <= 1: return 1
+        G = [0 for _ in range(n+1)]
+        G[0], G[1] = 1, 1
+        for i in range(2, n+1):
+            for j in range(i):
+                G[i] += G[j] * G[i-1-j]
+        return G[n]
+```
