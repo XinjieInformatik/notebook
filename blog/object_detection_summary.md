@@ -104,7 +104,7 @@ $$ -\sum\limits_{i=1}^n log(\frac {e^{p_i}}{\sum\limits_{j=1}^n e^{p_j}}) $$
 
 ##### 分类loss
 只有正样本与负样本会参与分类loss计算,被ignored的based-anchor不参与计算。分类loss是基于交叉熵的，优化的是概率。对于正样本，loss监督网络在其对应的class_id层有接近1的输出。对于负样本，loss监督网络在其对应输出层输出接近0。focal loss 是常见的one stage detector的分类loss，基于CE交叉熵loss，提出 1.优化正样本与background不平衡问题（可能只有几百个based_anchor与GT bbox匹配成功，其余十几万的都是负样本，负样本有可能主导分类loss） 2.重点优化难训练样本的概率见下图。focal loss中 1. alpha_t正样本权重，1-alpha_t负样本权重，解决正样本与background的不平衡 2. gamma，在ce_loss前乘上 $((1 - p_t))^{gamma}$，减少预测正确的大概率样本的loss，见下图。当gamma = 0, focal loss = CE loss
-$$  $$
+$$ FL(p_t) = -\alpha_t (1-p_t)^\gamma log(p_t) $$
 ![20200424_232127_48](assets/20200424_232127_48.png)
 
 直接看下伪代码吧。

@@ -3250,7 +3250,7 @@ class Solution:
 ```python
 class Solution:
     def swapPairs(self, head: ListNode) -> ListNode:
-        while head==None or head.next==None:
+        if head==None or head.next==None:
             return head
         dummy = ListNode(-1)
         res = dummy
@@ -3289,33 +3289,27 @@ class Solution:
 ```python
 class Solution:
     def reverseBetween(self, head: ListNode, m: int, n: int) -> ListNode:
+        p = 1
         node = head
-        node_prev_m = None
-        index = 1
-        node_m = None
-        while node:
-            if index < m-1:
-                node = node.next
-            elif index == m-1:
-                node_prev_m = node
-                node = node.next
-            elif index == m:
-                node_m = node
-                prev_node = node
-                node = node.next
-            elif m < index <= n:
-                next_node = node.next
-                node.next = prev_node
-                prev_node = node
-                if index == n:
-                    node_m.next = next_node
-                    if node_prev_m:
-                        node_prev_m.next = node
-                node = next_node
-            else:
-                break
-            index += 1
-        return prev_node if m==1 else head
+        pprev = None
+        while p < m:
+            pprev = node
+            node = node.next
+            p += 1
+        begin = node
+        prev = None
+        while p <= n:
+            nxt = node.next
+            node.next = prev
+            prev = node
+            node = nxt
+            p += 1
+        begin.next = node
+        if pprev == None:
+            return prev
+        else:
+            pprev.next = prev
+            return head
 ```
 
 #### [19. 删除链表的倒数第N个节点](https://leetcode-cn.com/problems/remove-nth-node-from-end-of-list/)
