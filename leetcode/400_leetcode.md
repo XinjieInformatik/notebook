@@ -455,6 +455,32 @@ class Solution:
         return profit_0
 ```
 
+##### [4. 寻找两个正序数组的中位数](https://leetcode-cn.com/problems/median-of-two-sorted-arrays/)
+TODO: 二分和递归的做法
+```python
+class Solution:
+    def findMedianSortedArrays(self, nums1: List[int], nums2: List[int]) -> float:
+        """O(m+n), 不要用双指针边界情况太复杂. 用更新left, right这种方式"""
+        p1, p2 = 0, 0
+        n1, n2 = len(nums1), len(nums2)
+        target, res = divmod(n1+n2, 2)
+        left, right = -1, -1
+        p1, p2 = 0, 0
+        for i in range(target+1):
+            left = right
+            if p1 < n1 and (p2 == n2 or nums1[p1] < nums2[p2]):
+                right = nums1[p1]
+                p1 += 1
+            else:
+                right = nums2[p2]
+                p2 += 1
+        ans = right if res == 1 else (left+right)/2
+        return ans
+```
+
+##### [88. ]
+
+
 ##### [11. 盛最多水的容器](https://leetcode-cn.com/problems/container-with-most-water)
 首尾双指针，哪边低，哪边指针向内移动
 ```python
