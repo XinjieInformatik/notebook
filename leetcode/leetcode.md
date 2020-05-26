@@ -2456,10 +2456,10 @@ def qsort(array, l, r):
         l = left + 1
         r = right - 1
         while (l <= r): # 注意是 <= !
-            # 左指针找到大于pivot的数
+            # 左指针找到第一个大于pivot的数
             while (l < right and arr[l] <= pivot):
                 l += 1
-            # 右指针找到小于pivot的数
+            # 右指针找到第一个小于pivot的数
             while (r > left and arr[r] >= pivot):
                 r -= 1
             if l < r:
