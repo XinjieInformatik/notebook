@@ -3606,3 +3606,113 @@ class Solution:
                             dp[max(0,i-30)]+costs[2])
         return dp[-1]
 ```
+
+#### [5409. 检查一个字符串是否包含所有长度为 K 的二进制子串](https://leetcode-cn.com/problems/check-if-a-string-contains-all-binary-codes-of-size-k/)
+```
+输入：s = "00110110", k = 2  输出：true
+解释：长度为 2 的二进制串包括 "00"，"01"，"10" 和 "11"。它们分别是 s 中下标为 0，1，3，2 开始的长度为 2 的子串。
+```
+```python
+class Solution:
+    def hasAllCodes(self, s: str, k: int) -> bool:
+        s_len = len(s)
+        if s_len < 2 ** k:
+            return False
+        curr = set()
+        for i in range(s_len+1-k):
+            curr.add(s[i:k+i])
+        print(curr)
+        if len(curr) == 2 ** k:
+            return True
+        else:
+            return False
+```
+
+#### [5410. 课程安排 IV](https://leetcode-cn.com/problems/course-schedule-iv/)
+```python
+from collections import defaultdict, deque
+import functools
+class Solution:
+    def checkIfPrerequisite(self, n: int, prerequisites: List[List[int]], queries: List[List[int]]) -> List[bool]:
+        connect = defaultdict(list)
+        for requisite in prerequisites:
+            prev, curr = requisite
+            connect[prev].append(curr)
+
+        # print(connect)
+        results = []
+        # @functools.lru_cache(None)
+
+        def helper(prev, end):
+            if prev == end:
+                return True
+            if prev not in connect:
+                memo[prev] = False
+                return False
+
+            for curr in connect[prev]:
+                if curr in memo:
+                    ans = memo[curr]
+                else:
+                    ans = helper(curr, end)
+                    memo[curr] = ans
+                if ans == True:
+                    break
+            return ans
+
+        for query in queries:
+            start, end = query
+            memo = {}
+            ans = helper(start, end)
+            results.append(ans)
+
+        return results
+
+        # for query in queries:
+        #     start, end = query
+        #     queue = deque([start])
+        #     visited = set([start])
+        #     flag = False
+        #     while queue:
+        #         prev = queue.pop()
+        #         if prev == end:
+        #             flag = True
+        #             break
+        #         if prev not in connect:
+        #             continue
+        #         for curr in connect[prev]:
+        #             if curr not in visited:
+        #                 visited.add(curr)
+        #                 queue.appendleft(curr)
+        #     results.append(flag)
+        # return results
+```
+
+#### [5411. 摘樱桃 II](https://leetcode-cn.com/problems/cherry-pickup-ii/)
+```python
+import functools
+class Solution:
+    def cherryPickup(self, grid: List[List[int]]) -> int:
+        n, m = len(grid), len(grid[0])
+        col_range = [-1,0,1]
+        @functools.lru_cache(None)
+        def dp(row, col1, col2):
+            if row == n:
+                return 0
+            res = grid[row][col1]
+            if col1 != col2:
+                res += grid[row][col2]
+            max_value = 0
+            for delta1 in col_range:
+                col1n = col1 + delta1
+                if col1n < 0 or col1n >= m:
+                    continue
+                for delta2 in col_range:
+                    col2n = col2 + delta2
+                    if col2n < 0 or col2n >= m:
+                        continue
+                    max_value = max(max_value, dp(row+1, col1n, col2n))
+            return max_value + res
+
+        return dp(0, 0, m-1)
+```
