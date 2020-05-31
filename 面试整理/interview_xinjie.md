@@ -306,6 +306,7 @@ Adam利用梯度的一阶矩估计和二阶矩估计动态调整每个参数的�
 矩阵与矩阵的欧式距离
 ![20200529_194800_64](assets/20200529_194800_64.png)
 $$ C=sum(A^2,axis=1)∗ones((1,3))+ones((2,1))∗sum(B^2,axis=1)^T − 2AB^T $$
+
 ####  矩阵正定性的判断,Hessian矩阵正定性在梯度下降中的应用
 若矩阵所有特征值均不小于0,则判定为半正定。若矩阵所有特征值均大于0,则判定为正定。在判断优化算法的可行性时Hessian矩阵的正定性起到了很大的作用,若Hessian正定,则函数的二阶偏导恒大于0,函数的变化率处于递增状态,在牛顿法等梯度下降的方法中,Hessian矩阵的正定性可以很容易的判断函数是否可收敛到局部或全局最优解。
 
@@ -511,5 +512,14 @@ InvertedResidual: 先将通道膨胀6倍,再压缩
 
 牛客网 机器学习 题目 https://www.nowcoder.com/ta/review-ml
 
-#### 池化反向传播
-https://github.com/jxingm/Interview-Notes/blob/master/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/28.%E5%8D%B7%E7%A7%AF%E5%92%8C%E6%B1%A0%E5%8C%96%E5%8F%8D%E5%90%91%E4%BC%A0%E6%92%AD%E7%9A%84%E5%AE%9E%E7%8E%B0.pdf
+#### Pooling层的作用以及如何进行反向传播
+pooling层作用
+1、增加非线性,也起到注意力机制的作用
+2、保留主要的特征同时减少计算量(pooling层无参数)，防止过拟合，提高模型泛化能力
+3、invariance(不变性)，这种不变性包括translation(平移)，rotation(旋转)，scale(尺度)
+
+1. average pooling 把当前梯度平均分成 n 份分配给上一层
+2. max pooling 将当前梯度直接传递给前一层的某个像素, 所以，max pooling和average pooling不同的是，max pooling在前向传播的时候要记录池化操作时哪个像素的值是最大的，即max_id，在反向传播中才能将其对应起来。
+
+Spatial Pyramid Pooling（空间金字塔池化）
+用大小不同的池化窗口来作用于feature map，得到1×1、2×2和4×4的池化结果

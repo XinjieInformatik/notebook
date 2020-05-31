@@ -110,9 +110,9 @@ def conv_forward(feature, filter, bias, conv_param):
 <img src="assets/conv2.jpg" width="50%" height="50%"/>
 <img src="assets/conv3.jpg" width="50%" height="50%"/>
 <img src="assets/conv4.jpg" width="50%" height="50%"/>
-
-reference: https://www.zhihu.com/question/28385679
-
+最后是Filter Matrix乘以Feature Matrix的转置，得到输出矩阵Cout x (H x W)
+reference: https://www.zhihu.com/question/28385679 
+![20200531_231413_69](assets/20200531_231413_69.png)
 
 ### 实际tensorflow模型FLOPs统计示例
 tf.profiler.profile 统计tensorflow freezing graph FLOPs
