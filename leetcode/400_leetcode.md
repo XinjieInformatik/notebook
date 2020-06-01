@@ -1578,6 +1578,26 @@ class Solution:
                 self.memo[(lo, hi)] = ret
         return ret
 ```
+#### [818. 赛车](https://leetcode-cn.com/problems/race-car/)
+```python
+from collections import deque
+class Solution:
+    def racecar(self, target: int) -> int:
+        queue = deque([(0, 1, 0)])
+        visited = set((0, 1))
+        while queue:
+            p, v, cnt = queue.pop()
+            A = (p+v, v*2)
+            R = (p, -1) if v > 0 else (p, 1)
+            for status in [A, R]:
+                if status not in visited:
+                    # 假设一定能搜索到target
+                    if status[0] == target:
+                        return cnt+1
+                    visited.add(status)
+                    queue.appendleft(status+(cnt+1,))
+        return -1
+```
 
 #### [301. 删除无效的括号](https://leetcode-cn.com/problems/remove-invalid-parentheses/)
 枚举+bfs搜索
@@ -1621,7 +1641,7 @@ class Solution:
 ```
 TODO: 好好练练递归，再把种树作一遍
 
-[392. 判断子序列](https://leetcode-cn.com/problems/is-subsequence/)
+#### [392. 判断子序列](https://leetcode-cn.com/problems/is-subsequence/)
 ```python
 class Solution:
     def isSubsequence(self, s: str, t: str) -> bool:
@@ -1642,7 +1662,7 @@ class Solution:
         return True
 ```
 
-[115. 不同的子序列](https://leetcode-cn.com/problems/distinct-subsequences/)
+#### [115. 不同的子序列](https://leetcode-cn.com/problems/distinct-subsequences/)
 TODO: 需要重做，重新理解
 ```python
 class Solution:
@@ -2761,6 +2781,26 @@ class Solution:
 ```python
 class Solution:
     def minPathSum(self, grid: List[List[int]]) -> int:
+        ds = [(1,0), (0,1)]
+        n = len(grid)
+        if n == 0: return 0
+        m = len(grid[0])
+        dp = [[0 for j in range(m)] for i in range(n)]
+        for i in range(n):
+            for j in range(m):
+                if i == 0 and j == 0:
+                    dp[i][j] = grid[i][j]
+                elif i == 0:
+                    dp[i][j] = dp[i][j-1] + grid[i][j]
+                elif j == 0:
+                    dp[i][j] = dp[i-1][j] + grid[i][j]
+                else:
+                    dp[i][j] = min(dp[i-1][j], dp[i][j-1]) + grid[i][j]
+        return dp[-1][-1]
+```
+```python
+class Solution:
+    def minPathSum(self, grid: List[List[int]]) -> int:
         rows = len(grid)
         if rows == 0: return 0
         cols = len(grid[0])
@@ -2789,7 +2829,8 @@ class Solution:
             return path
 
         return helper(0,0)
-
+```
+```python
 class Solution:
     def minPathSum(self, grid: List[List[int]]) -> int:
         rows = len(grid)
@@ -4423,11 +4464,36 @@ class Solution:
 ```python
 class Solution:
     def numTrees(self, n: int) -> int:
-        if n <= 1: return 1
-        G = [0 for _ in range(n+1)]
-        G[0], G[1] = 1, 1
-        for i in range(2, n+1):
+        # dp长度n+1, +1是为了保证两端的情况
+        dp = [0] * (n+1)
+        dp[0] = 1
+        for i in range(n+1):
             for j in range(i):
-                G[i] += G[j] * G[i-1-j]
-        return G[n]
+                dp[i] += dp[j] * dp[i-j-1]
+        return dp[-1]
+```
+
+#### [95. 不同的二叉搜索树 II](https://leetcode-cn.com/problems/unique-binary-search-trees-ii/)
+```python
+class Solution:
+    def generateTrees(self, n: int) -> List[TreeNode]:
+        if(n==0):
+            return []
+
+        def build_Trees(left,right):
+            all_trees=[]
+            if(left>right):
+                return [None]
+            for i in range(left,right+1):
+                left_trees=build_Trees(left,i-1)
+                right_trees=build_Trees(i+1,right)
+                for l in left_trees:
+                    for r in right_trees:
+                        cur_tree=TreeNode(i)
+                        cur_tree.left=l
+                        cur_tree.right=r
+                        all_trees.append(cur_tree)
+            return all_trees
+
+        return build_Trees(1,n)
 ```
