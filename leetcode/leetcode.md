@@ -3716,3 +3716,71 @@ class Solution:
 
         return dp(0, 0, m-1)
 ```
+#### [114. 二叉树展开为链表](https://leetcode-cn.com/problems/flatten-binary-tree-to-linked-list/)
+```python
+class TreeNode(object):
+    def __init__(self, val=0, left=None, right=None):
+        self.left = left
+        self.right = right
+        self.val = val
+class Solution:
+    def flatten(self, root: TreeNode) -> None:
+        def helper(root):
+            if root == None:
+                return
+            # 将根节点的左子树变成链表
+            helper(root.left)
+            # 将根节点的右子树变成链表
+            helper(root.right)
+            temp = root.right
+            # 把树的右边换成左边的链表
+            root.right = root.left
+            # 将左边置空
+            root.left = None
+            # 找到树的最右边的节点
+            while root.right:
+                root = root.right
+            # 把右边的链表接到刚才树的最右边的节点
+            root.right = temp
+        helper(root)
+```
+#### [128. 最长连续序列](https://leetcode-cn.com/problems/longest-consecutive-sequence/)
+```
+给定一个未排序的整数数组，找出最长连续序列的长度。要求算法的时间复杂度为 O(n)。
+输入: [100, 4, 200, 1, 3, 2]   输出: 4
+解释: 最长连续序列是 [1, 2, 3, 4]。它的长度为 4。
+```
+哈希map倒序查询,巧妙O(n)
+```python
+class Solution:
+    def longestConsecutive(self, nums: List[int]) -> int:
+        if len(nums) == 0: return 0
+        lookup = set(nums)
+        max_len = 0
+        for num in lookup:
+            if num-1 in lookup:
+                continue
+            curr_len = 1
+            while num+1 in lookup:
+                num += 1
+                curr_len += 1
+            max_len = max(max_len, curr_len)
+        return max_len
+```
+#### [837. 新21点](https://leetcode-cn.com/problems/new-21-game/)
+```python
+class Solution:
+    def new21Game(self, N: int, K: int, W: int) -> float:
+        """dp以K为界限,分为两部分"""
+        dp = [0] * (K+W)
+        # 当分数大于等于K,停止抽牌,此时如果<=N,获胜概率为1,否则为0
+        for i in range(K, K+W):
+            dp[i] = 1 if i <= N else 0
+        # s为长度为W的窗口内的概率和
+        s = sum(dp)
+        # 当分数小于K,可以抽牌,范围是[1,W],获胜概率为窗口s内的概率和/W
+        for i in range(K-1, -1, -1):
+            dp[i] = s / W
+            s = s - dp[i+W] + dp[i]
+        return dp[0]
+```

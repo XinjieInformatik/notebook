@@ -1757,18 +1757,18 @@ class Solution:
 ```python
 class Solution:
     def combine(self, n: int, k: int) -> List[List[int]]:
-        result = []
-        def helper(i, res):
+        results = []
+        def helper(index, res):
             if len(res) == k:
-                result.append(res)
-                return
-            # 剪枝上限   n+2-(k-len(res))
-            for j in range(i, n+2-(k-len(res))):
-                if len(res)>k: break
-                helper(j+1, res+[j])
-
+                results.append(res)
+                return # 重要,避免之后无效的递归
+            for i in range(index, n+1):
+                # 重要,if 已选+剩余可选 < k: break
+                if len(res)+n-i+1 < k:
+                    break
+                helper(i+1, res+[i])
         helper(1, [])
-        return result
+        return results
 ```
 
 #### [40. 组合总和 II](https://leetcode-cn.com/problems/combination-sum-ii/)
