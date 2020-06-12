@@ -3,7 +3,35 @@
 希望在这篇文章比较系统的总结一下相关知识。
 希望大家能够通过这篇文章，快速梳理清不同目标检测框架的核心，并能够独立开展自己的研究。
 
-TODO: YOLOv1-v2-v3
+## yolov1, v2, v3 异同
+1. GT定义的不同
+v1: 物体中心落在哪个grid, 哪个grid就负责检测该物体.xyhw直接作为归回目标(图片被分为7x7grids)
+v2: 物体中心落在哪个grid,和该grid的anchor计算IoU,匹配的anchor与GT的delta作为归回目标
+v3: 与GT IoU最大的anchor与GT的delta作为回归目标
+2. 网络结构的不同
+v1: 卷积+全连接层(dropout)
+v2: darknet19, 全卷积(batchnorm)
+v3: darknet53, FPN
+3. loss的不同
+v1: l2 loss, softmax loss
+v2: l2 loss, softmax loss
+v3: 只用wh用的 l2 loss, 其他均为sigmoid BCE loss, 引入了bbox scale loss
+
+## yolo 与 RetinaNet 的不同
+1. based anchor 数目不同, RetinaNet每个尺度下9个, yolov3 每个尺度下3个
+2. yolov3 的FPN不是标准的FPN,8/16/32的特征图还经过几层conv才concat融合, FPN是add特征图相加
+3. RetinaNet cls,bbox各一个分支. yolo cls,bbox在一个分支里.
+4. RetinaNet FPN不同尺度之间,head参数共享, yolov3 独立
+5. RetinaNet 使用的是Focal loss 与 smooth l1
+
+## RetinaNet 与 Retanaface 的不同
+1. Retanaface 每个尺度两个不同大小的正方形based anchor
+2. Retanaface 论文中不同尺度间head参数共享,但实际代码独立
+3. SSH layer, 融合3x3, 5x5, 7x7的特征,实际实现中用的两次,三次卷积代替5x5,7x7卷积
+4. cls loss采用sampling的办法, 取topk个CE loss
+
+
+
 ## 目标检测
 目标检测的目的是输出待检测物体bbox的位置(x1,x2,y1,y2)及其分类。
 ![20200420_170516_55](assets/20200420_170516_55.png)
@@ -103,7 +131,7 @@ $$ softmax = \frac {e^{p_i}}{\sum\limits_{j=1}^n e^{p_j}} $$
 $$ -\sum\limits_{i=1}^n log(\frac {e^{p_i}}{\sum\limits_{j=1}^n e^{p_j}}) $$
 
 ##### 分类loss
-只有正样本与负样本会参与分类loss计算,被ignored的based-anchor不参与计算。分类loss是基于交叉熵的，优化的是概率。对于正样本，loss监督网络在其对应的class_id层有接近1的输出。对于负样本，loss监督网络在其对应输出层输出接近0。focal loss 是常见的one stage detector的分类loss，基于CE交叉熵loss，提出 1.优化正样本与background不平衡问题（可能只有几百个based_anchor与GT bbox匹配成功，其余十几万的都是负样本，负样本有可能主导分类loss） 2.重点优化难训练样本的概率见下图。focal loss中 1. alpha_t正样本权重，1-alpha_t负样本权重，解决正样本与background的不平衡 2. gamma，在ce_loss前乘上 $((1 - p_t))^{gamma}$，减少预测正确的大概率样本的loss，见下图。当gamma = 0, focal loss = CE loss
+只有正样本与负样本会参与分类loss计算,被ignored的based-anchor不参与计算。分类loss是基于交叉熵的，优化的是概率。对于正样本，loss监督网络在其对应的class_id层有接近1的输出。对于负样本，loss监督网络在其对应输出层输出接近0。focal loss 是常见的one stage detector的分类loss，基于CE交叉熵loss，提出 1.优化正样本与background不平衡问题（可能只有几百个based_anchor与GT bbox匹配成功，其余十几万的都是负样本，负样本有可能主导分类loss） 2.重点优化难训练样本的概率见下图。focal loss中 1. alpha_t正样本权重，1-alpha_t负样本权重，解决正样本与background的不平衡 2. gamma，在ce_loss前乘上 $(1 - p_t)^{\gamma}$，减少预测正确的大概率样本的loss，见下图。当gamma = 0, focal loss = CE loss
 $$ FL(p_t) = -\alpha_t (1-p_t)^\gamma log(p_t) $$
 ![20200424_232127_48](assets/20200424_232127_48.png)
 
@@ -128,7 +156,15 @@ return loss
 torch.nn.init.normal_(layer.weight, mean=0, std=0.01)
 torch.nn.init.constant_(layer.bias, 0)
 ```
-
+#### yolov3 loss
+```python
+xy_loss = object_mask * box_loss_scale * K.binary_crossentropy(raw_true_xy, raw_pred[...,0:2], from_logits=True)
+wh_loss = object_mask * box_loss_scale * 0.5 * K.square(raw_true_wh-raw_pred[...,2:4])
+confidence_loss = object_mask * K.binary_crossentropy(object_mask, raw_pred[...,4:5], from_logits=True)+ \
+    (1-object_mask) * K.binary_crossentropy(object_mask, raw_pred[...,4:5], from_logits=True) * ignore_mask
+class_loss = object_mask * K.binary_crossentropy(true_class_probs, raw_pred[...,5:], from_logits=True)
+loss = xy_loss + wh_loss + confidence_loss + class_loss
+```
 #### IoU
 ```python
 import numpy as np

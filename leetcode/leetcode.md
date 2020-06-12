@@ -351,6 +351,27 @@ class Solution:
 
         return result
 ```
+#### [1353. 最多可以参加的会议数目](https://leetcode-cn.com/problems/maximum-number-of-events-that-can-be-attended/)
+```python
+class Solution:
+    def maxEvents(self, events: List[List[int]]) -> int:
+        ans = 0
+        end = []
+        # 按起始日期从大到小排序
+        events = sorted(events,reverse=True)
+        for i in range(1,100001,1):
+            # 如果当前日期==会议起始日期，将结束日期加入小顶堆
+            while events and events[-1][0] == i:
+                heapq.heappush(end, events.pop()[1])
+            # 将堆中所有结束日期小于当前日期的会议pop
+            while end and end[0] < i:
+                heapq.heappop(end)
+            # 如果堆非空，当前日期参加结束日期最小的
+            if end:
+                heapq.heappop(end)
+                ans += 1
+        return ans
+```
 
 #### [面试题40. 最小的k个数](https://leetcode-cn.com/problems/zui-xiao-de-kge-shu-lcof/)
 ```python
@@ -2397,20 +2418,20 @@ class Solution:
 [912. 排序数组](https://leetcode-cn.com/problems/sort-an-array/)
 ### 比较排序
 #### 快速排序
+稳定, O(nlog(n)), 最坏 O(n^2)
 ```
 快排的最差情况什么时候发生？
 1. 已排序
 2. 数值全部相等（已排序的特殊情况）
 
 快排最好的情况是，每次正好中分，复杂度为O(nlogn)。最差情况，复杂度为O(n^2)，退化成冒泡排序
-
 为了尽量避免最差情况的发生，就要尽量使每次选择的pivot为中位数。
-
 一般常用的方法是，对每一个数列都取一次中位数(O(n))，这样总体的快排时间复杂度仍为O(nlogn)。
-
 更为简化的方法是，取头、中、尾的中位数(O(1))作为pivot
 ```
-
+1. 通过partition操作,使得pivot左边数均<pivot,右边>=pivot
+2. 递归的对pivot左边,右边分别partition
+3. 递归退出条件是l>=r
 ```python
 def qsort(array, l, r):
     def partition(arr, left, right):
@@ -2422,9 +2443,17 @@ def qsort(array, l, r):
                 arr[pivot_i], arr[i] = arr[i], arr[pivot_i]
         arr[pivot_i], arr[left] = arr[left], arr[pivot_i]
         return pivot_i
+
+    if l < r:
+    # partition: 交换，使得pivot左边<pivot,右边>=pivot
+    pivot_index = partition_2(array, l, r)
+    qsort(array, l, pivot_index)
+    qsort(array, pivot_index+1, r)
 ```
-选择left, right, mid 的中位数作为pivot，避免复杂度退化n^2
+
+中值快排: 解决的是复杂度退化到O(n^2)的问题
 ```python
+def qsort(array, l, r):
     def get_median(l_i, r_i, m_i):
         l_val, r_val, m_val = nums[l_i], nums[r_i], nums[m_i]
         max_val = max(l_val, r_val, m_val)
@@ -2448,8 +2477,16 @@ def qsort(array, l, r):
                 arr[pivot_i], arr[i] = arr[i], arr[pivot_i]
         arr[pivot_i], arr[left] = arr[left], arr[pivot_i]
         return pivot_i
+
+    if l < r:
+        pivot_i = partition(array, l, r)
+        qsort(l, pivot_i)
+        qsort(pivot_i+1, r)
 ```
+
+双路快排: 解决的是待排序数组中大量重复数字的问题
 ```python
+def qsort(array, l, r):
     def partition2(arr, left, right):
         """双路快排，减少重复元素partition交换次数，无法解决退化n^2"""
         pivot = arr[left]
@@ -2473,35 +2510,11 @@ def qsort(array, l, r):
         qsort(array, l, pivot_index)
         qsort(array, pivot_index+1, r)
 ```
-```python
-def qsort3(array, l, r):
-    def partition_3(array, l, r):
-        """三路快排，用于多重复元素的排序任务"""
-        pivot = array[l]
-        p_l = l
-        p_r = r
-        p = l + 1
-        while (p < p_r):
-            if array[p] < pivot:
-                p_l += 1
-                array[p], array[p_l] = array[p_l], array[p]
-                p += 1
-            elif array[p] > pivot:
-                p_r -= 1
-                array[p], array[p_r] = array[p_r], array[p]
-            else:
-                p += 1
-        array[l], array[p_l] = array[p_l], array[l]
-        return p_l, p_r
 
-    if l < r:
-        p_l, p_r = partition_3(array, l, r)
-        qsort3(array, 0, p_l)
-        qsort3(array, p_r+1, r)
-
-qsort3(nums, 0, len(nums))
-```
 #### 归并排序
+1. 递归对半分数组
+2. 当被分子数组长度为1时,结束递归,return子数组
+3. merge 返回的左右子数组
 ```python
 def merge(l_arr, r_arr):
     p_l, p_r, merged_arr = 0, 0, []
@@ -2560,39 +2573,35 @@ def mergeSort(arr, l, r):
 mergeSort(nums, 0, len(nums))
 ```
 
-
 #### 冒泡排序
+O(n^2). 两两比较大小,每次循环将最大的数放在最后面
 ```python
-def bubblesort(array):
+def bubbleSort(array):
     n = len(array)
-    while(n != 1):
-        flag = 1
-        if n == len(array):
-            last = len(array[:n])-1
-        for i in range(last):
-            j = i + 1
-            if array[i] > array[j]:
-                array[i], array[j] = array[j], array[i]
-                flag = 0; last = i
-        n -= 1
-        if flag == 1: break
+    for i in range(1, n):
+        for j in range(n-i):
+            if array[j+1] < array[j]:
+                array[j], array[j+1] = array[j+1], array[j]
+    return array
 ```
+
 #### 选择排序
+第二层循环,找到最小的数,放在最前面.稳定O(n^2)复杂度,不受数组初始排序影响.
 ```python
-def selectsort(array):
-    sort_array = []
-    while(len(array) > 0):
-        temp_min = 1e5
-        temp_i = 0
-        for i in range(len(array)):
-            if array[i] < temp_min:
-                temp_min = array[i]
-                temp_i = i
-        sort_array.append(temp_min)
-        del array[temp_i]
-    return sort_array
+def selectSort(array):
+    n = len(array)
+    for i in range(n):
+        min_index = i
+        for j in range(i+1, n):
+            if array[j] < array[min_index]:
+                min_index = j
+        if min_index != i:
+            array[i], array[min_index] = array[min_index], array[i]
+    return array
 ```
+
 #### 插入排序
+把当前数,和前面的数比大小,赋值交换找到插入位置
 ```python
 def insertionSort(arr):
     for i in range(len(arr)):
@@ -2606,6 +2615,8 @@ def insertionSort(arr):
 ```
 
 #### 堆排序
+两次sift_down操作,第一次从倒数第二层到根节点下沉,保证根节点最大
+第二次for循环把最大值交换到尾部,然后根下沉.
 ```python
 def heapSort(arr):
     def sift_down(arr, root, k):
@@ -2623,7 +2634,7 @@ def heapSort(arr):
         arr[root] = root_val
 
     n = len(arr) # n 为heap的规模
-    # 构造 maxheap. 从倒数第二层起，该元素下沉
+    # 保证根节点最大. 从倒数第二层向上，该元素下沉
     for i in range((n-1)//2, -1, -1):
         sift_down(arr, i, n)
     # 从尾部起，依次与顶点交换并再构造 maxheap，heap规模-1
@@ -2646,7 +2657,8 @@ while (inc > 1):
 
 ### 非比较排序
 #### 计数排序
-时间复杂度为O(n+k)，空间复杂度为O(n+k)。n 是待排序数组长度，k 是 max_value-min_value+1长度。稳定排序算法，即排序后的相同值的元素原有的相对位置不会发生改变。
+时间复杂度为O(n+k)，空间复杂度为O(n+k)。n 是待排序数组长度，k 是 max_value-min_value+1长度。
+稳定排序算法，即排序后的相同值的元素原有的相对位置不会发生改变。
 
 可以排序整数（包括负数），不能排序小数
 1. 计算数组值最大与最小，生成长度为 max-min+1 的bucket
@@ -2670,7 +2682,9 @@ def countingSort(array):
 #### 桶排序
 桶排序是计数排序的拓展
 ![](assets/leetcode-be66e5dc.png)
-如果对每个桶（共M个）中的元素排序使用的算法是插入排序，每次排序的时间复杂度为O(N/Mlog(N/M))。则总的时间复杂度为O(N)+O(M)O(N/Mlog(N/M)) = O(N+ Nlog(N/M)) = O(N + NlogN - NlogM)。当M接近于N时，桶排序的时间复杂度就可以近似认为是O(N)的。是一种稳定排序算法.
+如果对每个桶（共M个）中的元素排序使用的算法是插入排序，每次排序的时间复杂度为O(N/Mlog(N/M))。
+则总的时间复杂度为O(N)+O(M)O(N/Mlog(N/M)) = O(N+ Nlog(N/M)) = O(N + NlogN - NlogM)。
+当M接近于N时，桶排序的时间复杂度就可以近似认为是O(N)的。是一种稳定排序算法.
 
 可以排序负数与小数
 ```python
@@ -3754,16 +3768,15 @@ class Solution:
 ```python
 class Solution:
     def longestConsecutive(self, nums: List[int]) -> int:
-        if len(nums) == 0: return 0
         lookup = set(nums)
         max_len = 0
         for num in lookup:
             if num-1 in lookup:
                 continue
-            curr_len = 1
-            while num+1 in lookup:
-                num += 1
+            curr_len = 0
+            while num in lookup:
                 curr_len += 1
+                num += 1
             max_len = max(max_len, curr_len)
         return max_len
 ```
@@ -3783,4 +3796,206 @@ class Solution:
             dp[i] = s / W
             s = s - dp[i+W] + dp[i]
         return dp[0]
+```
+#### [15. 三数之和](https://leetcode-cn.com/problems/3sum/)
+```python
+class Solution:
+    def threeSum(self, nums: List[int]) -> List[List[int]]:
+        nums.sort()
+        n = len(nums)
+        results = []
+        for p0 in range(n-2):
+            # 如果p0已经大于0了,p1,p2必定大于0,break
+            if nums[p0] > 0:
+                break
+            # 如果遇到重复数字,跳过
+            if p0 != 0 and nums[p0] == nums[p0-1]:
+                continue
+            p1, p2 = p0+1, n-1
+            while p1 < p2:
+                if nums[p0] + nums[p1] + nums[p2] < 0:
+                    p1 += 1
+                elif nums[p0] + nums[p1] + nums[p2] > 0:
+                    p2 -= 1
+                else:
+                    results.append([nums[p0],nums[p1],nums[p2]])
+                    p1 += 1
+                    p2 -= 1
+                    # 找到三元数后,对于重复的数字跳过
+                    while p1 < p2 and nums[p1] == nums[p1-1]:
+                        p1 += 1
+                    while p1 < p2 and nums[p2] == nums[p2+1]:
+                        p2 -= 1
+        return results
+```
+#### [18. 四数之和](https://leetcode-cn.com/problems/4sum/)
+```python
+class Solution:
+    def fourSum(self, nums: List[int], target: int) -> List[List[int]]:
+        """注意与三数之和的区别,target可以为负"""
+        nums.sort()
+        n = len(nums)
+        results = []
+        for p0 in range(n-3):
+            # 当数组最小值和大于target break
+            if nums[p0]+nums[p0+1]+nums[p0+2]+nums[p0+3] > target:
+                break
+            # 当数组最大值和小于target 寻找下一个数字
+            if nums[p0]+nums[n-1]+nums[n-2]+nums[n-3] < target:
+                continue
+            # 重复数 跳过
+            if p0 != 0 and nums[p0] == nums[p0-1]:
+                continue
+            for p1 in range(p0+1, n-2):
+                # 当数组最小值和大于target break
+                if nums[p0]+nums[p1]+nums[p1+1]+nums[p1+2] > target:
+                    break
+                # 当数组最大值和小于target 寻找下一个数字
+                if nums[p0]+nums[p1]+nums[n-2]+nums[n-1] < target:
+                    continue
+                # 重复数 跳过
+                if p1 != p0+1 and nums[p1] == nums[p1-1]:
+                    continue
+                p2, p3 = p1+1, n-1
+                while p2 < p3:
+                    val = nums[p0]+nums[p1]+nums[p2]+nums[p3]
+                    if val < target:
+                        p2 += 1
+                    elif val > target:
+                        p3 -= 1
+                    else:
+                        results.append([nums[p0],nums[p1],nums[p2],nums[p3]])
+                        p2 += 1
+                        p3 -= 1
+                        while p2 < p3 and nums[p2] == nums[p2-1]:
+                            p2 += 1
+                        while p2 < p3 and nums[p3] == nums[p3+1]:
+                            p3 -= 1
+        return results
+```
+
+#### [面试题29. 顺时针打印矩阵](https://leetcode-cn.com/problems/shun-shi-zhen-da-yin-ju-zhen-lcof/)
+模拟题， 收缩四个边界， 在边界范围内打印。
+```python
+class Solution:
+    def spiralOrder(self, matrix: List[List[int]]) -> List[int]:
+        if len(matrix) == 0: return []
+        l, t, r, b = 0, 0, len(matrix[0]), len(matrix)
+        results = []
+        while True:
+            for j in range(l,r):
+                results.append(matrix[t][j])
+            t += 1
+            if t == b: break
+
+            for i in range(t,b):
+                results.append(matrix[i][r-1])
+            r -= 1
+            if r == l: break
+
+            for j in range(r-1, l-1, -1):
+                results.append(matrix[b-1][j])
+            b -= 1
+            if t == b: break
+
+            for i in range(b-1, t-1, -1):
+                results.append(matrix[i][l])
+            l += 1
+            if r == l: break
+
+        return results
+```
+
+#### [990. 等式方程的可满足性](https://leetcode-cn.com/problems/satisfiability-of-equality-equations/)
+典型并查集
+```python
+class UnionFindSet:
+    def __init__(self, n):
+        self.parent = [i for i in range(n)]
+        self.rank = [0] * n
+
+    def find(self, x):
+        """返回根节点的同时完全压缩 ~= O(1)"""
+        if x != self.parent[x]:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+
+    def union(self, x, y):
+        """合并两个节点到同一根节点,并维护rank O(1)"""
+        px, py = self.find(x), self.find(y)
+        if self.rank[px] < self.rank[py]:
+            self.parent[px] = py
+        elif self.rank[px] > self.rank[py]:
+            self.parent[py] = px
+        else:
+            self.parent[px] = py
+            self.rank[py] += 1
+
+    def is_connect(self, x, y):
+        """查询两个节点是否联通"""
+        return self.find(x) == self.find(y)
+
+class Solution:
+    def equationsPossible(self, equations: List[str]) -> bool:
+        unionfind = UnionFindSet(26)
+        for item in equations:
+            if item[1] == "=":
+                index1 = ord(item[0]) - ord("a")
+                index2 = ord(item[3]) - ord("a")
+                unionfind.union(index1, index2)
+        for item in equations:
+            if item[1] == "!":
+                index1 = ord(item[0]) - ord("a")
+                index2 = ord(item[3]) - ord("a")
+                if unionfind.is_connect(index1, index2):
+                    return False
+        return True
+```
+
+#### [218. 天际线问题](https://leetcode-cn.com/problems/the-skyline-problem/)
+```python
+class Solution:
+    def getSkyline(self, buildings: List[List[int]]) -> List[List[int]]:
+        # 扫描线算法
+        def merge(left, right):
+            p0, p1 = 0, 0
+            n0, n1 = len(left), len(right)
+            lh, rh = 0, 0
+            merged = []
+            while p0 < n0 and p1 < n1:
+                # 如果横坐标左<右,记录左矩形h与之前rh的max作为当前点的h
+                if left[p0][0] < right[p1][0]:
+                    cp = [left[p0][0], max(rh, left[p0][1])]
+                    lh = left[p0][1]
+                    p0 += 1
+                # 注意是elif,不然有bug
+                elif left[p0][0] > right[p1][0]:
+                    cp = [right[p1][0], max(lh, right[p1][1])]
+                    rh = right[p1][1]
+                    p1 += 1
+                # 如果横坐标相等,取两点的最高高度,p0+1,p1+1
+                else:
+                    cp = [right[p1][0], max(left[p0][1], right[p1][1])]
+                    lh = left[p0][1]
+                    rh = right[p1][1]
+                    p0 += 1
+                    p1 += 1
+                # 如果相对于上一个点,高度没有更换,不更新
+                if len(merged) == 0 or cp[1] != merged[-1][1]:
+                    merged.append(cp)
+            merged.extend(left[p0:] or right[p1:])
+            return merged
+
+        def mergeSort(buildings):
+            # return 单个矩形的左上,右下坐标
+            if len(buildings) == 1:
+                return [[buildings[0][0], buildings[0][2]], [buildings[0][1], 0]]
+            mid = len(buildings) // 2
+            left = mergeSort(buildings[mid:])
+            right = mergeSort(buildings[:mid])
+            return merge(left, right)
+
+        # O(nlogn)
+        if len(buildings) == 0: return []
+        return mergeSort(buildings)
 ```

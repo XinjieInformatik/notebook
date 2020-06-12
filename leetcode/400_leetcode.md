@@ -2386,8 +2386,7 @@ class Solution(object):
 
         return 0
 ```
-[126. 单词接龙 II](https://leetcode-cn.com/problems/word-ladder-ii/)
-TODO: 再做一遍
+#### [126. 单词接龙 II](https://leetcode-cn.com/problems/word-ladder-ii/)
 ```python
 class Solution:
     def findLadders(self, beginWord: str, endWord: str, wordList: List[str]) -> List[List[str]]:
@@ -2425,9 +2424,8 @@ class Solution:
                         if visited[word] == level+1:
                             level_words[top].append(word) # TODO: check
 
-
-        # dfs
-        # print(level_words)
+        # 用dfs输出全部的组合
+        print(level_words)
         results = []
         def dfs(top, result):
             if result and result[-1] == endWord:
@@ -3781,6 +3779,36 @@ class Solution:
                 heapq.heappush(heap, (lists[i].val, i))
                 lists[i] = lists[i].next
         return dummy_head.next
+```
+归并有序链表排序
+```python
+class Solution:
+    def mergeKLists(self, lists: List[ListNode]) -> ListNode:
+        def mergeSort(inputs, l, r):
+            if l == r-1:
+                return inputs[l]
+            mid = l + (r-l)//2
+            l1 = mergeSort(inputs, l, mid)
+            l2 = mergeSort(inputs, mid, r)
+            merged_list = merge(l1, l2)
+            return merged_list
+
+        def merge(l1, l2):
+            dummy = ListNode(-1)
+            prehead = dummy
+            while l1 and l2:
+                if l1.val < l2.val:
+                    dummy.next = l1
+                    l1 = l1.next  
+                else:
+                    dummy.next = l2
+                    l2 = l2.next
+                dummy = dummy.next
+            dummy.next = l1 if l1 else l2
+            return prehead.next
+
+        if len(lists) == 0: return
+        return mergeSort(lists, 0, len(lists))
 ```
 
 #### [147. 对链表进行插入排序](https://leetcode-cn.com/problems/insertion-sort-list/)
