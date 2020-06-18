@@ -3849,19 +3849,17 @@ class Solution:
 ```python
 class Solution:
     def isValidBST(self, root: TreeNode) -> bool:
-        def helper(node, lower, upper):
-            if node == None:
+        def helper(node, low, up):
+            if not node:
                 return True
-            val = node.val
-            if val <= lower or val >= upper:
+            if not low < node.val < up:
                 return False
-            if not helper(node.left, lower, val):
+            if not helper(node.left, low, node.val):
                 return False
-            if not helper(node.right, val, upper):
+            if not helper(node.right, node.val, up):
                 return False
             return True
-
-        return helper(root, float("-inf"), float("inf"))
+        return helper(root, -float("inf"), float("inf"))
 ```
 
 #### [100. 相同的树](https://leetcode-cn.com/problems/same-tree/)
@@ -3904,7 +3902,26 @@ class Solution:
 
         return helper(root, root)
 ```
-
+迭代
+```python
+class Solution:
+    def isSymmetric(self, root: TreeNode) -> bool:
+        stack = [root, root]
+        while stack:
+            node2 = stack.pop()
+            node1 = stack.pop()
+            if node1 == None and node2 == None:
+                continue
+            if node1 == None or node2 == None:
+                return False
+            if node1.val != node2.val:
+                return False
+            stack.append(node1.left)
+            stack.append(node2.right)
+            stack.append(node1.right)
+            stack.append(node2.left)
+        return True
+```
 #### [226. 翻转二叉树](https://leetcode-cn.com/problems/invert-binary-tree/)
 后序遍历，交换左右子节点
 ```python
@@ -4057,6 +4074,25 @@ class Solution:
 ```
 
 #### [111. 二叉树的最小深度](https://leetcode-cn.com/problems/minimum-depth-of-binary-tree/)
+迭代, 注意用stack模拟递归时, 存储的变量也应该是 (node, depth)
+```python
+class Solution:
+    def minDepth(self, root: TreeNode) -> int:
+        if not root: return 0
+        stack = []
+        min_depth, curr = float("inf"), 0
+        while stack or root:
+            while root:
+                curr += 1
+                if not root.left and not root.right:
+                    min_depth = min(min_depth, curr)
+                stack.append((root, curr))
+                root = root.left
+            if stack:
+                root, curr = stack.pop()
+                root = root.right
+        return min_depth
+```
 1. bfs 广度优先搜索，遇到叶子节点，返回当前level. 比dfs会快一点，提前return
 ```python
 from collections import deque
@@ -4103,6 +4139,62 @@ class Solution:
 特别要注意的是，求最大深度不用像最小深度一样，严格到叶节点就返回，可以到None再返回，因此dfs
 有两种写法
 ```python
+class Solution:
+    def maxDepth(self, root: TreeNode) -> int:
+        """迭代 前序"""
+        stack = []
+        max_depth, curr = 0, 0
+        while root or stack:
+            while root:
+                curr += 1
+                max_depth = max(max_depth, curr)
+                stack.append((root, curr))
+                root = root.left
+            if stack:
+                root, curr = stack.pop()
+                root = root.right
+        return max_depth
+
+    def maxDepth(self, root: TreeNode) -> int:
+        """迭代 中序"""
+        stack = []
+        max_depth, curr = 0, 0
+        while root or stack:
+            while root:
+                curr += 1
+                stack.append((root, curr))
+                root = root.left
+            if stack:
+                root, curr = stack.pop()  
+                max_depth = max(max_depth, curr)
+                root = root.right
+        return max_depth
+```
+```python
+class Solution:
+    def maxDepth(self, root: TreeNode) -> int:
+        """递归 前序遍历"""
+        ans = 0
+        def helper2(node, depth):
+            nonlocal ans
+            ans = max(ans, depth)
+            if not node:
+                return
+            helper2(node.left, depth+1)
+            helper2(node.right, depth+1)
+        helper2(root, 0)
+        return ans
+        """递归 后序遍历"""
+        def helper(node):
+            if not node:
+                return 0
+            l_d = helper(node.left)
+            r_d = helper(node.right)
+            return max(l_d, r_d) + 1
+        return helper(root)
+```
+层次遍历
+```python
 from collections import deque
 class Solution:
     def maxDepth(self, root: TreeNode) -> int:
@@ -4120,54 +4212,24 @@ class Solution:
             return level
         if not root: return 0
         return bfs(root)
-```      
-```python
-class Solution:
-    def maxDepth(self, root: TreeNode) -> int:
-        def dfs(node, depth):
-            if not node.left and not node.right:
-                return depth+1
-            depth_left, depth_right = -float("inf"), -float("inf")
-            if node.left:
-                depth_left = dfs(node.left, depth+1)
-            if node.right:
-                depth_right = dfs(node.right, depth+1)
-            return max(depth_left, depth_right)
-        if not root: return 0
-        return dfs(root, 0)
-```
-```python
-class Solution:
-    def maxDepth(self, root: TreeNode) -> int:
-        def dfs(node, depth):
-            if not node:
-                return depth
-            depth_left = dfs(node.left, depth+1)
-            depth_right = dfs(node.right, depth+1)
-            return max(depth_left, depth_right)
-        if not root: return 0
-        return dfs(root, 0)
-```
+```    
 
 #### [110. 平衡二叉树](https://leetcode-cn.com/problems/balanced-binary-tree/)
 注意判断 if not is_left_balance的位置，紧接着dfs,如果已经失平衡，就不再进入right子树了。
 ```python
 class Solution:
     def isBalanced(self, root: TreeNode) -> bool:
-        """递归获取深度，层层返回时比较左右子树高度差
-        返回值需要统一，不能混合depth与False"""
-        def dfs(node, depth):
-            if not node:
-                return depth, True
-            depth_left, is_left_balance = dfs(node.left, depth+1)
-            if not is_left_balance:
-                return None, False
-            depth_right, is_right_balance = dfs(node.right, depth+1)
-            if not is_right_balance:
-                return None, False
-            return max(depth_left, depth_right), abs(depth_left - depth_right) <= 1
-        if not root: return True
-        max_depth, is_balance = dfs(root, 0)
+        def helper(root):
+            if root == None:
+                return 0, True
+            left, l_balance = helper(root.left)
+            if not l_balance:
+                return -1, False
+            right, r_balance = helper(root.right)
+            if not r_balance:
+                return -1, False
+            return max(left, right)+1, abs(left-right) <= 1
+        depth, is_balance = helper(root)
         return is_balance
 ```
 
@@ -4243,23 +4305,24 @@ class Solution:
 二叉搜索树，左子树小于根，右子树大于根！利用其搜索的性质
 1. 如果p,q均小于根，父节点向左移
 2. 如果p,q均大于根，父节点向右移
-3. 如果p,q一个大于一个小于根，则该父节点是最近的分叉节点
+3. 如果p,q一个大于一个小于根，则该父节点是最近的分叉节点!
 
 ```python
 class Solution:
-    def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
-        def helper(node):
-            min_val = min(p.val, q.val)
-            max_val = max(p.val, q.val)
+    def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':  
+        def helper(root):
             # 如果p,q均小于根，父节点向左移
-            if max_val < node.val:
-                return helper(node.left)
+            if max_val < root.val:
+                return helper(root.left) # 注意要return
             # 如果p,q均大于根，父节点向右移
-            elif min_val > node.val:
-                return helper(node.right)
-            # 如果p,q一个大于一个小于根，则该父节点是最近的分叉节点
+            elif min_val > root.val:
+                return helper(root.right)
+            # 如果p,q一个大于一个小于根，则该父节点是最近的分叉节点,然后层层return
             else:
-                return node
+                return root
+
+        min_val = min(p.val, q.val)
+        max_val = max(p.val, q.val)
 
         return helper(root)
 ```
@@ -4300,6 +4363,41 @@ class Solution:
             return node
 
         return helper(root)
+```  
+
+#### [1028. 从先序遍历还原二叉树](https://leetcode-cn.com/problems/recover-a-tree-from-preorder-traversal/)
+if 当前结点的深度 = 前一个结点的深度 + 1
+    当前结点是前一结点的左孩子
+if 当前结点的深度 <= 前一个结点的深度
+    当前结点是前面某一个结点的右孩子
+```python
+class Solution:
+    def recoverFromPreorder(self, S: str) -> TreeNode:
+        i = 0
+        stack = []
+        pre_depth = -1
+        pre_node = None
+        while i < len(S):
+            depth = 0
+            while S[i] == '-':
+                depth += 1
+                i += 1
+            value = ''
+            while i < len(S) and S[i].isdigit():
+                value += S[i]
+                i += 1
+            node = TreeNode(int(value))
+
+            if stack and depth == pre_depth + 1:
+                stack[-1].left = node
+            else:
+                for _ in range(pre_depth - depth + 1):
+                    stack.pop()
+                if stack:
+                    stack[-1].right = node
+            pre_depth = depth
+            stack.append(node)
+        return stack[0]
 ```
 
 #### [面试题07. 重建二叉树](https://leetcode-cn.com/problems/zhong-jian-er-cha-shu-lcof/)
@@ -4334,24 +4432,95 @@ class Solution:
         return root
 ```
 
+#### [106. 从中序与后序遍历序列构造二叉树](https://leetcode-cn.com/problems/construct-binary-tree-from-inorder-and-postorder-traversal/)
+TODO: 其他做法
+```python
+class Solution:
+    def buildTree(self, inorder: List[int], postorder: List[int]) -> TreeNode:
+        n = len(inorder)
+        lookup = {inorder[i]: i for i in range(n)}
+        def helper(root_i, left, right):
+            if left >= right: return
+            val = postorder[root_i]
+            in_i = lookup[val]
+            node = TreeNode(val)
+            # 左孩子后序遍历的位置: 根节点 - 右子树长度 (注意,因为right开区间,因此不用再-1)
+            node.left = helper(root_i-(right-in_i), left, in_i)
+            node.right = helper(root_i-1, in_i+1, right)
+            return node
+        return helper(n-1, 0, n)
+```
+
+#### [297. 二叉树的序列化与反序列化](https://leetcode-cn.com/problems/serialize-and-deserialize-binary-tree/)
+和上两题一样,以先序遍历return node的方法建立二叉树,注意用data.pop()的形式
+```python
+from collections import deque
+class Codec:
+    def serialize(self, root):
+        encode = []
+        def helper(node):
+            if not node:
+                encode.append("null")
+                return
+            encode.append(str(node.val))
+            helper(node.left)
+            helper(node.right)
+
+        helper(root)
+        encode_str = " ".join(encode)
+        return encode_str
+
+    def deserialize(self, data):
+        decode = deque(data.split())
+        def helper():
+            val = decode.popleft()
+            if val == "null": return None
+            node = TreeNode(val)
+            node.left = helper()
+            node.right = helper()
+            return node
+        return helper()
+```
+
+#### [116. 填充每个节点的下一个右侧节点指针](https://leetcode-cn.com/problems/populating-next-right-pointers-in-each-node/)
+```python
+class Node:
+    def __init__(self, val: int = 0, left: 'Node' = None, right: 'Node' = None, next: 'Node' = None):
+        self.val = val
+        self.left = left
+        self.right = right
+        self.next = next
+from collections import deque
+class Solution:
+    def connect(self, root: 'Node') -> 'Node':
+        if not root: return root
+        queue = deque([root])
+        while queue:
+            rs = None
+            for i in range(len(queue)):
+                top = queue.pop()
+                top.next = rs
+                rs = top
+                if top.right:
+                    queue.appendleft(top.right)
+                if top.left:
+                    queue.appendleft(top.left)
+        return root
+```
+
 #### [108. 将有序数组转换为二叉搜索树](https://leetcode-cn.com/problems/convert-sorted-array-to-binary-search-tree/)
 ```python
-# Definition for a binary tree node.
-# class TreeNode:
-#     def __init__(self, x):
-#         self.val = x
-#         self.left = None
-#         self.right = None
-
 class Solution:
     def sortedArrayToBST(self, nums: List[int]) -> TreeNode:
         def helper(left, right):
-            if left >= right: return None
-            mid = left + (right-left)//2
+            if left == right:
+                return None
+            mid = left + (right - left) // 2
             root = TreeNode(nums[mid])
             root.left = helper(left, mid)
             root.right = helper(mid+1, right)
             return root
+
         return helper(0, len(nums))
 ```
 
@@ -4381,46 +4550,6 @@ class Solution:
             root.right = helper(mid.next)
             return root
         return helper(head)
-```
-
-#### [297. 二叉树的序列化与反序列化](https://leetcode-cn.com/problems/serialize-and-deserialize-binary-tree/)
-和上两题一样,以先序遍历return node的方法建立二叉树,注意用data.pop()的形式
-```python
-class Codec:
-    def serialize(self, root):
-        """Encodes a tree to a single string.
-        :type root: TreeNode
-        :rtype: str
-        """
-        encode_str = ""
-        def helper(node):
-            val = node.val if node != None else "None"
-            nonlocal encode_str
-            encode_str += str(val) + " "
-            if node == None: return
-            helper(node.left)
-            helper(node.right)
-        helper(root)
-        return encode_str
-
-    def deserialize(self, data):
-        """
-        :type data: str
-        :rtype: TreeNode
-        """
-        data_list = data.strip().split(" ")
-        data = deque(data_list)
-        def helper(data):
-            node = data.popleft()
-            if node == "None":
-                return None
-            node = TreeNode(int(node))
-            node.left = helper(data)
-            node.right = helper(data)
-            return node
-
-        root = helper(data)
-        return root
 ```
 
 #### [173. 二叉搜索树迭代器](https://leetcode-cn.com/problems/binary-search-tree-iterator/)
@@ -4457,6 +4586,207 @@ class BSTIterator:
         return len(self.stack) > 0
 ```
 
+#### [701. 二叉搜索树中的插入操作](https://leetcode-cn.com/problems/insert-into-a-binary-search-tree/)
+```python
+class Solution:
+    def insertIntoBST(self, root: TreeNode, val: int) -> TreeNode:
+        def helper(node):
+            if node == None:
+                return TreeNode(val)
+            if node.val < val:
+                node.right = helper(node.right)
+            else:
+                node.left = helper(node.left)
+            return node
+        return helper(root)
+```
+
+#### [450. 删除二叉搜索树中的节点](https://leetcode-cn.com/problems/delete-node-in-a-bst/)
+
+![20200618_001541_46](assets/20200618_001541_46.png)
+
+```python
+class Solution:
+    def deleteNode(self, root: TreeNode, key: int) -> TreeNode:
+        def predecessor(node):
+            node = node.right
+            while node.left:
+                node = node.left
+            return node.val
+
+        def helper(node, key):
+            # 如果到了底部None, return
+            if not node:
+                return None
+            # 如果找到了key
+            if key == node.val:
+                # 如果该节点是叶子节点,直接删除该节点
+                if not node.left and not node.right:
+                    return None
+                # 如果该节点只是左边空,返回右节点
+                elif not node.left:
+                    return node.right
+                # 如果该节点只是右边空,返回左节点
+                elif not node.right:
+                    return node.left
+                # 如果左右均非空,找到他的前驱节点替换掉该节点,删除前驱节点
+                else:
+                    node.val = predecessor(node)
+                    node.right = helper(node.right, node.val)
+                    return node
+            # 搜左子树
+            elif key < node.val:
+                node.left = helper(node.left, key)
+            # 搜右子树
+            else:
+                node.right = helper(node.right, key)
+            return node
+
+        return helper(root, key)
+```
+
+#### [703. 数据流中的第K大元素](https://leetcode-cn.com/problems/kth-largest-element-in-a-stream/)
+构建二叉搜索树, 节点计数, 超时...
+```python
+class TreeNode():
+    def __init__(self, val):
+        self.left = None
+        self.right = None
+        self.val = val
+        self.cnt = 0
+
+class KthLargest:
+    def __init__(self, k: int, nums: List[int]):
+        self.root = None
+        self.k = k
+        for num in nums:
+            self.root = self.insert(self.root, num)
+
+    def search(self, root, k):
+        if root == None:
+            return None
+        left_cnt = root.left.cnt if root.left else 0
+        right_cnt = root.right.cnt if root.right else 0
+        curr_cnt = root.cnt - left_cnt - right_cnt
+
+        if k <= right_cnt:
+            return self.search(root.right, k)
+        elif k > right_cnt+curr_cnt:
+            return self.search(root.left, k-right_cnt-curr_cnt)
+        else:
+            return root.val
+
+    def insert(self, root, val):
+        if root == None:
+            leaf = TreeNode(val)
+            leaf.cnt += 1
+            return leaf
+        if root.val < val:
+            root.right = self.insert(root.right, val)
+        elif root.val > val:
+            root.left = self.insert(root.left, val)
+        # 对于重复元素,不新建节点,cnt依然+1
+        root.cnt += 1
+        return root
+
+    def add(self, val: int) -> int:
+        self.root = self.insert(self.root, val)
+        # self.result = []
+        # self.helper(self.root)
+        # print(self.result)
+        return self.search(self.root, self.k)
+
+    def helper(self, root):
+        if not root:
+            return
+        self.helper(root.left)
+        self.result.append((root.val, root.cnt))
+        self.helper(root.right)
+```
+维护规模为k的二叉搜索树
+```python
+class TreeNode:
+    def __init__(self, val):
+        self.val = val
+        self.left = None
+        self.right = None
+
+class KthLargest:
+    def __init__(self, k: int, nums: List[int]):
+        self.k = k
+        self.root = None
+        self.size = 0
+        for num in nums:
+            self.root = self.insert_root(self.root, num)
+            self.root = self.keep_k(self.root)
+
+    def add(self, val: int) -> int:
+        self.root = self.insert_root(self.root, val)
+        self.root = self.keep_k(self.root)
+        return self.get_min()
+
+    def insert_root(self, root, num):
+        if not root:
+            self.size += 1
+            return TreeNode(num)
+        if root.val >= num:
+            root.left = self.insert_root(root.left, num)
+        else:
+            root.right = self.insert_root(root.right, num)
+        return root
+
+    def keep_k(self, root):
+        if self.size <= self.k:
+            return root
+        if not root:
+            return None
+        elif root.left:
+            root.left = self.keep_k(root.left)
+        else:
+            self.size -= 1
+            if not(root.left or root.right):
+                root = None
+            else:
+                root.val = self.succ(root)
+                root.right = self.deleteNode(root.right, root.val)
+        return root
+
+    def deleteNode(self, root: TreeNode, key: int) -> TreeNode:
+        if not root:
+            return None
+        if root.val == key:
+            if not (root.left or root.right):
+                root = None
+            elif root.right:
+                root.val = self.succ(root)
+                root.right = self.deleteNode(root.right, root.val)
+            else:
+                root.val = self.prev(root)
+                root.left = self.deleteNode(root.left, root.val)
+        elif root.val > key:
+            root.left = self.deleteNode(root.left, key)
+        else:
+            root.right = self.deleteNode(root.right, key)
+        return root
+
+    def succ(self, root):
+        right = root.right
+        while right.left:
+            right = right.left
+        return right.val
+
+    def prev(self, root):
+        left = root.left
+        while left.right:
+            left = left.right
+        return left.val
+
+    def get_min(self):
+        cur = self.root
+        while cur.left:
+            cur = cur.left
+        return cur.val
+```
 #### [230. 二叉搜索树中第K小的元素](https://leetcode-cn.com/problems/kth-smallest-element-in-a-bst/)
 ```python
 class Solution:

@@ -28,20 +28,20 @@ class HuffmanCoding(object):
         self.coding2char = {}
 
     def freqence_calculate(self, compressed_str: str):
-        """O(logn)"""
+        """O(n)"""
         freq = {}
         for char in compressed_str:
             freq[char] = 1 if char not in freq else freq[char]+1
         return freq
 
     def build_heap(self, freq: Dict[str,int]):
-        """O(logk)"""
+        """O(n)"""
         for key in freq:
             node = HeapNode(key, freq[key])
             heapq.heappush(self.heap, node)
 
     def merge_nodes(self):
-        """O(klogk)"""
+        """O(nlogn)"""
         while len(self.heap) > 1:
             node1 = heapq.heappop(self.heap)
             node2 = heapq.heappop(self.heap)

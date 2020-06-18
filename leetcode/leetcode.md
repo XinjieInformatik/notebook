@@ -1388,18 +1388,15 @@ class Solution:
 class Solution:
     def inorderTraversal(self, root: TreeNode) -> List[int]:
         stack = []
-        if root: stack.append(root)
         result = []
-        while stack:
-            top = stack[-1]
-            if top.left:
-                stack.append(top.left)
-                top.left = None # 设置left已经访问!
-            else:
-                stack.pop()
-                result.append(top.val)
-                if top.right:
-                    stack.append(top.right)
+        while stack or root:
+            while root:
+                stack.append(root)
+                root = root.left
+            if stack:
+                root = stack.pop()
+                result.append(root.val)
+                root = root.right
         return result
 ```
 
@@ -1427,15 +1424,15 @@ class Solution:
 class Solution:
     def preorderTraversal(self, root: TreeNode) -> List[int]:
         stack = []
-        if root: stack.append(root)
         result = []
-        while stack:
-            top = stack.pop()
-            result.append(top.val)
-            if top.right:
-                stack.append(top.right)
-            if top.left:
-                stack.append(top.left)
+        while root or stack:
+            while root:
+                result.append(root.val)
+                stack.append(root)
+                root = root.left
+            if stack:
+                root = stack.pop()
+                root = root.right
         return result
 ```
 
@@ -1455,43 +1452,24 @@ class Solution:
         traversal(root, res)
         return res
 ```
-循环，每次添加两个点
+
 ```python
 class Solution:
     def postorderTraversal(self, root: TreeNode) -> List[int]:
+        if not root: return []
+        stack = [root]
         result = []
-        if root: stack = [root] * 2
-        else: return result
-
         while stack:
-            # 每次添加2个点，点2用于循环树, 点1用于result
-            cur_node = stack.pop()
-            if stack and stack[-1] == cur_node:
-                if cur_node.right:
-                    stack += [cur_node.right] * 2
-                if cur_node.left:
-                    stack += [cur_node.left] * 2
+            temp = stack.pop()
+            if temp != None:
+                stack.append(temp)
+                stack.append(None)
+                if temp.right:
+                    stack.append(temp.right)
+                if temp.left:
+                    stack.append(temp.left)
             else:
-                result.append(cur_node.val)
-        return result
-```
-
-```python
-class Solution:
-    def postorderTraversal(self, root: TreeNode) -> List[int]:
-        WHITE, GRAY = 0, 1
-        stack = []
-        stack.append((root, WHITE))
-        result = []
-        while stack:
-            node, color = stack.pop()
-            if node:
-                if color == WHITE:
-                    stack.append((node, GRAY))
-                    stack.append((node.right, WHITE))
-                    stack.append((node.left, WHITE))
-                else:
-                    result.append(node.val)
+                result.append(stack.pop().val)
         return result
 ```
 
@@ -1514,16 +1492,14 @@ class Solution:
 ```
 非递归
 ```python
+from collections import deque
 class Solution:
     def levelOrder(self, root: TreeNode) -> List[List[int]]:
-        from collections import deque
-        queue = deque([])
-        if root: queue.appendleft(root)
-        level = 0
-        result = []
+        if not root: return []
+        result, level = [], 0
+        queue = deque([root])
         while queue:
             result.append([])
-            # 一次遍历一个level，方便level+1
             for i in range(len(queue)):
                 top = queue.pop()
                 result[level].append(top.val)
@@ -2839,15 +2815,30 @@ class Solution:
 
 #### [69. x 的平方根](https://leetcode-cn.com/problems/sqrtx/)
 ```python
-def mySqrt(x):
-    l = 0
-    r = x // 2 + 1
-    while (l < r):
-        m = l + (r - l + 1) // 2
-        squre = m ** 2
-        if squre <= x: l = m
-        else: r = m - 1
-    return l
+class Solution:
+    def mySqrt(self, ａ: int) -> int:
+        """牛顿法,解　f(x)-a=0 这个方程的正根
+        核心: x' = x - f(x)/f'(x)
+             if abs(x'-x)<1e-4: return x
+        """
+        if a == 0:
+            return 0
+        curr = a
+        while True:
+            prev = curr
+            curr = (curr + a/curr) / 2
+            if abs(curr - prev) < 1e-1:
+                return int(curr)
+        """二分法,小心边界"""
+        left, right = 0, x
+        while left < right:
+            mid = left + (right-left+1)//2
+            val = mid ** 2
+            if val <= x:
+                left = mid
+            else:
+                right = mid - 1
+        return left
 ```
 #### [441. 排列硬币](https://leetcode-cn.com/problems/arranging-coins/solution/er-fen-fa-by-xxinjiee/)
 可以直接用数学公式求解，也可以通过二分法求解数学公式 类似[69. x的平方根](https://leetcode-cn.com/problems/sqrtx/)
@@ -3998,4 +3989,113 @@ class Solution:
         # O(nlogn)
         if len(buildings) == 0: return []
         return mergeSort(buildings)
+```
+
+#### [面试题46. 把数字翻译成字符串](https://leetcode-cn.com/problems/ba-shu-zi-fan-yi-cheng-zi-fu-chuan-lcof/)
+动态规划,搜到了返回1,注意不用for,控制index移动.注意06只有一种可能
+```python
+import functools
+class Solution:
+    def translateNum(self, num: int) -> int:
+        num = str(num)
+        n = len(num)
+        @functools.lru_cache(None)
+        def helper(index):
+            if index == n:
+                return 1
+            if index+2 <= n and num[index] != "0" and int(num[index:index+2]) < 26:
+                return helper(index+1) + helper(index+2)
+            else:
+                return helper(index+1)
+        return helper(0)
+```
+
+#### [238. 除自身以外数组的乘积](https://leetcode-cn.com/problems/product-of-array-except-self/)
+构造L, R, 数组,存储的是该元素左边/右边的累计乘积.为了节省空间,重复利用L,并且R在正向遍历时构建更新
+```python
+class Solution:
+    def productExceptSelf(self, nums: List[int]) -> List[int]:
+        n = len(nums)
+        ans = [0] * n
+        ans[-1] = nums[-1]
+        for i in range(n-2,-1,-1):
+            ans[i] = ans[i+1] * nums[i]
+        R = 1
+        for i in range(n):
+            if i < n-1:
+                ans[i] = R * ans[i+1]
+            else:
+                ans[i] = R
+            R *= nums[i]
+        return ans
+```
+
+#### [26. 删除排序数组中的重复项](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array/)
+```python
+class Solution:
+    def removeDuplicates(self, nums: List[int]) -> int:
+        l = 0
+        for r in range(len(nums)):
+            if nums[r] != nums[l]:
+                l += 1
+                nums[l] = nums[r]
+        return l+1
+
+        # l, r = 0, 0
+        # n = len(nums)
+        # while r < len(nums):
+        #     val = nums[r]
+        #     r += 1
+        #     while r < n and nums[r] == val:
+        #         r += 1
+        #     nums[l] = val
+        #     l += 1
+        # return l
+```
+
+#### [27. 移除元素](https://leetcode-cn.com/problems/remove-element/)
+```python
+class Solution:
+    def removeElement(self, nums: List[int], val: int) -> int:
+        l = 0
+        for r in range(len(nums)):
+            if nums[r] != val:
+                nums[l] = nums[r]
+                l += 1
+        return l
+```
+
+#### [576.出界的路径数](https://leetcode-cn.com/problems/out-of-boundary-paths/)
+动态规划,搜索
+```python
+import functools
+class Solution:
+    def findPaths(self, m: int, n: int, N: int, i: int, j: int) -> int:
+        oriens = [(-1,0),(1,0),(0,-1),(0,1)]
+        @functools.lru_cache(None)
+        def helper(N, i, j):
+            if i < 0 or i >= m or j < 0 or j >= n:
+                return 1
+            if N == 0:
+                return 0
+            res = 0
+            for orien in oriens:
+                ni, nj = i+orien[0], j+orien[1]
+                res += helper(N-1, ni, nj)
+            return res
+        return helper(N, i, j) % (10**9+7)
+```
+
+#### [1014. 最佳观光组合](https://leetcode-cn.com/problems/best-sightseeing-pair/)
+维护 mx = max(A[i]+i), ans = max(ans, mx + (A[i]-i))
+```python
+class Solution:
+    def maxScoreSightseeingPair(self, A: List[int]) -> int:
+        mx = A[0] + 0
+        n = len(A)
+        ans = 0
+        for i in range(1, n):
+            ans = max(ans, mx + (A[i]-i))
+            mx = max(mx, A[i]+i)
+        return ans
 ```

@@ -102,7 +102,17 @@ def conv_forward(feature, filter, bias, conv_param):
     cache = (feature, filter, bias, conv_param)
     return feature_out, cache
 ```
-
+```python
+matrix = np.zeros((Ho*Wo, Co*k*k))
+row = 0
+for i in range(Ho):
+    for j in range(Wo):
+        window = feature[i*s:i*s+k, j*s:j*s+k, :].reshape(1,-1) # (H, W, C)
+        matrix[row] = window 
+filters = filters.transpose()# (C*k*k, C)
+output = np.dot(matrix, filters) # (H*W, C)
+output = output.reshape(Ho, Wo, Co)
+```
 ### 优化
 用矩阵乘法代替多重for循环
 
@@ -111,7 +121,7 @@ def conv_forward(feature, filter, bias, conv_param):
 <img src="assets/conv3.jpg" width="50%" height="50%"/>
 <img src="assets/conv4.jpg" width="50%" height="50%"/>
 最后是Filter Matrix乘以Feature Matrix的转置，得到输出矩阵Cout x (H x W)
-reference: https://www.zhihu.com/question/28385679 
+reference: https://www.zhihu.com/question/28385679
 ![20200531_231413_69](assets/20200531_231413_69.png)
 
 ### 实际tensorflow模型FLOPs统计示例
