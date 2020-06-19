@@ -3238,22 +3238,15 @@ class Solution:
 ## LinkedList
 #### [206. 反转链表](https://leetcode-cn.com/problems/reverse-linked-list/)
 ```python
-# Definition for singly-linked list.
-# class ListNode:
-#     def __init__(self, x):
-#         self.val = x
-#         self.next = None
-
 class Solution:
     def reverseList(self, head: ListNode) -> ListNode:
-        cur_node = head
-        pre_node = None
-        while cur_node:
-            next_node = cur_node.next
-            cur_node.next = pre_node
-            pre_node = cur_node
-            cur_node = next_node
-        return pre_node
+        prev, curr = None, head
+        while curr:
+            nxt = curr.next
+            curr.next = prev
+            prev = curr
+            curr = nxt
+        return prev
 ```
 
 #### [141. 环形链表](https://leetcode-cn.com/problems/linked-list-cycle/)
@@ -3440,16 +3433,14 @@ class Solution:
     def addTwoNumbers(self, l1: ListNode, l2: ListNode) -> ListNode:
         carry = 0
         dummy = head = ListNode(-1)
-        while (l1 or l2 or carry):
-            l1_val = l1.val if l1 else 0
-            l2_val = l2.val if l2 else 0
-            carry, value = divmod((l1_val + l2_val + carry), 10)
-            dummy.next = ListNode(value)
+        while l1 or l2 or carry:
+            val1 = l1.val if l1 else 0
+            val2 = l2.val if l2 else 0
+            carry, val = divmod(val1+val2+carry, 10)
+            dummy.next = ListNode(val)
+            l1 = l1.next if l1 else None
+            l2 = l2.next if l2 else None
             dummy = dummy.next
-            if l1:
-                l1 = l1.next
-            if l2:
-                l2 = l2.next
         return head.next
 ```
 
@@ -3498,19 +3489,17 @@ class Solution:
 ```python
 class Solution:
     def mergeTwoLists(self, l1: ListNode, l2: ListNode) -> ListNode:
-        """注意哨兵dummy节点的运用"""
-        dummy = ListNode(-1)
-        prev_node = dummy
+        dummy = head = ListNode(-1)
         while l1 and l2:
             if l1.val < l2.val:
-                prev_node.next = l1
+                dummy.next = l1
                 l1 = l1.next
             else:
-                prev_node.next = l2
+                dummy.next = l2
                 l2 = l2.next
-            prev_node = prev_node.next
-        prev_node.next = l1 if l1 else l2
-        return dummy.next
+            dummy = dummy.next
+        dummy.next = l1 if l1 else l2
+        return head.next
 ```
 #### [234. 回文链表](https://leetcode-cn.com/problems/palindrome-linked-list/)
 思路一：快慢指针找到中点，翻转后半个链表，再逐一比较前后两个半个链表
@@ -3581,33 +3570,37 @@ class Solution:
 #### [148. 排序链表](https://leetcode-cn.com/problems/sort-list/submissions/)
 ```python
 class Solution:
+    def cut(self, head):
+        slow, fast = head, head.next
+        while fast and fast.next:
+            fast = fast.next.next
+            slow = slow.next
+        temp = slow.next
+        slow.next = None
+        return head, temp
+
+    def merge(self, left, right):
+        dummy = head = ListNode(-1)
+        while left and right:
+            if left.val < right.val:
+                dummy.next = left
+                left = left.next
+            else:
+                dummy.next = right
+                right = right.next
+            dummy = dummy.next
+        dummy.next = left if left else right
+        return head.next
+
     def sortList(self, head: ListNode) -> ListNode:
-        """递归版本"""
         def helper(head):
-            if not head or not head.next:
+            if head.next == None:
                 return head
-            # important to set fast = head.next, so that
-            # slow is one node before mid node for cut the linked list.
-            fast, slow = head.next, head
-            while fast and fast.next:
-                fast = fast.next.next
-                slow = slow.next
-            mid = slow.next
-            slow.next = None
-            left = self.sortList(head)
-            right = self.sortList(mid)
-            # merge two linkedlist
-            dummy = head_node = ListNode(-1)
-            while right and left:
-                if right.val > left.val:
-                    dummy.next = left
-                    left = left.next
-                else:
-                    dummy.next = right
-                    right = right.next
-                dummy = dummy.next
-            dummy.next = left if left else right
-            return head_node.next
+            left, right = self.cut(head)
+            l_sort = self.sortList(left)
+            r_sort = self.sortList(right)
+            return self.merge(l_sort, r_sort)
+        if not head: return []
         return helper(head)
 
     def sortList(self, head: ListNode) -> ListNode:

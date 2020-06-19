@@ -700,4 +700,6 @@ mixup, cutout
 最小二乘, 线性规划 均属于凸优化问题
 #### 解释 L0 L1 L2正则化
 
-#### 灰度直方图
+#### 灰度直方图与均匀化
+https://zhuanlan.zhihu.com/p/32857009
+https://zhuanlan.zhihu.com/p/54771264

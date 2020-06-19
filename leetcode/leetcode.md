@@ -4099,3 +4099,59 @@ class Solution:
             mx = max(mx, A[i]+i)
         return ans
 ```
+
+#### [71. 简化路径](https://leetcode-cn.com/problems/simplify-path/)
+```python
+class Solution:
+    def simplifyPath(self, path: str) -> str:
+        """
+        1. 用 / 分割path
+        2. 遍历分割后的path,遇到..则stack.pop(),遇到合法路径append
+        """
+        path = path.split("/")
+        stack = []
+        for item in path:
+            if item == "..":
+                if stack:
+                    stack.pop()
+            elif item and item != ".":
+                stack.append(item)
+        clean_path = "/" + "/".join(stack)
+        return clean_path
+```
+
+#### [93. 复原IP地址](https://leetcode-cn.com/problems/restore-ip-addresses/)
+核心思路是用回溯,找出所有合法的ip组合.
+ip节的合法长度是1-3,因此回溯的主结构是 for i in range(3)
+当前的边界=上一个ip节的index+当前ip节长度+1. curr = index+i+1
+然后剪掉非法ip的情况,最后index如果走到最后并且有4个ip节,保存结果
+
+```python
+class Solution:
+    def restoreIpAddresses(self, s: str) -> List[str]:
+        n = len(s)
+        result = []
+        def helper(index, cnt, res):
+            if index == n and cnt == 4:
+                result.append(res[1:])
+            # 每个ip 长度 1-3
+            for i in range(3):
+                curr = index+i+1
+                rest = n - curr
+                # 剩余个数无法凑出合法ip, 剪枝
+                if rest > (4-cnt-1) * 3:
+                    continue
+                # 超过ip最大长度, 剪枝
+                if curr > n:
+                    break
+                ip = s[index:curr]
+                # 首尾为0,非法ip
+                if len(ip) > 1 and ip[0] == "0":
+                    continue
+                # 大于255, 非法ip
+                if int(ip) > 255:
+                    continue
+                helper(curr, cnt+1, res+"."+ip)
+        helper(0, 0, "")
+        return result
+```
