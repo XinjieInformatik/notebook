@@ -3282,6 +3282,25 @@ class Solution:
         return False
 ```
 
+#### [环形链表 II](https://leetcode-cn.com/problems/linked-list-cycle-ii/)
+```python
+class Solution:
+    def detectCycle(self, head: ListNode) -> ListNode:
+        fast, slow = head, head
+        first = True
+        while fast != slow or first:
+            if fast == None or fast.next == None:
+                return None
+            fast = fast.next.next
+            slow = slow.next
+            first = False
+        fast = head
+        while fast != slow:
+            fast = fast.next
+            slow = slow.next
+        return fast
+```
+
 #### [24. 两两交换链表中的节点](https://leetcode-cn.com/problems/swap-nodes-in-pairs/)
 ![20200417203727916](assets/20200417203727916.png)
 ```python
@@ -3777,31 +3796,29 @@ class Solution:
 ```python
 class Solution:
     def mergeKLists(self, lists: List[ListNode]) -> ListNode:
-        def mergeSort(inputs, l, r):
-            if l == r-1:
-                return inputs[l]
-            mid = l + (r-l)//2
-            l1 = mergeSort(inputs, l, mid)
-            l2 = mergeSort(inputs, mid, r)
-            merged_list = merge(l1, l2)
-            return merged_list
-
-        def merge(l1, l2):
-            dummy = ListNode(-1)
-            prehead = dummy
-            while l1 and l2:
-                if l1.val < l2.val:
-                    dummy.next = l1
-                    l1 = l1.next  
+        def merge(l, r):
+            dummy = head = ListNode(-1)
+            while l and r:
+                if l.val < r.val:
+                    dummy.next = l
+                    l = l.next
                 else:
-                    dummy.next = l2
-                    l2 = l2.next
+                    dummy.next = r
+                    r = r.next
                 dummy = dummy.next
-            dummy.next = l1 if l1 else l2
-            return prehead.next
+            dummy.next = l if l else r
+            return head.next
 
-        if len(lists) == 0: return
-        return mergeSort(lists, 0, len(lists))
+        def helper(left, right):
+            if left == right - 1:
+                return lists[left]
+            mid = left + (right-left) // 2
+            l_node = helper(left, mid)
+            r_node = helper(mid, right)
+            return merge(l_node, r_node)
+
+        if len(lists) == 0: return []
+        return helper(0, len(lists))
 ```
 
 #### [147. 对链表进行插入排序](https://leetcode-cn.com/problems/insertion-sort-list/)

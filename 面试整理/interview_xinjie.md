@@ -331,6 +331,9 @@ MSE, MAE, SMOOTH L1, CE, Hinge Loss
 1. 反向传播时，经过softmax的MSE难优化
 2. KL散度衡量两个分布的相似度，交叉熵和KL散度同增同减，是等价的，所以在优化时，如果要衡量两个分布相似度，交叉熵是一个合适的选择
 
+#### 特征工程
+https://www.zhihu.com/question/29316149
+
 #### PCA算法
 参考 https://www.cnblogs.com/pinard/p/6239403.html
 PCA的优化目标，就是最大化投影方差。换种说法就是，让数据在某个超平面（主轴）上投影的方差最大。
@@ -620,6 +623,9 @@ InvertedResidual: 先将通道膨胀6倍,再压缩
 
 ##### dla32
 网络结构:
+
+##### inception系列
+
 
 #### 目标检测网络与异同点
 

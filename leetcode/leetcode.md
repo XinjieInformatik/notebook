@@ -2393,8 +2393,10 @@ class Solution:
 排序算法测试
 [912. 排序数组](https://leetcode-cn.com/problems/sort-an-array/)
 ### 比较排序
+不稳定排序算法
+希尔排序,堆排序,快速排序,选择排序
 #### 快速排序
-稳定, O(nlog(n)), 最坏 O(n^2)
+O(nlog(n)), 最坏 O(n^2)
 ```
 快排的最差情况什么时候发生？
 1. 已排序
@@ -2562,7 +2564,7 @@ def bubbleSort(array):
 ```
 
 #### 选择排序
-第二层循环,找到最小的数,放在最前面.稳定O(n^2)复杂度,不受数组初始排序影响.
+第二层循环,找到最小的数,放在最前面.O(n^2)复杂度,不受数组初始排序影响.
 ```python
 def selectSort(array):
     n = len(array)
@@ -2634,7 +2636,7 @@ while (inc > 1):
 ### 非比较排序
 #### 计数排序
 时间复杂度为O(n+k)，空间复杂度为O(n+k)。n 是待排序数组长度，k 是 max_value-min_value+1长度。
-稳定排序算法，即排序后的相同值的元素原有的相对位置不会发生改变。
+排序算法，即排序后的相同值的元素原有的相对位置不会发生改变。
 
 可以排序整数（包括负数），不能排序小数
 1. 计算数组值最大与最小，生成长度为 max-min+1 的bucket
@@ -2660,7 +2662,7 @@ def countingSort(array):
 ![](assets/leetcode-be66e5dc.png)
 如果对每个桶（共M个）中的元素排序使用的算法是插入排序，每次排序的时间复杂度为O(N/Mlog(N/M))。
 则总的时间复杂度为O(N)+O(M)O(N/Mlog(N/M)) = O(N+ Nlog(N/M)) = O(N + NlogN - NlogM)。
-当M接近于N时，桶排序的时间复杂度就可以近似认为是O(N)的。是一种稳定排序算法.
+当M接近于N时，桶排序的时间复杂度就可以近似认为是O(N)的。是一种排序算法.
 
 可以排序负数与小数
 ```python
@@ -4153,5 +4155,40 @@ class Solution:
                     continue
                 helper(curr, cnt+1, res+"."+ip)
         helper(0, 0, "")
+        return result
+```
+#### [二叉树的锯齿形层次遍历](https://leetcode-cn.com/problems/binary-tree-zigzag-level-order-traversal/)
+双栈stack(left,right), stack_inv(right,left)
+```python
+class Solution:
+    def zigzagLevelOrder(self, root: TreeNode) -> List[List[int]]:
+        if root == None: return []
+        stack, stack_inv = [root], []
+        result = []
+        while True:
+            line = []
+            while stack:
+                top = stack.pop()
+                line.append(top.val)
+                if top.left:
+                    stack_inv.append(top.left)
+                if top.right:
+                    stack_inv.append(top.right)
+            if line:
+                result.append(line)
+            else:
+                break
+            line = []
+            while stack_inv:
+                top = stack_inv.pop()
+                line.append(top.val)
+                if top.right:
+                    stack.append(top.right)
+                if top.left:
+                    stack.append(top.left)
+            if line:
+                result.append(line)
+            else:
+                break
         return result
 ```
