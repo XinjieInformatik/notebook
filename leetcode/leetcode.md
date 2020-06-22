@@ -569,83 +569,49 @@ class Solution:
 1. 状态转移方程
 2. 初始值
 #### [55. 跳跃游戏](https://leetcode-cn.com/problems/jump-game)
-动态规划，贪心
+动态规划, 维护max_step作为能够最远跳达的位置,如果当前index<=max_step, 用nums[i]+i更新max_step
 ```python
 class Solution:
     def canJump(self, nums: List[int]) -> bool:
-        left_good = len(nums) - 1 # index
-        for i in range(left_good, -1, -1):
-            if nums[i] + i >= left_good:
-                left_good = i
-        return left_good == 0
-
-# 从后往前，核对能否到达终点，或者到达后面能到达终点的点
-class Solution:
-    def canJump(self, nums: List[int]) -> bool:
-        if len(nums) == 1:二叉搜索
-            return True
-
-        point_to_end = []
-        for i in range(len(nums)-2,-1,-1):
-            if nums[i] >= len(nums)-1-i:
-                point_to_end.append(i)
-            if point_to_end and nums[i] >= point_to_end[-1] - i:
-                point_to_end.append(i)
-
-        if 0 in point_to_end:
-            return True
-        else:
-            return False
+        max_step = 0
+        n = len(nums)
+        for i in range(n):
+            if i <= max_step:
+                nxt = nums[i]+i
+                max_step = max(max_step, nxt)
+                if max_step >= n-1:
+                    return True
+        return False
 ```
 参看 [官方题解](https://leetcode-cn.com/problems/jump-game/solution/tiao-yue-you-xi-by-leetcode/) 四种方案思路很清楚
 
 #### [45. 跳跃游戏 II](https://leetcode-cn.com/problems/jump-game-ii/)
 
 ```python
-from collections import deque
 class Solution:
     def jump(self, nums: List[int]) -> int:
-        """bfs超时"""
-        # if len(nums) <= 1: return 0
-        # queue = deque([[0, nums[0]]])
-        # visited = [0 for _ in range(len(nums))]
-        # level = 0
-        # while queue:
-        #     level += 1
-        #     for _ in range(len(queue)):
-        #         index, top = queue.pop()
-        #         for next_index in range(index+top, index, -1):
-        #             if next_index >= len(nums)-1:
-        #                 return level
-        #             if not visited[next_index]:
-        #                 queue.appendleft([next_index, nums[next_index]])
-        # return 0
-        """贪心"""
-        # if len(nums) <= 1: return 0
-        # p, longest, longest_index, cnt, reach_list = 0, 0, 0, 0, []
-        # while p < len(nums):
-        #     reach_list = list(range(p+1, p+nums[p]+1))
-        #     if reach_list[-1] >= len(nums)-1:
-        #         return cnt + 1
-        #     for index in reach_list:
-        #         if index+nums[index] > longest:
-        #             longest = index+nums[index]
-        #             longest_index = index
-        #         if longest >= len(nums)-1:
-        #             return cnt + 2
-        #     cnt += 1
-        #     p = longest_index
-        # return -1
-        """贪心"""
+        max_step, cnt, last = 0, 0, 0
         n = len(nums)
-        maxPos, end, step = 0, 0, 0
-        for i in range(n - 1):
-            if maxPos >= i:
-                maxPos = max(maxPos, i + nums[i])
-                if i == end:
-                    end = maxPos
-                    step += 1
-        return step
+        # 注意是n-1,检查到倒数第二个节点即可
+        for i in range(n-1):
+            max_step = max(max_step, i+nums[i])
+            if i == last:
+                cnt += 1
+                last = max_step
+        return cnt
+
+        # import functools
+        # n = len(nums)
+        # @functools.lru_cache(None)
+        # def helper(index):
+        #     if index >= n-1:
+        #         return 0
+        #     min_step = float("inf")
+        #     for i in range(nums[index], 0, -1):
+        #         step = helper(index+i) + 1
+        #         min_step = min(min_step, step)
+        #     return min_step
+        # return helper(0)
 ```
 
 #### [70. 爬楼梯](https://leetcode-cn.com/problems/climbing-stairs/)
@@ -4191,4 +4157,74 @@ class Solution:
             else:
                 break
         return result
+```
+
+#### [240. 搜索二维矩阵 II](https://leetcode-cn.com/problems/search-a-2d-matrix-ii/)
+```python
+class Solution:
+    def searchMatrix(self, matrix, target):
+        """正是因为严格的升序,所以可以用区间排除"""
+        n = len(matrix)
+        if n == 0: return False
+        m = len(matrix[0])
+        row, col = n-1, 0
+        while row >= 0 and col < m:
+            if matrix[row][col] > target:
+                row -= 1
+            elif matrix[row][col] < target:
+                col += 1
+            else:
+                return True
+        return False
+```
+
+#### [1296. 划分数组为连续数字的集合](https://leetcode-cn.com/problems/divide-array-in-sets-of-k-consecutive-numbers/)
+同一手顺子, 模拟题. 注意每次-freq.
+```python
+from collections import Counter
+class Solution:
+    def isPossibleDivide(self, nums: List[int], k: int) -> bool:
+        n = len(nums)
+        if n % k != 0: return False
+        stat = Counter(nums)
+        for key in sorted(stat):
+            freq = stat[key]
+            if freq > 0:
+                for item in range(key, key+k):
+                    if item in stat and stat[item] >= freq:
+                        stat[item] -= freq
+                    else:
+                        return False
+        return True
+```
+
+#### [面试题 16.18. 模式匹配](https://leetcode-cn.com/problems/pattern-matching-lcci/)
+找出所有可行的(la,lb)组，然后进行组合测试。
+```python
+class Solution:
+    def patternMatching(self, pattern: str, value: str) -> bool:
+        if not pattern: return not value
+        if not value: return len(pattern)<=1
+        # 1、清点字符
+        ca = pattern.count('a')
+        cb = len(pattern) - ca
+        # 2、只有一种字符
+        if 0==ca*cb:
+            return value==value[:len(value)//len(pattern)]*len(pattern)                
+        # 3、如果有两种字符
+        for la in range(len(value)//ca+1):
+            # len(value) == la*ca + lb*cb
+            if 0 != (len(value)-la*ca)%cb: continue
+            p,lb = 0,(len(value)-la*ca)//cb
+            a,b = set(),set()
+            # 分离子串
+            for c in pattern:
+                if c=='a':
+                    a.add(value[p:p+la])
+                    p += la
+                else:
+                    b.add(value[p:p+lb])
+                    p += lb
+            if len(a)==len(b)==1: return True
+        return False
 ```

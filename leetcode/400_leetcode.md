@@ -877,73 +877,101 @@ class Solution:
 #### [278. 第一个错误的版本](https://leetcode-cn.com/problems/first-bad-version/)
 二分查找
 
-TODO: 33, 81, 153, 154 二分，有时间再多练习下
-#### [33. 搜索旋转排序数组](https://leetcode-cn.com/problems/search-in-rotated-sorted-array/)
-先寻找旋转点，再判断区间，再二分搜索，一大堆if太复杂
-```python
-class Solution:
-    def search(self, nums: List[int], target: int) -> int:
-        if len(nums) == 0: return -1
-        if len(nums) == 1: return 0 if nums[0] == target else -1
-300
-        def find_rotation_index(arr, l, r):
-            while (l < r):
-                m = l + (r-l)//2
-                if arr[m] < arr[m-1]:
-                    return m
-                else:
-                    if arr[m] > arr[l]:
-                        l = m
-                    else:
-                        r = m
-            return l
-
-        def low_bound(arr, l, r, target):
-            while (l < r):
-                m = l + (r-l)//2
-                if arr[m] < target:
-                    l = m + 1
-                else:
-                    r = m
-            return l if l < len(arr) and arr[l] == target else -1
-
-        rotation_index = find_rotation_index(nums, 0, len(nums))
-        if nums[rotation_index] > nums[0]:
-            return low_bound(nums, 0, len(nums), target)
-        if target == nums[-1]:
-            return len(nums)-1
-        elif target < nums[-1]:
-            return low_bound(nums, rotation_index, len(nums), target)
-        else:
-            return low_bound(nums, 0, rotation_index, target)
-```
-#### [81. 搜索旋转排序数组 II](https://leetcode-cn.com/problems/search-in-rotated-sorted-array-ii/)
-
 #### [153. 寻找旋转排序数组中的最小值](https://leetcode-cn.com/problems/find-minimum-in-rotated-sorted-array/)
-同154. 二分寻找旋转点，注意判断二分是否查到旋转点. log(n)
-
-#### [154. 寻找旋转排序数组中的最小值 II](https://leetcode-cn.com/problems/find-minimum-in-rotated-sorted-array-ii/)
-二分查找的难点就是边界如何收缩，这里m必须通过r-1得到！
-缺点，该方法找到的只能保证是最小值，不能保证是旋转点。
+注意 1.while 循环条件 l<r 2.右边界取闭区间 3.与右端点比
 ```python
 class Solution:
     def findMin(self, nums: List[int]) -> int:
-        if len(nums) == 0: return None
-        if len(nums) == 1: return nums[0]
-
-        def search(arr, l, r):
-            r = r - 1 # 使得中位数是靠前的元素
-            while (l < r):
-                m = l + (r-l)//2
-                if arr[m] > arr[r]:
+        def low_bound(nums, l, r):
+            while l < r:
+                m = l + (r - l) // 2
+                if nums[m] > nums[r]:
                     l = m + 1
-                elif arr[m] < arr[r]:
+                else:
+                    r = m
+            return l
+        if len(nums) == 0: return None
+        # 右边界-1是为了中点取靠前的,方便与右端点比较.
+        index = low_bound(nums, 0, len(nums)-1)
+        return nums[index]
+```
+
+#### [154. 寻找旋转排序数组中的最小值 II](https://leetcode-cn.com/problems/find-minimum-in-rotated-sorted-array-ii/)
+注意 1.while 循环条件 l<r 2.右边界取闭区间 3.与右端点比 4.如果等于右端点,r-=1
+```python
+class Solution:
+    def findMin(self, nums: List[int]) -> int:
+        """因为有重复元素,所以会有nums[m]==nums[r]的情况,这时候r-=1可以保证数组不越界且最小值不丢失"""
+        def search(nums, l, r):
+            while l < r:
+                m = l + (r - l) // 2
+                if nums[m] > nums[r]:
+                    l = m + 1
+                elif nums[m] < nums[r]:
                     r = m
                 else:
-                    r = r - 1
+                    r -= 1
             return l
 
-        return nums[search(nums, 0, len(nums))]
+        index = search(nums, 0, len(nums)-1)
+        return nums[index]
+```
+
+#### [33. 搜索旋转排序数组](https://leetcode-cn.com/problems/search-in-rotated-sorted-array/)
+注意 1.while 循环条件 l<=r 2.右边界取闭区间 3.与左端点比
+先与左端点(注意是nums[l])比,确定nums[m]在哪个区间,再确定target在哪个区间
+```python
+class Solution:
+    def search(self, nums: List[int], target: int) -> int:
+        def low_bound(nums, l, r, target):
+            while l <= r:
+                m = l + (r - l) // 2
+                if nums[m] == target:
+                    return m
+                if nums[m] >= nums[l]:
+                    # 如果在有序区间,收缩边界,否则排除有序区间
+                    if nums[l] <= target < nums[m]:
+                        r = m
+                    else:
+                        l = m + 1
+                else:
+                    if nums[m] < target <= nums[r]:
+                        l = m + 1
+                    else:
+                        r = m
+            return -1
+
+        return low_bound(nums, 0, len(nums)-1, target)
+```
+
+#### [搜索旋转排序数组 II](https://leetcode-cn.com/problems/search-in-rotated-sorted-array-ii)
+注意 1.while 循环条件 l<=r 2.右边界取闭区间 3.与左端点比 4.如果等于左端点,l+=1
+与左端点(注意是nums[l])比,确定nums[m]在哪个区间,再确定target在哪个区间
+```python
+class Solution:
+    def search(self, nums: List[int], target: int) -> bool:
+        """nums[m]与nums[l]比,所以相等的时候l+=1"""
+        def low_bound(nums, l, r, target):
+            while l <= r:
+                m = l + (r - l) // 2
+                if nums[m] == target:
+                    return True
+                if nums[m] == nums[l]:
+                    l += 1
+                    continue
+                if nums[m] > nums[l]:
+                    if nums[l] <= target < nums[m]:
+                        r = m
+                    else:
+                        l = m + 1
+                else:
+                    if nums[m] < target <= nums[r]:
+                        l = m
+                    else:
+                        r = m - 1
+            return False
+        if len(nums) == 0: return False
+        return low_bound(nums, 0, len(nums)-1, target)
 ```
 
 #### [374. 猜数字大小](https://leetcode-cn.com/problems/guess-number-higher-or-lower/)
@@ -3302,22 +3330,23 @@ class Solution:
 ```
 
 #### [24. 两两交换链表中的节点](https://leetcode-cn.com/problems/swap-nodes-in-pairs/)
-![20200417203727916](assets/20200417203727916.png)
 ```python
 class Solution:
     def swapPairs(self, head: ListNode) -> ListNode:
-        if head==None or head.next==None:
-            return head
-        dummy = ListNode(-1)
-        res = dummy
-        while head and head.next:
-            dummy.next = head.next
-            head.next = head.next.next
-            dummy.next.next = head
-
-            dummy = head
-            head = head.next
-        return res.next
+        """ d -> 1 -> 2 -> 3 -> 4 -> None
+            d   prev curr nxt
+        """
+        dummy = d_head = ListNode(-1)
+        dummy.next = head
+        while dummy.next and dummy.next.next:
+            prev = dummy.next
+            curr = prev.next
+            nxt = curr.next
+            dummy.next = curr
+            curr.next = prev
+            prev.next = nxt
+            dummy = prev # 注意反转后是到prev
+        return d_head.next
 ```
 
 #### [328. 奇偶链表](https://leetcode-cn.com/problems/odd-even-linked-list/)
@@ -4244,11 +4273,25 @@ class Solution:
 ```
 
 #### [124. 二叉树中的最大路径和](https://leetcode-cn.com/problems/binary-tree-maximum-path-sum/)
+注意: 1. max_path 初始化为-inf 2. 计算最大路径时 max(root.val+l, root.val+r, root.val, root.val+l+r) 3. 向上层return时, max(root.val+l, root.val+r, root.val)
+```python
+class Solution:
+    def maxPathSum(self, root: TreeNode) -> int:
+        self.max_path = -float("inf")
+        def helper(root):
+            if root == None: return 0
+            l = helper(root.left)
+            r = helper(root.right)
+            val = max(root.val+l, root.val+r, root.val)
+            self.max_path = max(self.max_path, val, root.val+l+r)
+            return val
+        _ = helper(root)
+        return self.max_path
+```
 因为求的是任意节点到任意节点的最大路径，因此层层向上返回的时候，有三种可能
 1. return node.val + node.left.val
 2. return node.val + node.right.val
 3. return node.val
-
 ```python
 class Solution:
     def maxPathSum(self, root: TreeNode) -> int:
@@ -4270,6 +4313,29 @@ class Solution:
 
         dfs(root)
         return max_path
+```
+
+#### [958. 二叉树的完全性检验](https://leetcode-cn.com/problems/check-completeness-of-a-binary-tree/)
+index从1开始,父节点为i,则左孩子2*i,右孩子2*i+1
+遍历完每层,检查最后的index==已遍历节点数cnt.即可完成对完全二叉树的判断.
+```python
+from collections import deque
+class Solution:
+    def isCompleteTree(self, root: TreeNode) -> bool:
+        if root == None: return True
+        queue = deque([(root, 1)])
+        last, cnt = 0, 0
+        while queue:
+            for _ in range(len(queue)):
+                top, index = queue.pop()
+                cnt += 1
+                last = index
+                if top.left:
+                    queue.appendleft((top.left, 2*index))
+                if top.right:
+                    queue.appendleft((top.right, 2*index+1))
+            if last != cnt: return False
+        return True
 ```
 
 #### [337. 打家劫舍 III](https://leetcode-cn.com/problems/house-robber-iii/submissions/)
