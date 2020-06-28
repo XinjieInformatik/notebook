@@ -14,12 +14,12 @@ $$ = -\sum_{i=1}^n  p(x_i)p(c|x=x_i) log(p(c|x=x_i)) $$
 $$ = -\sum_{i=1}^n p(c,x_i) log(p(c|x=x_i)) $$
 
 ID3 特征X的信息增益
-$$ IG(X) = H(c) - H(c|X) $$
+$$ IG(c,X) = H(c) - H(c|X) $$
 
 $$ = - \sum_{i=1}^n p(c_i) log(p(c_i)) + \sum_{i=1}^n p(c,x_i) log(p(c|x=x_i)) $$
 
 C4.5 特征X的信息增益比
-$$ g = \frac{IG(X)}{H(X)} = \frac{H(c) - H(c|X)}{H(X)} $$
+$$ g = \frac{IG(c,X)}{H(X)} = \frac{H(c) - H(c|X)}{H(X)} $$
 
 CART 基尼系数
 $$ Gini(p) = \sum_{i=1}^n p_i(1 - p_i)$$
