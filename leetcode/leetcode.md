@@ -263,77 +263,74 @@ class Solution:
 ## 堆
 #### [347. 前 K 个高频元素](https://leetcode-cn.com/problems/top-k-frequent-elements)
 这题是对**堆，优先队列**很好的练习，因此有必要自己用python实现研究一下。**堆 处理海量数据的topK，分位数**非常合适，**优先队列**应用在元素优先级排序，比如本题的频率排序非常合适。与基于比较的排序算法 时间复杂度**O(nlogn)** 相比, 使用**堆，优先队列**复杂度可以下降到 **O(nlogk)**,在总体数据规模 n 较大，而维护规模 k 较小时，时间复杂度优化明显。
+
 **堆，优先队列**的本质其实就是个完全二叉树，有其下重要性质
-1. 父节点index为i. (子节点index-1) // 2
-2. 左子节点index为 2*i + 1
-3. 右子节点index为 2*i + 2
+ps: 堆heap[0]插入一个占位节点,此时堆顶为index为1的位置,可以更方便的运用位操作.
+[1,2,3] -> [0,1,2,3]
+1. 父节点index为 i.
+2. 左子节点index为 i << 1
+3. 右子节点index为 i << 1 | 1
 4. 大顶堆中每个父节点大于子节点，小顶堆每个父节点小于子节点
 5. 优先队列以优先级为堆的排序依据
 因为性质1，2，3，堆可以用数组直接来表示，不需要通过链表建树。
 
-**堆，优先队列** 有两个重要操作，时间复杂度均是 O(logk)。以大顶锥为例：
-1. 上浮sift up: 向堆新加入一个元素，堆规模+1，依次向上与父节点比较，如大于父节点就交换。
-2. 下沉sift down: 从堆取出一个元素（堆规模-1，用于堆排序）或者更新堆中一个元素（本题），逆序遍历数组index从 (k-1) // 2 到 index为 0，向下走保证父节点大于子节点。
+**堆，优先队列** 有两个重要操作，时间复杂度均是 O(logk)。以小顶锥为例：
+1. 上浮sift up: 向堆尾新加入一个元素，堆规模+1，依次向上与父节点比较，如小于父节点就交换。
+2. 下沉sift down: 从堆顶取出一个元素（堆规模-1，用于堆排序）或者更新堆中一个元素（本题），依次向下与子节点比较，如大于子节点就交换。
 
 对于topk 问题：**最大堆求topk小，最小堆求topk大。**
 - topk小：构建一个k个数的最大堆，当读取的数小于根节点时，替换根节点，重新塑造最大堆
 - topk大：构建一个k个数的最小堆，当读取的数大于根节点时，替换根节点，重新塑造最小堆
 
 **这一题的总体思路** 总体时间复杂度 **O(nlogk)**
-- 建立字典遍历一次统计出现频率. O(logn)
-- 取前k个数，构造**规模为k的最小堆** minheap. O(logn)
-- 遍历规模k之外的数据，大于堆顶则入堆，维护规模为k的最小堆 minheap. O(nlogk)
+- 遍历统计元素出现频率. O(n)
+- 前k个数构造**规模为k+1的最小堆** minheap. O(k). 注意+1是因为占位节点.
+- 遍历规模k之外的数据，大于堆顶则入堆，下沉维护规模为k的最小堆 minheap. O(nlogk)
 - (如需按频率输出，对规模为k的堆进行排序)
 
 ```python
 class Solution:
     def topKFrequent(self, nums: List[int], k: int) -> List[int]:
-        # hashmap 统计频率
-        freq_count = {}
-        for num in nums:
-            if num in freq_count:
-                freq_count[num] += 1
-            else:
-                freq_count[num] = 1
-
-        def sift_up(arr, k):
-            """ 时间复杂度 O(logk) k 为堆的规模"""
-            new_index, new_val = k-1, arr[k-1]
-            while (new_index > 0 and arr[(new_index-1)//2][1] > new_val[1]):
-                arr[new_index] = arr[(new_index-1)//2]
-                new_index = (new_index-1)//2
-            arr[new_index] = new_val # 这里采用的是类似插入排序的赋值交换
-
         def sift_down(arr, root, k):
-            """ O(logk). 左节点index 2*root+1, 右节点 2*root+2, 父节点 (child-1)//2"""
-            root_val = arr[root]
-            while (2*root+1 < k):
-                child = 2 * root + 1
-                # 小顶锥 用 >，大顶锥 用 <
-                if child+1 < k and arr[child][1] > arr[child+1][1]:
-                    child += 1
-                if root_val[1] > arr[child][1]:
+            """下沉log(k),如果新的根节点>子节点就一直下沉"""
+            val = arr[root] # 用类似插入排序的赋值交换
+            while root<<1 < k:
+                child = root << 1
+                # 选取左右孩子中小的与父节点交换
+                if child|1 < k and arr[child|1][1] < arr[child][1]:
+                    child |= 1
+                # 如果子节点<新节点,交换,如果已经有序break
+                if arr[child][1] < val[1]:
                     arr[root] = arr[child]
-                    root = child # 继续向下检查
-                else: break # 如果到这里没乱序，不用再检查后续子节点
-            arr[root] = root_val
+                    root = child
+                else:
+                    break
+            arr[root] = val
 
-        # 注意构造规模为k的堆, 时间复杂度O(k)，因为堆的规模是从0开始增长的
-        freq_list = list(freq_count.items())
-        min_heap = []
+        def sift_up(arr, child):
+            """上浮log(k),如果新加入的节点<父节点就一直上浮"""
+            val = arr[child]
+            while child>>1 > 0 and val[1] < arr[child>>1][1]:
+                arr[child] = arr[child>>1]
+                child >>= 1
+            arr[child] = val
+
+        stat = collections.Counter(nums)
+        stat = list(stat.items())
+        heap = [(0,0)]
+
+        # 构建规模为k+1的堆,新元素加入堆尾,上浮
         for i in range(k):
-            min_heap.append(freq_list[i])
-            sift_up(min_heap, i+1)
-
-        # 遍历剩下元素，大于堆顶入堆，下沉维护小顶堆
-        for item in freq_list[k:]:
-            priority = item[1]
-            if priority > min_heap[0][1]:
-                min_heap[0] = item
-                sift_down(min_heap, 0, k)
-
-        return [item[0] for item in min_heap]
+            heap.append(stat[i])
+            sift_up(heap, len(heap)-1)
+        # 维护规模为k+1的堆,如果新元素大于堆顶,入堆,并下沉
+        for i in range(k, len(stat)):
+            if stat[i][1] > heap[1][1]:
+                heap[1] = stat[i]
+                sift_down(heap, 1, k+1)
+        return [item[0] for item in heap[1:]]
 ```
+
 ```python
 heapq 构造小顶堆, 若从大到小输出, heappush(-val)
 class Solution:
@@ -351,6 +348,42 @@ class Solution:
 
         return result
 ```
+
+再附上堆排序(从小到大输出),注意这里是大顶堆
+1. 从后往前非叶子节点下沉，依次向上保证每一个子树都是大顶堆,构造大顶锥
+2. 依次把大顶堆根节点与尾部节点交换(不再维护,堆规模-1),新根节点下沉。
+
+```python
+def heapSort(arr):
+    def sift_down(arr, root, k):
+        val = arr[root]
+        while root<<1 < k:
+            chlid = root << 1
+            if chlid|1 < k and arr[chlid|1] > arr[chlid]:
+                chlid |= 1
+            if arr[chlid] > val:
+                arr[root] = arr[chlid]
+                root = chlid
+            else:
+                break
+        arr[root] = val
+
+    arr = [0] + arr
+    k = len(arr)
+    for i in range((k-1)>>1, 0, -1):
+        sift_down(arr, i, k)
+    for i in range(k-1, 0, -1):
+        arr[1], arr[i] = arr[i], arr[1]
+        sift_down(arr, 1, i)
+    return arr[1:]
+```
+
+更多的几个堆的练习
+[295. 数据流的中位数](https://leetcode-cn.com/problems/find-median-from-data-stream/)
+[215. 数组中的第K个最大元素](https://leetcode-cn.com/problems/kth-largest-element-in-an-array/)
+[面试题40. 最小的k个数](https://leetcode-cn.com/problems/zui-xiao-de-kge-shu-lcof/)
+[347. 前 K 个高频元素](https://leetcode-cn.com/problems/top-k-frequent-elements)
+
 #### [1353. 最多可以参加的会议数目](https://leetcode-cn.com/problems/maximum-number-of-events-that-can-be-attended/)
 ```python
 class Solution:
@@ -503,6 +536,53 @@ class MedianFinder:
 
 #### [215. 数组中的第K个最大元素](https://leetcode-cn.com/problems/kth-largest-element-in-an-array/)
 1. 规模为k的最小堆
+```python
+class Solution:
+    def findKthLargest(self, nums: List[int], k: int) -> int:
+        def sift_down(arr, root, k):
+            """ root i, l 2i, r 2i+1 """
+            val = arr[root]
+            while root << 1 < k:
+                child = root << 1
+                if child|1 < k and arr[child|1] < arr[child]:
+                    child |= 1
+                if arr[child] < val:
+                    arr[root] = arr[child]
+                    root = child
+                else:
+                    break
+            arr[root] = val
+
+        def sift_up(arr, k):
+            child, val = k-1, arr[k-1]
+            while child > 1 and arr[child>>1] > val:
+                root = child >> 1
+                arr[child] = arr[root]
+                child = root
+            arr[child] = val
+
+        heap = [0]
+        for i in range(k):
+            heap.append(nums[i])
+            sift_up(heap, len(heap))
+        for i in range(k, len(nums)):
+            if nums[i] > heap[1]:
+                heap[1] = nums[i]
+                sift_down(heap, 1, len(heap))
+        return heap[1]
+```
+```python
+        import heapq
+        heap = []
+        for i in range(k):
+            heapq.heappush(heap, nums[i])
+        n = len(nums)
+        for i in range(k, n):
+            if nums[i] > heap[0]:
+                heapq.heappop(heap)
+                heapq.heappush(heap, nums[i])
+        return heap[0]
+```
 2. partition 直到 pivot_index = n-k, 可保证左边均小于pivot, 右边均大于等于pivot
 快速选择可以用于查找中位数，任意第k大的数
 在输出的数组中，pivot_index达到其合适位置。所有小于pivot_index的元素都在其左侧，所有大于或等于的元素都在其右侧。如果是快速排序算法，会在这里递归地对两部分进行快速排序，时间复杂度为 O(NlogN)。快速选择由于知道要找的第 N - k 小的元素在哪部分中，不需要对两部分都做处理，这样就将平均时间复杂度下降到 O(N)。
@@ -510,28 +590,43 @@ class MedianFinder:
 ```python
 class Solution:
     def findKthLargest(self, nums: List[int], k: int) -> int:
-        def partition(array, l, r):
-            pivot = array[l]
-            pivot_index = l
-            for i in range(l+1, r):
-                if array[i] < pivot:
-                    pivot_index += 1
-                    array[i], array[pivot_index] = array[pivot_index], array[i]
-            array[l], array[pivot_index] = array[pivot_index], array[l]
-            return pivot_index
+        import random
+        def qselect(arr, l, r, k_smallest):
+            def partition(arr, l, r):
+                i = random.randint(l, r-1)
+                arr[l], arr[i] = arr[i], arr[l]
+                pivot, val = l, arr[l]
+                for i in range(l+1, r):
+                    if arr[i] < val:
+                        pivot += 1
+                        arr[i], arr[pivot] = arr[pivot], arr[i]
+                arr[l], arr[pivot] = arr[pivot], arr[l]
+                return pivot
+            def partition2(arr, left, right):
+                i = random.randint(left, right-1)
+                arr[left], arr[i] = arr[i], arr[left]
+                val = arr[left]
+                l = left + 1
+                r = right - 1
+                while l <= r:
+                    while l < right and arr[l] <= val:
+                        l += 1
+                    while r > left and arr[r] >= val:
+                        r -= 1
+                    if l < r:
+                        arr[l], arr[r] = arr[r], arr[l]
+                arr[left], arr[r] = arr[r], arr[left]
+                return r
 
-        def select(array, l, r, k_smallest):
-            while (l < r):
-                pivot_index = partition(array, l, r)
-                if pivot_index == k_smallest:
-                    return pivot_index
-                elif pivot_index < k_smallest:
-                    l = pivot_index + 1
+            while l < r:
+                pivot = partition(arr, l, r)
+                if pivot < k_smallest:
+                    l = pivot + 1
                 else:
-                    r = pivot_index
+                    r = pivot
             return l
-
-        index = select(nums, 0, len(nums), len(nums)-k)
+        n = len(nums)
+        index = qselect(nums, 0, n, n-k)
         return nums[index]
 ```
 
@@ -583,7 +678,6 @@ class Solution:
                     return True
         return False
 ```
-参看 [官方题解](https://leetcode-cn.com/problems/jump-game/solution/tiao-yue-you-xi-by-leetcode/) 四种方案思路很清楚
 
 #### [45. 跳跃游戏 II](https://leetcode-cn.com/problems/jump-game-ii/)
 
@@ -892,20 +986,22 @@ class Solution:
         else: return False
 ```
 ```python
+import functools
 class Solution:
     def wordBreak(self, s: str, wordDict: List[str]) -> bool:
-        n = len(s)
+        lenths = [len(item) for item in wordDict]
+        lenths = set(lenths)
         wordDict = set(wordDict)
-        import functools
+        n = len(s)
         @functools.lru_cache(None)
-        def helper(start):
-            if start == n:
+        def helper(index):
+            if index == n:
                 return True
-            for i in range(start+1,n+1):
-                if s[start:i] in wordDict and helper(i):
-                    return True
+            for lenth in lenths:
+                if index+lenth <= n and s[index:index+lenth] in wordDict:
+                    if helper(index+lenth):
+                        return True
             return False
-
         return helper(0)
 ```
 
@@ -2360,7 +2456,7 @@ class Solution:
 [912. 排序数组](https://leetcode-cn.com/problems/sort-an-array/)
 ### 比较排序
 不稳定排序算法
-希尔排序,堆排序,快速排序,选择排序
+堆排序,快速排序,选择排序,希尔排序
 #### 快速排序
 O(nlog(n)), 最坏 O(n^2)
 ```
@@ -2389,10 +2485,10 @@ def qsort(array, l, r):
         return pivot_i
 
     if l < r:
-    # partition: 交换，使得pivot左边<pivot,右边>=pivot
-    pivot_index = partition_2(array, l, r)
-    qsort(array, l, pivot_index)
-    qsort(array, pivot_index+1, r)
+        # partition: 交换，使得pivot左边<pivot,右边>=pivot
+        pivot_index = partition_2(array, l, r)
+        qsort(array, l, pivot_index)
+        qsort(array, pivot_index+1, r)
 ```
 
 中值快排: 解决的是复杂度退化到O(n^2)的问题
@@ -2460,61 +2556,29 @@ def qsort(array, l, r):
 2. 当被分子数组长度为1时,结束递归,return子数组
 3. merge 返回的左右子数组
 ```python
-def merge(l_arr, r_arr):
-    p_l, p_r, merged_arr = 0, 0, []
-    for i in range(len(l_arr)+len(r_arr)):
-        if p_l == len(l_arr):
-            merged_arr.append(r_arr[p_r])
-            p_r += 1
-        elif p_r == len(r_arr):
-            merged_arr.append(l_arr[p_l])
-            p_l += 1
-        elif l_arr[p_l] < r_arr[p_r]:
-            merged_arr.append(l_arr[p_l])
-            p_l += 1
-        else:
-            merged_arr.append(r_arr[p_r])
-            p_r += 1
-    return merged_arr
-
-def mergeSort(arr):
-    if len(arr) == 1:
-        return arr
-    m = len(arr)//2
-    l_arr = mergeSort(arr[:m])
-    r_arr = mergeSort(arr[m:])
-    if l_arr[-1] <= r_arr[0]:
-        return l_arr + r_arr
-    return merge(l_arr, r_arr)
-```
-
-```python
-def merge(arr, l, m, r):
-    temp = arr[l:r]
-    p_l, p_r = 0, m-l
-    for i in range(l, r):
-        if p_l == m-l:
-            arr[i] = temp[p_r]
-            p_r += 1
-        elif p_r == r-l:
-            arr[i] = temp[p_l]
-            p_l += 1
-        elif temp[p_l] < temp[p_r]:
-            arr[i] = temp[p_l]
-            p_l += 1
-        else:
-            arr[i] = temp[p_r]
-            p_r += 1
-
 def mergeSort(arr, l, r):
-    if l < r-1:
-        m = l + (r-l)//2
-        mergeSort(arr, l, m)
-        mergeSort(arr, m, r)
-        if arr[m-1] > arr[m]:
-            merge(arr, l, m, r)
+    def merge(l_arr, r_arr):
+        result = []
+        p1, p2 = 0, 0
+        n1, n2 = len(l_arr), len(r_arr)
+        while p1 < n1 and p2 < n2:
+            if l_arr[p1] < r_arr[p2]:
+                result.append(l_arr[p1])
+                p1 += 1
+            else:
+                result.append(r_arr[p2])
+                p2 += 1
+        result.extend(l_arr[p1:] or r_arr[p2:])
+        return result
 
-mergeSort(nums, 0, len(nums))
+    if r == 0:
+        return []
+    if l == r-1:
+        return [arr[l]]
+    m = l + (r-l)//2
+    l_arr = mergeSort(arr, l, m)
+    r_arr = mergeSort(arr, m, r)
+    return merge(l_arr, r_arr)
 ```
 
 #### 冒泡排序
@@ -3511,9 +3575,6 @@ class FenwickTree:
             index -= self.lowbit(index)
         return res
 ```
-
-### 线段树
-
 ### 位操作
 python 中 bin 可以十进制转二进制。二进制"0b"，八进制"0"，十六进制"0x"开头。
 位运算说明
@@ -4227,4 +4288,85 @@ class Solution:
                     p += lb
             if len(a)==len(b)==1: return True
         return False
+```
+
+#### [343. 整数拆分](https://leetcode-cn.com/problems/integer-break/)
+```python
+import functools
+class Solution:
+    def integerBreak(self, n: int) -> int:
+        @functools.lru_cache(None)
+        def helper(index):
+            if index == 1:
+                return 1
+            res = 0
+            for i in range(1, index):
+                split = i * helper(index-i)
+                not_split = i * (index-i)
+                res = max(res, split, not_split)
+            return res
+        return helper(n)
+```
+
+#### [4. 寻找两个正序数组的中位数](https://leetcode-cn.com/problems/median-of-two-sorted-arrays/)
+```python
+class Solution:
+    def findMedianSortedArrays(self, nums1: List[int], nums2: List[int]) -> float:
+        def helper(nums1, nums2, k):
+            if len(nums1) < len(nums2):
+                return helper(nums2, nums1, k)
+            if len(nums2) == 0:
+                return nums1[k-1]
+            if k == 1:
+                return min(nums1[0], nums2[0])
+
+            t = min(k//2, len(nums2))
+            if nums1[t-1] < nums2[t-1]:
+                return helper(nums1[t:], nums2, k-t)
+            else:
+                return helper(nums1, nums2[t:], k-t)
+
+        k1 = (len(nums1) + len(nums2) + 1) // 2
+        k2 = (len(nums1) + len(nums2) + 2) // 2
+        if k1 == k2:
+            return helper(nums1, nums2, k1)
+        else:
+            return (helper(nums1, nums2, k1) + helper(nums1, nums2, k2)) / 2
+```
+
+#### [剑指 Offer 51. 数组中的逆序对](https://leetcode-cn.com/problems/shu-zu-zhong-de-ni-xu-dui-lcof/)
+```python
+class Solution:
+    def reversePairs(self, nums: List[int]) -> int:
+        n = len(nums)
+        arr = [(i, nums[i]) for i in range(n)]
+        self.res = 0
+
+        def merge(arr_l, arr_r):
+            arr = []
+            n1, n2 = len(arr_l), len(arr_r)
+            p1, p2 = 0, 0
+            while p1 < n1 or p2 < n2:
+                # 注意是 <=
+                if p2 == n2 or (p1 < n1 and arr_l[p1][1] <= arr_r[p2][1]):
+                    self.res += p2
+                    arr.append(arr_l[p1])
+                    p1 += 1
+                else:
+                    arr.append(arr_r[p2])
+                    p2 += 1
+            return arr
+
+        def mergeSort(arr, l, r):
+            if r == 0:
+                return
+            if l == r - 1:
+                return [arr[l]]
+            m = l + (r-l) // 2
+            arr_l = mergeSort(arr, l, m)
+            arr_r = mergeSort(arr, m, r)
+            return merge(arr_l, arr_r)
+
+        mergeSort(arr, 0, n)
+        return self.res
 ```

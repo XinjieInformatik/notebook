@@ -29,7 +29,7 @@ Deep3Dbox
 
 ![20200617_225525_81](assets/20200617_225525_81.png)
 
-1. 每个region proposal 回归$\theta, X_o, Y_o, Z_o$
+1. 每个region proposal 回归 $\theta, X_o, Y_o, Z_o$
 2. 分bin回归$sin\theta, cos\theta$ 与落在该bin的conf
 3. 找 [u,v] 和 3D点的对应,最小二乘法求解超静定方程$X_c, Y_c, Z_c$
 
@@ -38,7 +38,8 @@ Deep3Dbox
 2. 最小二乘法求解误差大,$Z_c$带来的误差很大,不如梯度下降回归,再后矫正.
 
 M3D-RPN:
-神经网络直接预测 $\theta, t_w, t_h, t_l, [t_x, t_y, t_z]_P$
+神经网络直接预测 $ \theta, t_w, t_h, t_l, [t_x, t_y, t_z] $
+
 - post reficty $\theta$
 
 Stereo RCNN:

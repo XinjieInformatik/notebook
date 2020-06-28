@@ -24,7 +24,7 @@ v3: 只用wh用的 l2 loss, 其他均为sigmoid BCE loss, 引入了bbox scale lo
 4. RetinaNet FPN不同尺度之间,head参数共享, yolov3 独立
 5. RetinaNet 使用的是Focal loss 与 smooth l1
 
-## RetinaNet 与 Retanaface 的不同
+## RetinaNet 与 Retinaface 的不同
 1. Retanaface 每个尺度两个不同大小的正方形based anchor
 2. Retanaface 论文中不同尺度间head参数共享,但实际代码独立
 3. SSH layer, 融合3x3, 5x5, 7x7的特征,实际实现中用的两次,三次卷积代替5x5,7x7卷积
@@ -35,7 +35,7 @@ v3: 只用wh用的 l2 loss, 其他均为sigmoid BCE loss, 引入了bbox scale lo
 ## 目标检测
 目标检测的目的是输出待检测物体bbox的位置(x1,x2,y1,y2)及其分类。
 ![20200420_170516_55](assets/20200420_170516_55.png)
-TODO: diff. SGD, ADAM
+
 ## 基于深度学习的目标检测
 通用目标检测网络基于是否使用预定义的anchor可分为：
 - Anchor Based Network：Faster-RCNN, RetinaNet, SSD,
@@ -97,7 +97,6 @@ num_anchors为9，是特征图每个网格配备的based-anchor数目。
 ps: 注意与Faster-RCNN 不同，Faster-RCNN class head 输出维度为 ((class_num+1) * 9)，
 1 是 background，最后一层输出后接softmax。
 
-
 对于bbox位置回归的真值定义：
 每个based-anchor去回归delta cx, delta cy, delta h, delta w。
 ```python
@@ -120,7 +119,9 @@ deltas = torch.stack((dx, dy, dw, dh), dim=1)
 
 ##### binary loss
 $$ sigmoid = \frac{1}{1 + e^{-x}} $$
+
 $$ L = L_{neg} + L_{pos} = -\sum\limits_{i=1}^n log(1-p) - \sum\limits_{i=1}^n log(p)$$
+
 $$ L = -ylog(p)-(1-y)log(1-p) $$
 
 ##### CE loss
@@ -128,7 +129,8 @@ $$ L = -\sum\limits_{i=1}^n log(p) $$
 
 ##### softmax loss
 $$ softmax = \frac {e^{p_i}}{\sum\limits_{j=1}^n e^{p_j}} $$
-$$ -\sum\limits_{i=1}^n log(\frac {e^{p_i}}{\sum\limits_{j=1}^n e^{p_j}}) $$
+
+$$ -\sum\limits_{i=1}^n log(\frac {e^{z_i}}{\sum\limits_{j=1}^n e^{z_j}}) $$
 
 ##### 分类loss
 只有正样本与负样本会参与分类loss计算,被ignored的based-anchor不参与计算。分类loss是基于交叉熵的，优化的是概率。对于正样本，loss监督网络在其对应的class_id层有接近1的输出。对于负样本，loss监督网络在其对应输出层输出接近0。focal loss 是常见的one stage detector的分类loss，基于CE交叉熵loss，提出 1.优化正样本与background不平衡问题（可能只有几百个based_anchor与GT bbox匹配成功，其余十几万的都是负样本，负样本有可能主导分类loss） 2.重点优化难训练样本的概率见下图。focal loss中 1. alpha_t正样本权重，1-alpha_t负样本权重，解决正样本与background的不平衡 2. gamma，在ce_loss前乘上 $(1 - p_t)^{\gamma}$，减少预测正确的大概率样本的loss，见下图。当gamma = 0, focal loss = CE loss

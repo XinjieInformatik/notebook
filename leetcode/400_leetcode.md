@@ -1134,7 +1134,43 @@ class Solution:
 ```
 
 #### [315. 计算右侧小于当前元素的个数](https://leetcode-cn.com/problems/count-of-smaller-numbers-after-self/)
-TODO: 归并排序，树状数组
+```python
+class Solution:
+    def countSmaller(self, nums: List[int]) -> List[int]:
+        """merge时,对每个左数组中的元素,+=右数组当前index,即为右侧小于当前元素的个数"""
+        def mergeSort(arr, l, r):
+            def merge(l, r):
+                n1, n2 = len(l), len(r)
+                p1, p2 = 0, 0
+                arr = []
+                while p1 < n1 or p2 < n2:
+                    # 注意是 <=
+                    if p2 == n2 or (p1 < n1 and l[p1][1] <= r[p2][1]):
+                        arr.append(l[p1])
+                        res[l[p1][0]] += p2
+                        p1 += 1
+                    else:
+                        arr.append(r[p2])
+                        p2 += 1
+                return arr
+
+            if r == 0:
+                return []
+            if l == r-1:
+                return [arr[l]]
+            m = l + (r-l) // 2
+            left = mergeSort(arr, l, m)
+            right = mergeSort(arr, m, r)
+            return merge(left, right)
+
+        n = len(nums)
+        arr = []
+        for i in range(n):
+            arr.append((i, nums[i]))
+        res = [0] * n
+        mergeSort(arr, 0, n)
+        return res
+```
 
 ### Array
 #### 基础题
@@ -3501,36 +3537,6 @@ class Solution:
             nodeA = nodeA.next if nodeA else headB
             nodeB = nodeB.next if nodeB else headA
         return nodeA
-
-        # nodeA = headA
-        # nodeB = headB
-        # lenthA = 0
-        # lenthB = 0
-        # while nodeA:
-        #     nodeA = nodeA.next
-        #     lenthA += 1
-        # while nodeB:
-        #     nodeB = nodeB.next
-        #     lenthB += 1
-
-        # nodeA, nodeB = headA, headB
-        # gap = abs(lenthA - lenthB)
-        # if lenthA > lenthB:
-        #     while gap > 0:
-        #         nodeA = nodeA.next
-        #         gap -= 1
-        # else:
-        #     while gap > 0:
-        #         nodeB = nodeB.next
-        #         gap -= 1
-
-        # while nodeA and nodeB:
-        #     if nodeA == nodeB:
-        #         return nodeA
-        #     nodeA = nodeA.next
-        #     nodeB = nodeB.next
-
-        # return None
 ```
 
 #### [21. 合并两个有序链表](https://leetcode-cn.com/problems/merge-two-sorted-lists/)
@@ -3961,6 +3967,7 @@ class Solution:
             stack.append(node2.left)
         return True
 ```
+
 #### [226. 翻转二叉树](https://leetcode-cn.com/problems/invert-binary-tree/)
 后序遍历，交换左右子节点
 ```python
@@ -3972,6 +3979,19 @@ class Solution:
                 traversal(node.right)
                 node.left, node.right = node.right, node.left
         helper(root)
+        return root
+```
+非递归
+```python
+class Solution:
+    def invertTree(self, root: TreeNode) -> TreeNode:
+        stack = [root]
+        while stack:
+            node = stack.pop()
+            if node:
+                node.left, node.right = node.right, node.left
+                stack.append(node.right)
+                stack.append(node.left)
         return root
 ```
 
@@ -4477,6 +4497,7 @@ class Solution:
 ```
 
 #### [面试题07. 重建二叉树](https://leetcode-cn.com/problems/zhong-jian-er-cha-shu-lcof/)
+从中序与前序遍历序列构造二叉树
 ```python
 # Definition for a binary tree node.
 # class TreeNode:
@@ -4916,7 +4937,7 @@ class Solution:
 
         def build_Trees(left,right):
             all_trees=[]
-            if(left>right):
+            if left > right:
                 return [None]
             for i in range(left,right+1):
                 left_trees=build_Trees(left,i-1)

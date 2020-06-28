@@ -14,11 +14,11 @@ def iou_calculate(bbox1, bbox2):
     """
     area1 = (bbox1[..., 2] - bbox1[..., 0]) * (bbox1[..., 3] - bbox1[..., 1]) # (N,)
     area2 = (bbox2[..., 2] - bbox2[..., 0]) * (bbox2[..., 3] - bbox2[..., 1]) # (M,)
-    lt = np.maximum(bbox1[:, np.newaxis, :2], bbox2[:, :2]) # (N, M, 2)
-    rb = np.minimum(bbox1[:, np.newaxis, 2:], bbox2[:, 2:]) # (N, M, 2)
+    lt = np.maximum(bbox1[:, None, :2], bbox2[:, :2]) # (N, M, 2)
+    rb = np.minimum(bbox1[:, None, 2:], bbox2[:, 2:]) # (N, M, 2)
     inter = np.maximum(0, rb - lt) # (N, M, 2)
     inter_area = inter[..., 0] * inter[..., 1] # (N, M)
-    union_area = area1[:, np.newaxis] + area2 - inter_area # (N, M)
+    union_area = area1[:, None] + area2 - inter_area # (N, M)
     iou = inter_area / union_area
     return iou
 ```
@@ -208,86 +208,27 @@ while 收敛或达到最大迭代次数:
 缺点:
 质心的初始位置和数据的分布很大程度影响了算法的精准度和收敛时间。更严重的是，在某些情况下，质心会被一小簇数据“欺骗”，从而陷入到局部最优解，无法达到全局最优。
 
-参考: https://blog.csdn.net/mottled233/java/article/details/79618968
-```python
-def rand_center(data, k):
-    # 共k个质心，data.shape[1]是每个数据样本的维度，质心的维度应与样本的维度一致。
-    centers = np.random.rand(k, data.shape[1])
-    # rand随机的范围是零到一，要适用于样本的范围需要进行缩放
-    # 这里使用样本在该维度的最大值作为每个维度上的缩放倍数
-    scale = np.max(data, axis=0)
-    centers *= scale
-    return centers
-# 将所有样本分组到k个质心，返回二维列表[[属于分组1的样本][属于分组2的样本]...]
-def group_all(data, k, centers):
-    groups = []
-    for index in range(k):
-        groups.append([])
-    # 对每一个样本进行分组
-    for sample in data:
-        index = group_one(sample, centers)
-        groups[index].append(sample.tolist())
-    return groups
-# 返回距离单个样本sample最近的质心的下标索引
-def group_one(sample, centers):
-    distance_vect = np.sum((sample-centers)**2, axis=1)
-    return np.argmin(distance_vect)
-# 根据样本分组，更新每个质心的位置
-def update_centers(data, k, groups):
-    centers = np.zeros((k, data.shape[1]))
-    for index in range(k):
-        # 对每一个分组中的数据，在不同的维度分别求均值
-        centers[index] = np.mean(np.array(groups[index]), axis=0)
-    return centers
-
-def iter_diff(old_centers, new_centers):
-    return np.sum(np.abs(old_centers - new_centers))
-
-def classify(data, k, threshold, max_iter=0):
-    # 随机初始化质心
-    centers = rand_center(data, k)
-    # 初始设定loss为无穷大
-    loss = float("inf")
-    # 迭代计数
-    iter_count = 0
-
-    # 当loss小于阈值，或迭代次数大于指定最大次数时终止
-    while loss > threshold and ((max_iter == 0) or iter_count < max_iter):
-        # 将每一个样本点分组
-        groups = group_all(data, k, centers)
-        # 更新质心
-        old_centers = centers
-        centers = update_centers(data, k, groups)
-        # 计算loss
-        loss = iter_diff(old_centers, centers)
-        # 输出迭代信息
-        iter_count += 1
-        print("iter_%d : loss=%f" % (iter_count, loss))
-
-    return centers, groups
-```
-
 yolov3 kmeans
 ```python
-def kmeans(self, boxes, k, dist=np.median):
-    """boxes: (N, 4)"""
-    box_number = boxes.shape[0]
-    distances = np.empty((box_number, k))
-    last_nearest = np.zeros((box_number,))
-    # init k clusters. replace=False no repeat element
-    clusters = boxes[np.random.choice(box_number, k, replace=False)]
+def kmeans(self, X, k, dist=np.median):
+    """X: (n, 4) bboxes"""
+    n = len(X)
+    prev_cls = np.zeros((n,))
+    # init k centers. replace=False no repeat element
+    centers = X[np.random.choice(n, k, replace=False)] # (k, 4)
     while True:
-        distances = 1 - self.iou(boxes, clusters) # (N, k)
-        current_nearest = np.argmin(distances, axis=1) # (N,)
-        # clusters won't change
-        if (last_nearest == current_nearest).all():
+        # distances = np.sqrt(np.sum((X[:,None,:]-centers[:,None,:])**2, axis=-1)) # (n, k)
+        distances = 1 - self.iou(X, centers) # (n, k)
+        curr_cls = np.argmin(distances, axis=1) # (n,)
+        # centers won't change
+        if (prev_cls == curr_cls).all():
             break  
-        # update clusters
+        # update centers coordinates
         for i in range(k):
-            clusters[i] = dist(boxes[current_nearest == i], axis=0)
-        last_nearest = current_nearest
+            centers[i] = dist(X[curr_cls == i], axis=0)
+        prev_cls = curr_cls
 
-    return clusters
+    return centers
 ```
 
 ### mean shift 聚类流程：
@@ -300,7 +241,7 @@ mean shift就是沿着密度上升的方向寻找同属一个簇的数据点。�
 6. 如果收敛时当前簇c的center与其它已经存在的簇c2中心的距离小于阈值，那么把c2和c合并。否则，把c作为新的聚类，增加1类。
 6. 重复1、2、3、4、5直到所有的点都被标记访问。
 7. 分类：根据每个类，对每个点的访问频率，取访问频率最大的那个类，作为当前点集的所属类。
-简单的说，
+https://github.com/zziz/mean-shift
 
 ### 机器学习知识点
 #### 欠拟合,过拟合
@@ -311,7 +252,22 @@ SGD为随机梯度下降,每一次迭代计算数据集的mini-batch的梯度,�
 Momentum参考了动量的概念,前几次的梯度也会参与到当前的计算中,但是前几轮的梯度叠加在当前计算中会有一定的衰减。
 Adagard在训练的过程中可以自动变更学习的速率,设置一个全局的学习率,而实际的学习率与以往的参数模和的开方成反比。
 Adam利用梯度的一阶矩估计和二阶矩估计动态调整每个参数的学习率,使得参数更新较为平稳。
-TODO: adam公式
+
+SGD: W = W - lr * grad
+Adam:
+![20200622_233509_51](assets/20200622_233509_51.png)
+前两行对梯度和梯度的平方进行滑动平均
+中间两行对初期滑动平均偏差的修正，当t越来越大时，分母都趋近于 1
+最后一行是参数更新公式. 每个参数的梯度都是不同的，每个参数的学习率即使在同一轮也不一样.
+<!--
+$$ m_t = \beta_1 m_{t-1} + (1 - \beta_1) g_t $$
+$$ v_t = \beta_2 v_{t-1} + (1 - \beta_2) g_t^2 $$
+$$ \hat{m_t} = \frac{m_t}{1 - \beta_1^t} $$
+$$ \hat{v_t} = \frac{v_t}{1 - \beta_2^t} $$
+$$ W_{t+1} = W_t - \frac{lr}{\sqrt{\hat{v_t}}+\varepsilon }\hat{m_t} $$
+-->
+参考: https://www.cnblogs.com/wuliytTaotao/p/11101652.html
+
 #### 向量与矩阵的欧几里得距离计算
 参考: https://blog.csdn.net/Autism_/article/details/88360483
 向量与向量的欧式距离
@@ -393,6 +349,25 @@ blending：
 blending 每次只训练一个模型，而stacking训练模型数和交叉验证折数相关；
 blending 训练时训练集和验证集是确定不变的，stacking则是通过交叉验证使得所有数据都做过验证集。
 
+#### Adaboost
+基学习器G加权误差率e,基学习器权重系数a,训练集样本权重w
+每个样本的相对误差 e_i
+$$ e_i = \frac{|y_i-G_k(x_i)|}{max(|y_i-G_k(x_i)|)} $$
+基学习器G加权误差e
+$$ e = \sum_{i=1}^m w_i e_i $$
+
+$$ a = 1/2 log \frac{1-e}{e} $$
+
+$$ w_{k+1} = \frac{w_k}{Z} e^{-a_k y G_k(x)} $$
+
+规范化因子
+$$ Z = \sum^m_{i=1} w_k e^{-a_k y G_k(x)} $$
+
+得到k个弱分类器,最终强分类器为他们的加权和
+参考 https://www.cnblogs.com/pinard/p/6133937.html
+
+#### knn
+
 ### python 知识点
 #### 深拷贝,浅拷贝
 直接赋值：为对象取别名,两个对象的id相同. a=1, b=a
@@ -423,7 +398,7 @@ GIL 是python的全局解释器锁，同一进程中假如有多个线程运行�
 def func(*args):
     for i in args:
         print(i)  
-    func(3,2,1,4,7)
+func(3,2,1,4,7)
 ```
 
 在我们不知道该传递多少关键字参数时，使用**kwargs来收集关键字参数。
@@ -431,7 +406,7 @@ def func(*args):
 def func(**kwargs):
     for i in kwargs:
         print(i,kwargs[i])
-    func(a=1,b=2,c=7)
+func(a=1,b=2,c=7)
 ```
 
 #### 装饰器
@@ -511,7 +486,7 @@ python字典源码(https://github.com/python/cpython/blob/master/Objects/dictobj
 哈希表，根据键（Key）直接访问在内存储存位置的数据结构
 python的字典是一种哈希表，根据key值直接进行访问的数据结构。通过哈希函数计算存储地址，以加快查找的速度。
 常用的哈希函数:1.直接定置法. 2.除留余数法 3.数字分析法
-随着数据的增加,当通过哈希函数计算的存储地址已经有值了,会发生哈希冲突. python 通过开放定址法（open addressing）解决哈希冲突. 原理是产生哈希冲突时, python 通过一个二次探测函数 f, 计算下一个候选位置,当下一个位置可用，则将数据插入该位置,如果不可用则再次调用探测函数 f,获得下一个候选位置.
+随着数据的增加,当通过哈希函数计算的存储地址已经有值了,会发生哈希冲突. python 通过开放定址法解决哈希冲突（还有拉链法,再构建哈希函数等方法）. 原理是产生哈希冲突时, python 通过一个二次探测函数 f, 计算下一个候选位置,当下一个位置可用，则将数据插入该位置,如果不可用则再次调用探测函数 f,获得下一个候选位置.
 开放定址法存在的问题: 通过多次使用二次探测函数f，从一个位置出发就可以依次到达多个位置,我们认为这些位置形成了一个 ‘冲突探测链’ 当需要删除探测链上的某个数据时问题就产生了, 假如这条链路上的首个元素是 a 最后的元素是 c 现在需要删除 处于中间位置的 b ，这样就会导致探测链断裂, 当下一次搜索 c 时会从 a 出发 沿着链路一步步出发，但是中途的链路断了导致无法到达 c 的位置, 因此无法搜索到c
 所以在采用 开放定地法解决哈希冲突的策略，删除链路上的某个元素时，不能真正的删除元素，只能进行 ‘伪删除’.
 python字典的 三种状态 Unused, Active, Dummy
@@ -572,7 +547,9 @@ https://blog.csdn.net/liuxiao214/article/details/83043170
 http://www.fenghz.xyz/telephone-meeting/
 
 ## 深度学习
-#### backbone异同点
+#### CNN分类网络演变脉络
+##### LeNet-5
+LeNet 被视为CNN的开山之作，1998，定义了基本组件：卷积、池化、全连接。用于手写数字识别10分类问题，主要有5层，包括：两层 5x5 卷积层和三层全连接层。
 ##### alexnet
 2012年
 ![alexnet](assets/20200524_184115_87.png)
@@ -585,6 +562,7 @@ http://www.fenghz.xyz/telephone-meeting/
 ![vgg16](assets/20200524_184332_13.png)
 - 整个网络都使用了同样大小的卷积核尺寸3x3
 - 使用3x3的卷积组合代替大尺寸的卷积（2个3x3卷积即可与5x5卷积拥有相同的感受视野, 3个3x3的卷积层串联的效果则相当于1个7x7的卷积层。这样的连接方式使得1.网络参数量更小，2.多层激活函数令网络对特征的学习能力更强。
+- VGG 中还没有BN
 
 理论感受野计算:
 ```python
@@ -598,7 +576,8 @@ for layer in （top layer To down layer）: 　　　　
 https://www.zhihu.com/question/64494691/answer/786270699
 网络结构:
 一次层是 7x7 步长 2 的 卷积下采样, 3*3 MaxPool 步长为2
-Bottleneck: 先压缩再膨胀
+1. building block: 跳跃连接
+2. Bottleneck: 先压缩再膨胀
 
 解决的问题
 1. 梯度消失
@@ -606,6 +585,15 @@ Bottleneck: 先压缩再膨胀
 2. 网络退化
 网络退化: 虽然是一个高维的矩阵，但是大部分维度却没有信息，表达能力没有看起来那么强大。
 让模型的内部结构至少有恒等映射的能力。以保证在堆叠网络的过程中，网络至少不会因为继续堆叠而产生退化. 假设权重矩阵完全退化为0，则输出已经失去鉴别能力，此时加上残差连接，网络又恢复了表达能力。
+
+##### SENet
+引入了attention机制,对每个channel训练得到一个权重系数
+
+##### darknet53
+网络结构:
+
+##### dla32
+网络结构:
 
 ##### mobilenetv2
 网络结构:
@@ -618,28 +606,26 @@ InvertedResidual: 先将通道膨胀6倍,再压缩
 
 ![20200602_004943_92](assets/20200602_004943_92.png)
 
-##### darknet53
-网络结构:
-
-##### dla32
-网络结构:
-
 ##### inception系列
+inception v1, 汇合1x1,3x3,5x5,maxpool,汇合前1x1减少通道数
+![20200626_172303_71](assets/20200626_172303_71.png)
+inception系列贡献:
+1. 提出了Global Average Pooling
+2. 1x1 卷积, 深度可分离卷积
+3. label smoothing
 
 
 #### 目标检测网络与异同点
 
 #### 什么是梯度爆炸，什么是梯度消失，神经网络是怎么解决梯度爆炸问题的，ResNet为什么能够解决梯度消失问题？
 
-#### 有哪些梯度下降算法，它们各有什么异同。
+#### 过拟合如何缓解？
 
-#### 过拟合？深度学习的过拟合如何缓解？
-
-牛客网 机器学习 题目 https://www.nowcoder.com/ta/review-ml
 
 #### 全连接层作用
-1. 将学到的“特征表示”映射到样本标记空间的作用
-2. FC可在模型表示能力迁移过程中充当“防火墙”的作用
+1. 将学到的“特征表示”映射到样本标记空间
+2. FC可在模型表示能力迁移过程中充当“防火墙”
+
 #### Pooling层的作用以及如何进行反向传播
 pooling层作用
 1、增加非线性,也起到注意力机制的作用
@@ -657,9 +643,11 @@ Spatial Pyramid Pooling（空间金字塔池化）
 #### ROI Align
 解决ROI Pooling中的两次量化，第一次是将原图的候选框映射到特征图上时，会除以32，得到一个浮点数，此时会进行取整操作。第二次是在pooling时，将特征图映射为7*7的大小，此时也是除不尽的，要进行取整操作。就会对边框位置产生影响。
 ROI Align通过对浮点数的位置进行双线性插值，得到这个点的值。对于pooling中的每个格子，取固定的4个点进行双线性插值，然后取maxpooling，作为这个格子的输出。
+
 #### rpn的loss
 分类的loss为交叉熵cross_entroy,回归的loss为smooth L1 loss.
 Smooth L1完美地避开了 L1 和 L2 损失的缺陷，在 损失 较小时，对 其梯度也会变小，使得能够更好的进行收敛; 而在损失很大时，对 x 的梯度的绝对值达到上限1，不会因预测值的梯度十分大导致训练不稳定。L2对离群点，异常值更敏感，容易发生梯度爆炸。
+
 #### FasterRCNN 训练4步骤
 1. load pre-trained base network, train RPN top
 2. load new pre-trained base network, train classifier top
@@ -691,7 +679,12 @@ False Positive(假正例, FP)：将负类预测为正类数 → 误报 (Type I e
 False Negative(假负例子, FN)：将正类预测为负类数 → 漏报 (Type II error).
 
 #### mAP指标解释
-在目标检测中，对于每张图片检测模型会输出多个预测框（远超真实框的个数），我们使用IoU(Intersection Over Union，交并比)来标记预测框是否预测准确。标记完成后，随着预测框的增多，查全率R总会上升，在不同查全率R水平下对准确率P做平均，即得到AP，最后再对所有类别按其所占比例做平均，即得到mAP指标。
+precision = TP / (TP+FP)
+recall = TP / (TP+FN) = TP / (n_GT)
+precision_curve = accumulate TP / (accumulate(TP+FP))
+recall_curve = accumulate TP / n_GT
+AP计算: 置信度从大到小排序, 插值precision_curve, recall_curve 计算
+
 
 #### 常用数据增强方法
 仿射变化: 旋转,缩放,平移
@@ -704,8 +697,20 @@ mixup, cutout
 
 #### 什么是凸优化
 最小二乘, 线性规划 均属于凸优化问题
-#### 解释 L0 L1 L2正则化
+
+#### L0 L1 L2 正则化
+https://blog.csdn.net/qq_37344125/article/details/104326946
 
 #### 灰度直方图与均匀化
 https://zhuanlan.zhihu.com/p/32857009
 https://zhuanlan.zhihu.com/p/54771264
+
+#### 图像算法加速方法
+1. 知识蒸馏
+2. 基于指令集的优化
+3. 精简网络结构(SSH, sconv)
+4. 剪枝,通道剪裁
+5. 量化
+
+#### 色彩空间
+HSV(色相, 饱和度, 明度), HSL(色相, 饱和度, 亮度), LAB(亮度, 绿到红, 蓝到黄)

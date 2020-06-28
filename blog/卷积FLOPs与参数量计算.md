@@ -103,14 +103,14 @@ def conv_forward(feature, filter, bias, conv_param):
     return feature_out, cache
 ```
 ```python
-matrix = np.zeros((Ho*Wo, Co*k*k))
+matrix = np.zeros((Ho*Wo, Ci*k*k))
 row = 0
 for i in range(Ho):
     for j in range(Wo):
-        window = feature[i*s:i*s+k, j*s:j*s+k, :].reshape(1,-1) # (H, W, C)
-        matrix[row] = window 
-filters = filters.transpose()# (C*k*k, C)
-output = np.dot(matrix, filters) # (H*W, C)
+        window = feature[i*s:i*s+k, j*s:j*s+k, :].reshape(-1)
+        matrix[row] = window
+filters = filters.transpose()# (Ci*k*k, Co)
+output = np.dot(matrix, filters) # (Ho*Wo, Co)
 output = output.reshape(Ho, Wo, Co)
 ```
 ### 优化
