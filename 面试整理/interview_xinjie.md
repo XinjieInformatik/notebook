@@ -386,6 +386,7 @@ $$ Z = \sum^m_{i=1} w_k e^{-a_k y G_k(x)} $$
 - 多线程模式；
 - 多进程+多线程模式.
 
+多线程开销小,启动快,
 #### GIL
 GIL 是python的全局解释器锁，同一进程中假如有多个线程运行，一个线程在运行python程序的时候会霸占python解释器（加了一把锁即GIL），使该进程内的其他线程无法运行，等该线程运行完后其他线程才能运行。如果线程运行过程中遇到耗时操作，则解释器锁解开，使其他线程运行。所以在多线程中，线程的运行仍是有先后顺序的，并不是同时进行。
 
@@ -411,6 +412,23 @@ func(a=1,b=2,c=7)
 
 #### 装饰器
 装饰器本质上是一个Python函数，它可以让其它函数在不作任何变动的情况下增加额外功能，装饰器的返回值也是一个函数对象. 比如：插入日志、性能测试、事务处理、缓存、权限校验等。有了装饰器我们就可以抽离出大量的与函数功能无关的雷同代码进行重用。装饰器其实就是一个闭包.
+```python
+def log(text):
+    def decorator(func):
+        def wrapper(*args, **kw):
+            print('%s %s():' % (text, func.__name__))
+            return func(*args, **kw)
+        return wrapper
+    return decorator
+
+@log('execute')
+def now():
+    print('2015-3-25')
+>>> now()
+>>> execute now():
+>>> 2015-3-25
+```
+面向切面编程. 切面:切入到 指定类or指定方法 的代码片段. 切入点:切入到 哪些类or方法
 
 #### 生成器
 生成器是一个返回迭代器的函数，不需要像迭代器的类一样写__iter__()和__next__()方法，只需要一个yiled关键字，每次遇到yield时函数会暂停并保存当前所有的运行信息，返回yield的值,并在下一次执行next()方法时从当前位置继续运行.
@@ -516,7 +534,130 @@ type(B()) == A        # returns False
 ```
 
 TODO: python 知识点 http://vissssa.gitee.io/blog/posts/e11f968c/
-单例模式
+#### 单例模式
+单例模式保证了在程序运行中该类只实例化一次，并且提供了一个全局访问点。
+`__new__()`是一个静态方法,会返回一个创建的实例,在`__init__()`之前被调用，用于生成实例对象。利用这个方法和类的属性的特点可以实现设计模式的单例模式。
+线程安全的单例模式.
+多线程环境下，由于单例模式总是会去判断 实例是否被创建，但是多个线程有可能会拿到相同的结果，这样就无法实现单例模式了，因此遇到多线程的环境时，需要加锁。加了锁之后，每个线程判断 if cls.instance is None 这里就变成了线程安全。因此可以实现多线程环境下，始终只有一个实例.
+```python
+import threading
+def synchronized(func):
+    func.__lock__ = threading.Lock()
+    def lock_func(*args, **kwargs):
+        with func.__lock__:
+            return func(*args, **kwargs)
+    return lock_func
+
+class Singleton(object):
+    instance = None
+    @synchronized
+    def __new__(cls, *args, **kwargs):
+        if cls.instance is None:
+            cls.instance = super().__new__(cls)
+        return cls.instance
+
+if __name__ == "__main__":
+    a = Singleton(3)
+    print("a单例! id为 %s" % id(a))
+    b = Singleton(4)
+    print("b单例! id为 %s" % id(b))
+```
+
+1 使用`__new__`方法
+```python
+class Singleton(object):
+    def __new__(cls, *args, **kw):
+        if not hasattr(cls, '_instance'):
+            orig = super(Singleton, cls)
+            cls._instance = orig.__new__(cls, *args, **kw)
+        return cls._instance
+
+class MyClass(Singleton):
+    a = 1
+```
+2 装饰器版本
+```python
+def singleton(cls):
+    instances = {}
+    def getinstance(*args, **kw):
+        if cls not in instances:
+            instances[cls] = cls(*args, **kw)
+        return instances[cls]
+    return getinstance
+
+@singleton
+class MyClass:
+  ...
+```
+3 import方法
+```python
+# mysingleton.py
+class My_Singleton(object):
+    def foo(self):
+        pass
+my_singleton = My_Singleton()
+
+# to use
+from mysingleton import my_singleton
+my_singleton.foo()
+```
+
+#### 静态方法(staticmethod),类方法(classmethod),实例方法,普通方法
+```python
+def foo(x):
+    print "executing foo(%s)"%(x)
+
+class A(object):
+    def foo(self,x):
+        print "executing foo(%s,%s)"%(self,x)
+
+    @classmethod
+    def class_foo(cls,x):
+        print "executing class_foo(%s,%s)"%(cls,x)
+
+    @staticmethod
+    def static_foo(x):
+        print "executing static_foo(%s)"%x
+```
+self和cls是对类或者实例的绑定,对于一般的函数来说我们可以这么调用foo(x),这个函数就是最常用的,它的工作跟任何东西(类,实例)无关.对于实例方法,我们知道在类里每次定义方法的时候都需要绑定这个实例,就是foo(self, x),为什么要这么做呢?因为实例方法的调用离不开实例,我们需要把实例自己传给函数,调用的时候是这样的a.foo(x)(其实是foo(a, x)).类方法一样,只不过它传递的是类而不是实例,A.class_foo(x)
+
+#### 类变量,实例变量
+类变量：是可在类的所有实例之间共享的值（也就是说，它们不是单独分配给每个实例的）
+实例变量：实例化之后，每个实例单独拥有的变量。
+```python
+class Test(object):  
+    num_of_instance = 0  
+    def __init__(self, name):  
+        self.name = name  
+        Test.num_of_instance += 1  
+
+if __name__ == '__main__':  
+    print Test.num_of_instance   # 0
+    t1 = Test('jack')  
+    print Test.num_of_instance   # 1
+```
+
+#### Python中单下划线和双下划线
+```python
+>>> class MyClass():
+...     def __init__(self):
+...             self.__superprivate = "Hello"
+...             self._semiprivate = ", world!"
+...
+>>> mc = MyClass()
+>>> print mc.__superprivate
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+AttributeError: myClass instance has no attribute '__superprivate'
+>>> print mc._semiprivate
+, world!
+>>> print mc.__dict__
+{'_MyClass__superprivate': 'Hello', '_semiprivate': ', world!'}
+```
+
+#### Python中的作用域
+本地作用域（Local）→当前作用域被嵌入的本地作用域（Enclosing locals）→全局/模块作用域（Global）→内置作用域（Built-in）
+
 
 #### 面向对象
 继承可以把父类的所有功能都直接拿过来，这样就不必重零做起，子类只需要新增自己特有的方法，也可以把父类不适合的方法覆盖重写。
@@ -534,6 +675,13 @@ Python是一种解释型语言，它的源代码不需要编译，可以直接�
 字节码bytecode的好处就是加载快，而且可以跨平台，同样一份bytecode，只要有操作系统平台上有相应的Python解释器，就可以执行，而不需要源代码。不同版本的Python编译的字节码是不兼容的.一般来说一个Python语句会对应若干字节码指令，Python的字节码是一种类似汇编指令的中间语言，但是一个字节码指令并不是对应一个机器指令（二进制指令），而是对应一段C代码. 一个Python的程序会有若干代码块组成，例如一个Python文件会是一个代码块，一个类，一个函数都是一个代码块，一个代码块会对应一个运行的上下文环境以及一系列的字节码指令。
 
 参考 https://www.ituring.com.cn/article/507878
+
+#### MVC
+
+- 模型（Model） - 程序员编写程序应有的功能（实现算法等等）、数据库专家进行数据管理和数据库设计(可以实现具体的功能)。
+- 视图（View） - 界面设计人员进行图形界面设计。
+- 控制器（Controller）- 负责转发请求，对请求进行处理。
+
 
 ## 深度学习
 

@@ -9353,3 +9353,83 @@ class Solution:
         mergeSort(arr, 0, n)
         return self.res
 ```
+
+#### [61. 旋转链表](https://leetcode-cn.com/problems/rotate-list/)
+移动k个位置 = 将倒数k%n个节点放到开头. 注意特殊处理k%n==0,return head
+```python
+class Solution:
+    def rotateRight(self, head: ListNode, k: int) -> ListNode:
+        if not head: return head
+        node = head
+        n = 0
+        while node:
+            node = node.next
+            n += 1
+        k %= n
+        if k == 0:
+            return head
+        slow = fast = head
+        while k:
+            fast = fast.next
+            k -= 1
+        while fast.next:
+            fast = fast.next
+            slow = slow.next
+        new_head = slow.next
+        slow.next = None
+        fast.next = head
+        return new_head
+```
+#### [剑指 Offer 45. 把数组排成最小的数](https://leetcode-cn.com/problems/ba-shu-zu-pai-cheng-zui-xiao-de-shu-lcof/)
+重点:转成字符串,比较left[p1] + right[p2] < right[p2] + left[p1]
+```python
+class Solution:
+    def minNumber(self, nums: List[int]) -> str:
+        def merge(left, right):
+            result = []
+            n1, n2 = len(left), len(right)
+            p1, p2 = 0, 0
+            while p1 < n1 or p2 < n2:
+                if p2 == n2 or (p1 < n1 and left[p1] + right[p2] < right[p2] + left[p1]):
+                    result.append(left[p1])
+                    p1 += 1
+                else:
+                    result.append(right[p2])
+                    p2 += 1
+            return result
+
+        def mergeSort(nums, l, r):
+            if r == 0:
+                return nums
+            if l == r - 1:
+                return [nums[l]]
+            m = l + (r - l) // 2
+            left = mergeSort(nums, l, m)
+            right = mergeSort(nums, m, r)
+            ans = merge(left, right)
+            return ans
+
+        nums = [str(item) for item in nums]
+        ans = mergeSort(nums, 0, len(nums))
+        return "".join(ans)
+```
+
+#### [剑指 Offer 09. 用两个栈实现队列](https://leetcode-cn.com/problems/yong-liang-ge-zhan-shi-xian-dui-lie-lcof/)
+stack1用来append, stack2为空时把stack1元素依次pop入stack2, return stack2.pop()
+```python
+class CQueue:
+    def __init__(self):
+        self.stack1 = []
+        self.stack2 = []
+
+    def appendTail(self, value: int) -> None:
+        self.stack1.append(value)
+
+    def deleteHead(self) -> int:
+        if len(self.stack1) == 0 and len(self.stack2) == 0:
+            return -1
+        if len(self.stack2) == 0:
+            while self.stack1:
+                self.stack2.append(self.stack1.pop())
+        return self.stack2.pop()
+```

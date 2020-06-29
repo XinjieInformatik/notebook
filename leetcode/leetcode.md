@@ -4370,3 +4370,30 @@ class Solution:
         mergeSort(arr, 0, n)
         return self.res
 ```
+
+#### [61. 旋转链表](https://leetcode-cn.com/problems/rotate-list/)
+移动k个位置 = 将倒数k%n个节点放到开头. 注意特殊处理k%n==0,return head
+```python
+class Solution:
+    def rotateRight(self, head: ListNode, k: int) -> ListNode:
+        if not head: return head
+        node = head
+        n = 0
+        while node:
+            node = node.next
+            n += 1
+        k %= n
+        if k == 0:
+            return head
+        slow = fast = head
+        while k:
+            fast = fast.next
+            k -= 1
+        while fast.next:
+            fast = fast.next
+            slow = slow.next
+        new_head = slow.next
+        slow.next = None
+        fast.next = head
+        return new_head
+```
