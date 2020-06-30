@@ -506,7 +506,33 @@ class Solution:
         return results
 ```
 
-
+#### [17. 电话号码的字母组合](https://leetcode-cn.com/problems/letter-combinations-of-a-phone-number/)
+注意,与全排列II的不同是不能跳过重复数字
+```python
+from collections import Counter
+class Solution:
+    def letterCombinations(self, digits: str) -> List[str]:
+        if len(digits) == 0: return []
+        mapping = {"2":["a","b","c"], "3":["d","e","f"], "4":["g","h","i"], "5":["j","k","l"], "6":["m","n","o"], "7":["p","q","r","s"], "8":["t","u","v"], "9":["w","x","y","z"]}
+        stat = []
+        for num in digits:
+            stat.extend(mapping[num])
+        count = Counter(stat)
+        results = []
+        n = len(digits)
+        def helper(index, curr):
+            if index == n:
+                results.append(curr)
+                return
+            for char in mapping[digits[index]]:
+                if count[char] == 0:
+                    continue
+                count[char] -= 1
+                helper(index+1, curr+char)
+                count[char] += 1
+        helper(0, "")
+        return results
+```
 ### 二维dp(字符串)
 #### [5. 最长回文子串](https://leetcode-cn.com/problems/longest-palindromic-substring/)
 ```给定一个字符串 s，找到 s 中最长的回文子串。
@@ -2245,59 +2271,6 @@ class Solution:
         return False
 ```
 
-#### [128. 最长连续序列](https://leetcode-cn.com/problems/longest-consecutive-sequence/solution/zui-chang-lian-xu-xu-lie-by-leetcode/)
-1. 暴力法，遍历每个数字查询。总体复杂度O(n^3), 注意数组的 in 查询操作, 时间复杂度O(n)
-```python
-class Solution:
-    def longestConsecutive(self, nums):
-        longest_streak = 0
-        for num in nums:
-            current_num = num
-            current_streak = 1
-            while current_num + 1 in nums:
-                current_num += 1
-                current_streak += 1
-            longest_streak = max(longest_streak, current_streak)
-
-        return longest_streak
-```
-
-2. 先排序，再依次通过索引向后查询即可。O(nlogn)
-```python
-class Solution:
-    def longestConsecutive(self, nums):
-        if not nums:
-            return 0
-        nums.sort()
-        longest_streak = 1
-        current_streak = 1
-        for i in range(1, len(nums)):
-            if nums[i] != nums[i-1]:
-                if nums[i] == nums[i-1]+1:
-                    current_streak += 1
-                else:
-                    longest_streak = max(longest_streak, current_streak)
-                    current_streak = 1
-        return max(longest_streak, current_streak)
-```
-
-3. 基于1利用hashmap查找，添加O(1)的特性.先构造hashmap set(). 然后如果 num - 1 not in num_set，开始查找统计。O(n). 尽管在 for 循环中嵌套了一个 while 循环，时间复杂度看起来像是二次方级别的。但其实它是线性的算法。因为只有当 currentNum 遇到了一个序列的开始， while 循环才会被执行, while 循环在整个运行过程中只会被迭代 n 次。这意味着尽管看起来时间复杂度为O(n^2) ，实际这个嵌套循环只会运行 O(n + n)次。所有的计算都是线性时间的，所以总的时间复杂度是 O(n)。
-```python
-class Solution:
-    def longestConsecutive(self, nums):
-        longest_streak = 0
-        num_set = set(nums)
-        for num in num_set:
-            if num - 1 not in num_set:
-                current_num = num
-                current_streak = 1
-                while current_num + 1 in num_set:
-                    current_num += 1
-                    current_streak += 1
-                longest_streak = max(longest_streak, current_streak)
-        return longest_streak
-```
-
 #### [128. 最长连续序列](https://leetcode-cn.com/problems/longest-consecutive-sequence/)
 ```
 给定一个未排序的整数数组，找出最长连续序列的长度。要求算法的时间复杂度为 O(n)。
@@ -3127,7 +3100,6 @@ class Solution:
 ```python
 class Solution:
     def findContinuousSequence(self, target: int) -> List[List[int]]:
-        """滑动窗口"""
         target_list = [i+1 for i in range(target)]
         l, r = 0, 1
         result = []
@@ -4735,6 +4707,7 @@ class Solution:
 ```
 
 #### [83. 删除排序链表中的重复元素](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list/)
+删除排序链表中重复的节点,保留第一次出现的
 ```python
 class Solution:
     def deleteDuplicates(self, head: ListNode) -> ListNode:
@@ -4748,6 +4721,58 @@ class Solution:
             else:
                 slow = slow.next
                 fast = fast.next
+        return head
+```
+
+#### [82. 删除排序链表中的重复元素 II](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list-ii/)
+排序链表中重复的节点,均删除不保留.引入dummy节点是为了避免head就是重复元素,无法删除.
+```python
+class Solution:
+    def deleteDuplicates(self, head: ListNode) -> ListNode:
+        if not head: return head
+        dummy = ListNode(-1)
+        dummy.next = head
+        slow, fast = dummy, dummy.next
+        while fast:
+            if fast.next and fast.val == fast.next.val:
+                temp = fast.val
+                while fast and fast.val == temp:
+                    fast = fast.next
+                slow.next = fast
+            else:
+                slow = fast
+                fast = fast.next
+        return dummy.next
+```
+
+#### [面试题 02.01. 移除重复节点](https://leetcode-cn.com/problems/remove-duplicate-node-lcci/)
+非排序链表 
+```python
+class Solution:
+    def removeDuplicateNodes(self, head: ListNode) -> ListNode:
+        """时间O(n) 空间O(n)"""
+        if not head: return head
+        visited = set([head.val])
+        node = head
+        while node.next:
+            if node.next and node.next.val in visited:
+                node.next = node.next.next
+            else:
+                node = node.next
+                visited.add(node.val)
+        return head
+
+        """时间O(n^2) 空间O(1)"""
+        if not head: return head
+        slow = head
+        while slow:
+            fast = slow
+            while fast.next:
+                if fast.next.val == slow.val:
+                    fast.next = fast.next.next
+                else:
+                    fast = fast.next
+            slow = slow.next
         return head
 ```
 
@@ -4767,6 +4792,20 @@ class Solution:
         return dummy.next
 ```
 
+#### [1. 两数之和](https://leetcode-cn.com/problems/two-sum/)
+```python
+class Solution:
+    def twoSum(self, nums: List[int], target: int) -> List[int]:
+        n = len(nums)
+        lookup = {}
+        for i in range(n):
+            lookup[nums[i]] = i
+        for i, num in enumerate(nums):
+            val = target-num
+            if val in lookup and i != lookup[val]:
+                return [i, lookup[val]]
+        return -1
+```
 
 #### [2. 两数相加](https://leetcode-cn.com/problems/add-two-numbers/)
 ```python
@@ -8504,10 +8543,6 @@ class Solution:
         s_reverse = ''.join(s_list)
         return s_reverse
 ```
-
-## 滑动窗口
-先考虑双指针构成的list窗口能不能求解，再考虑把窗口化为字典
-
 
 #### [438. 找到字符串中所有字母异位词](https://leetcode-cn.com/problems/find-all-anagrams-in-a-string)、
 方法一，通过双重for找到第一个满足的后，往后依次遍历。最直观但是超时
