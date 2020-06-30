@@ -4746,7 +4746,7 @@ class Solution:
 ```
 
 #### [面试题 02.01. 移除重复节点](https://leetcode-cn.com/problems/remove-duplicate-node-lcci/)
-非排序链表 
+非排序链表
 ```python
 class Solution:
     def removeDuplicateNodes(self, head: ListNode) -> ListNode:
@@ -6126,20 +6126,18 @@ class KthLargest:
 ```python
 class Solution:
     def kthSmallest(self, root: TreeNode, k: int) -> int:
-        node = root
         stack = []
-        def _left_most_inorder(node):
-            while node:
-                stack.append(node)
-                node = node.left
-        # 注意,向左只需要调用一次,在while之外
-        _left_most_inorder(node)
-        while k > 0:
-            node = stack.pop()
-            if node.right:
-                _left_most_inorder(node.right)
-            k -= 1
-        return node.val
+        while root or stack:
+            while root:
+                stack.append(root)
+                root = root.left
+            if stack:
+                root = stack.pop()
+                k -= 1
+                if k == 0:
+                    return root.val
+                root = root.right
+        return -1
 ```
 
 #### [96. 不同的二叉搜索树](https://leetcode-cn.com/problems/unique-binary-search-trees/)
@@ -8327,36 +8325,34 @@ key是字符，value是node， class node 基本是个字典，有着判断是�
 class Node:
     def __init__(self):
         self.is_end = False
-        self.dict = {}
+        self.lookup = {}
 
 class Trie:
     def __init__(self):
         self.root = Node()
 
     def insert(self, word: str) -> None:
-        cur_node = self.root
-        for alpha in word:
-            if alpha not in cur_node.dict:
-                cur_node.dict[alpha] = Node()
-            cur_node = cur_node.dict[alpha]
-        cur_node.is_end = True
+        curr = self.root
+        for char in word:
+            if char not in curr.lookup:
+                curr.lookup[char] = Node()
+            curr = curr.lookup[char]
+        curr.is_end = True
 
     def search(self, word: str) -> bool:
-        cur_node = self.root
-        for alpha in word:
-            if alpha not in cur_node.dict:
+        curr = self.root
+        for char in word:
+            if char not in curr.lookup:
                 return False
-            cur_node = cur_node.dict[alpha]
-        return cur_node.is_end
-
+            curr = curr.lookup[char]
+        return curr.is_end
 
     def startsWith(self, prefix: str) -> bool:
-        cur_node = self.root
-        for alpha in prefix:
-            if alpha not in cur_node.dict:
+        curr = self.root
+        for char in prefix:
+            if char not in curr.lookup:
                 return False
-            else:
-                cur_node = cur_node.dict[alpha]
+            curr = curr.lookup[char]
         return True
 ```
 #### [211. 添加与搜索单词 - 数据结构设计](https://leetcode-cn.com/problems/add-and-search-word-data-structure-design/)
@@ -8397,6 +8393,58 @@ class WordDictionary:
                     return True # be careful, don't return False
             return False # if no more in trie
 ```
+#### [79. 单词搜索](https://leetcode-cn.com/problems/word-search/)
+```python
+class Node():
+    def __init__(self):
+        self.lookup = {}
+        self.is_end = False
+
+class Trie():
+    def __init__(self):
+        self.root = Node()
+
+    def insert(self, word):
+        curr = self.root
+        for char in word:
+            if char not in curr.lookup:
+                curr.lookup[char] = Node()
+            curr = curr.lookup[char]
+        curr.is_end = True
+
+class Solution:
+    def exist(self, board: List[List[str]], word: str) -> bool:
+        """如果只是一个单词,其实没必要建字典树,dfs就够了"""
+        trie = Trie()
+        trie.insert(word)
+        n = len(board)
+        if n == 0: return False
+        m = len(board[0])
+        oriens = [(1,0),(-1,0),(0,1),(0,-1)]
+        def dfs(i, j, curr):
+            if curr.is_end:
+                return True
+            ichar = board[i][j]
+            board[i][j] = None
+            for orien in oriens:
+                nxt_i, nxt_j = i+orien[0], j+orien[1]
+                if nxt_i < 0 or nxt_i >= n or nxt_j < 0 or nxt_j >= m:
+                    continue
+                # char = board[nxt_i][nxt_j] # 要用char提取board[nxt_i][nxt_j],暂时不知为啥
+                if board[nxt_i][nxt_j] in curr.lookup:
+                    if dfs(nxt_i, nxt_j, curr.lookup[board[nxt_i][nxt_j]]):
+                        return True
+            board[i][j] = ichar
+            return False
+
+        for i in range(n):
+            for j in range(m):
+                if board[i][j] in trie.root.lookup:
+                    curr = trie.root.lookup[board[i][j]]
+                    if dfs(i, j, curr):
+                        return True
+        return False
+```
 
 #### [212. 单词搜索 II](https://leetcode-cn.com/problems/word-search-ii/)
 这道题整体思路是 1. 构建words的字典树 trie  2. 在board上深度优先遍历
@@ -8406,60 +8454,57 @@ class WordDictionary:
 3. 基于当前节点的深度优先搜索结束后，恢复board当前节点的值，便于之后单词的搜索
 
 ```python
-class Node:
+class Node():
     def __init__(self):
-        self.dict = {}
+        self.lookup = {}
         self.is_end = False
 
-class Trie:
+class Trie():
     def __init__(self):
         self.root = Node()
 
     def insert(self, word):
-        cur_node = self.root
-        for alpha in word:
-            if alpha not in cur_node.dict:
-                cur_node.dict[alpha] = Node()
-            cur_node = cur_node.dict[alpha]
-        cur_node.is_end = True
-
+        curr = self.root
+        for char in word:
+            if char not in curr.lookup:
+                curr.lookup[char] = Node()
+            curr = curr.lookup[char]
+        curr.is_end = True
 
 class Solution:
     def findWords(self, board: List[List[str]], words: List[str]) -> List[str]:
-        self.h = len(board)
-        self.w = len(board[0])
-        self.res = []
         trie = Trie()
+
         for word in words:
             trie.insert(word)
-        for i in range(len(board)):
-            for j in range(len(board[0])):
-                cur_node = trie.root
-                self.dfs(i, j, cur_node, board, "")
-        return self.res
+        n = len(board)
+        if n == 0:
+            return []
+        m = len(board[0])
 
-    def dfs(self, i, j, cur_node, board, word=""):
-        char = board[i][j]
-        if char in cur_node.dict:
-            word = word + char
-            if cur_node.dict[char].is_end:
-                self.res.append(word)
-                cur_node.dict[char].is_end = False # 保证无重复
-
-            cur_node = cur_node.dict[char]
-
+        result = []
+        oriens = [(-1,0), (1,0), (0,1), (0,-1)]
+        def dfs(i, j, curr, res):
+            if curr.is_end == True:
+                result.append(res)
+                curr.is_end = False # 保证无重复
+            ichar = board[i][j]
             board[i][j] = None # 关键！每个单词，不走回头路
+            for orien in oriens:
+                nxt_i, nxt_j = i + orien[0], j + orien[1]
+                if nxt_i < 0 or nxt_i >= n or nxt_j < 0 or nxt_j >= m:
+                    continue
+                char = board[nxt_i][nxt_j]
+                if char in curr.lookup:
+                    dfs(nxt_i, nxt_j, curr.lookup[char], res+char)
+            board[i][j] = ichar # 关键！在内存中恢复board
 
-            if i+1 < self.h and board[i+1][j]!=None:
-                self.dfs(i+1, j, cur_node, board, word)
-            if i > 0 and board[i-1][j]!=None:
-                self.dfs(i-1, j, cur_node, board, word)
-            if j+1 < self.w and board[i][j+1]!=None:
-                self.dfs(i, j+1, cur_node, board, word)
-            if j > 0 and board[i][j-1]!=None:
-                self.dfs(i, j-1, cur_node, board, word)
-
-            board[i][j] = char # 关键！在内存中恢复board
+        for i in range(n):
+            for j in range(m):
+                char = board[i][j]
+                if char in trie.root.lookup:
+                    dfs(i, j, trie.root.lookup[char], char)
+        return result
 ```
 
 #### [443. 压缩字符串](https://leetcode-cn.com/problems/string-compression/)
@@ -9467,4 +9512,75 @@ class CQueue:
             while self.stack1:
                 self.stack2.append(self.stack1.pop())
         return self.stack2.pop()
+```
+
+#### [LRU](https://leetcode-cn.com/problems/lru-cache/solution/lruhuan-cun-ji-zhi-by-leetcode-solution/)
+首先使用哈希表进行定位，找出缓存项在双向链表中的位置，随后将其移动到双向链表的头部(最近使用的)，即可在 O(1) 时间内完成 get 或者 put 操作
+```python
+class DLinkedNode:
+    def __init__(self, key=0, val=0):
+        self.key = key
+        self.val = val
+        self.prev = None
+        self.next = None
+
+
+class LRUCache:
+    def __init__(self, capacity):
+        self.lookup = dict()
+        # 使用伪头部和伪尾部节点    
+        self.head = DLinkedNode()
+        self.tail = DLinkedNode()
+        self.head.next = self.tail
+        self.tail.prev = self.head
+        self.capacity = capacity
+        self.size = 0
+
+    def get(self, key):
+        if key not in self.lookup:
+            return -1
+        # 如果 key 存在，先通过哈希表定位，再移到头部
+        node = self.lookup[key]
+        self.moveToHead(node)
+        return node.val
+
+    def put(self, key, val):
+        if key not in self.lookup:
+            # 如果key不存在，创建一个新的节点
+            node = DLinkedNode(key, val)
+            # 添加进哈希表
+            self.lookup[key] = node
+            # 添加至双向链表的头部
+            self.addToHead(node)
+            self.size += 1
+            if self.size > self.capacity:
+                # 如果超出容量，删除双向链表的尾部节点
+                removed = self.removeTail()
+                # 删除哈希表中对应的项
+                self.lookup.pop(removed.key)
+                self.size -= 1
+        else:
+            # 先通过哈希表定位，再修改 value，并移到头部
+            node = self.lookup[key]
+            node.val = val
+            self.moveToHead(node)
+
+    def addToHead(self, node):
+        node.prev = self.head
+        node.next = self.head.next
+        self.head.next.prev = node
+        self.head.next = node
+
+    def removeNode(self, node):
+        node.prev.next = node.next
+        node.next.prev = node.prev
+
+    def moveToHead(self, node):
+        self.removeNode(node)
+        self.addToHead(node)
+
+    def removeTail(self):
+        node = self.tail.prev
+        self.removeNode(node)
+        return node
 ```
