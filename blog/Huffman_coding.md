@@ -20,7 +20,7 @@ sample = "A"*40+"B"*20+"C"*16+"D"*11+"E"*7+"F"*4+"G"*2
 import heapq
 from typing import Dict
 
-class HuffmanCoding(object):
+class HuffmanCoding():
     def __init__(self):
         self.heap = []
         self.char2coding = {}

@@ -2498,7 +2498,7 @@ class Solution:
 
         return countingSort(nums)
 ```
-2. 三路快排，空间复杂度O(1)
+2. 三路快排，空间复杂度O(logn)
 ```python
 class Solution:
     def sortColors(self, nums: List[int]) -> None:
@@ -4554,41 +4554,53 @@ class Solution:
 #### [44. 通配符匹配](https://leetcode-cn.com/problems/wildcard-matching/)
 TODO: do once more
 ```python
+import functools
 class Solution:
     def isMatch(self, s: str, p: str) -> bool:
-        import functools
+        n1, n2 = len(s), len(p)
         @functools.lru_cache(None)
-        def helper(s, p):
-            if len(s) == 0:
-                if len(p) == 0:
+        def helper(p1, p2):
+            if p1 == n1:
+                if p2 == n2 or set(p[p2:]) == {"*"}:
                     return True
-                elif set(p) == {"*"}:
-                    return True
-                else: return False
-            if s and p and (s[0] == p[0] or p[0] == "?") and helper(s[1:], p[1:]):
-                return True
-            elif p and p[0] == "*" and (helper(s[1:], p) or helper(s, p[1:])):
-                return True
-            return False
+                else:
+                    return False
+            elif p2 == n2:
+                return p1 == n1
+            elif p[p2] == "*":
+                return helper(p1+1, p2) or helper(p1, p2+1)
+            elif p[p2] == "?" or s[p1] == p[p2]:
+                return helper(p1+1, p2+1)
+            else:
+                return False
 
-        return helper(s, p)
+        return helper(0, 0)
 
-    def isMatch(self, s: str, p: str) -> bool:
-        sn = len(s)
-        pn = len(p)
-        dp = [[False] * (pn + 1) for _ in range(sn + 1)]
-        dp[0][0] = True
-        for j in range(1, pn + 1):
-            if p[j - 1] == "*":
-                dp[0][j] = dp[0][j - 1]
 
-        for i in range(1, sn + 1):
-            for j in range(1, pn + 1):
-                if (s[i - 1] == p[j - 1] or p[j - 1] == "?"):
-                    dp[i][j] = dp[i - 1][j - 1]
-                elif p[j - 1] == "*":
-                    dp[i][j] = dp[i - 1][j] or dp[i][j - 1]
-        return dp[-1][-1]
+        i, j = 0, 0
+        start = -1
+        match = 0
+        while i < len(s):
+            # 一对一匹配,匹配成功一起移
+            if j < len(p) and (s[i] == p[j] or p[j] == "?"):
+                i += 1
+                j += 1
+            # 记录p的"*"的位置,还有s的位置
+            elif j < len(p) and p[j] == "*":
+                start = j
+                match = i
+                j += 1
+            # j 回到 记录的下一个位置
+            # match 更新下一个位置
+            # 这不代表用*匹配一个字符
+            elif start != -1:
+                j = start + 1
+                match += 1
+                i = match
+            else:
+                return False
+        # 将多余的 * 直接匹配空串
+        return all(x == "*" for x in p[j:])
 ```
 
 ## LinkedList
@@ -5762,6 +5774,7 @@ class Solution:
 
 class Solution:
     def buildTree(self, preorder: List[int], inorder: List[int]) -> TreeNode:
+        """时间O(n) 空间O(n), 取决于树的结构，最坏n"""
         n = len(preorder)
         # 建立哈希表，实现O(1)查询
         lookup_table = {inorder[i]: i for i in range(n)}
@@ -5775,7 +5788,7 @@ class Solution:
             # 左子树root index 根+1
             root.left = helper(root_i+1, left, in_i)
             # 右子树root index 根+左子树长度+1
-            root.right = helper(root_i+in_i-left+1, in_i+1, right)
+            root.right = helper(root_i+1+(in_i-left), in_i+1, right)
             # 层层向上返回子树的根
             return root
 
@@ -9583,4 +9596,264 @@ class LRUCache:
         node = self.tail.prev
         self.removeNode(node)
         return node
+```
+
+#### [378. 有序矩阵中第K小的元素](https://leetcode-cn.com/problems/kth-smallest-element-in-a-sorted-matrix/)
+```python
+class Solution:
+    def kthSmallest(self, matrix: List[List[int]], k: int) -> int:
+        n = len(matrix)
+        if n == 0: return
+
+        def sift_down(arr, root, k):
+            """小顶堆"""
+            val = arr[root]
+            while root << 1 < k:
+                child = root << 1
+                if child|1 < k and arr[child|1][0] < arr[child][0]:
+                    child |= 1
+                if arr[child][0] < val[0]:
+                    arr[root] = arr[child]
+                    root = child
+                else:
+                    break
+            arr[root] = val
+
+        def sift_up(arr, child):
+            val = arr[child]
+            while child > 1 and val[0] < arr[child>>1][0]:
+                arr[child] = arr[child>>1]
+                child >>= 1
+            arr[child] = val
+
+        heap = [0]
+        # 因此升序,此时已经是小顶堆
+        for i in range(n):
+            heap.append((matrix[i][0], i, 0))
+
+        for i in range(k):
+            heap[1], heap[-1] = heap[-1], heap[1]
+            num, row, col = heap.pop()
+            if i == k-1:
+                return num
+            if len(heap) > 1:
+                sift_down(heap, 1, len(heap))
+            if col+1 < n:
+                heap.append((matrix[row][col+1], row, col+1))
+                sift_up(heap, len(heap)-1)
+        return -1
+```
+
+#### [32. 最长有效括号](https://leetcode-cn.com/problems/longest-valid-parentheses/)
+挺巧妙的，stack初始化[-1], 遇到 ) pop
+```python
+class Solution:
+    def longestValidParentheses(self, s: str) -> int:
+        stack = [-1] # 有前缀和的感觉
+        max_len = 0
+        n = len(s)
+        for i in range(n):
+            if s[i] == ")":
+                stack.pop()
+                if not stack:
+                    stack.append(i)
+                else:
+                    max_len = max(max_len, i - stack[-1])
+            else:
+                stack.append(i)
+        return max_len
+```
+
+#### [222. 完全二叉树的节点个数](https://leetcode-cn.com/problems/count-complete-tree-nodes/)
+很好的题目           h从1开始
+对于完满二叉树，深度为h层的节点数 2^(h-1)，总节点数 2^h - 1
+从上往下，对于当前节点，统计左右子树的高度   (注意 << 运算优先级最低)
+- 如果左右子树高度相同，则左子树是完满二叉树，总节点数=右子树节点数 + ((l_h<<1) - 1) + 1
+- 如果左右子树高度不相同，则右子树少一层，是完满二叉树，总节点数=左子树节点数 + ((r_h<<1) - 1) + 1
+时间复杂度 O(logn * logn)
+```python
+class Solution:
+    def countNodes(self, root: TreeNode) -> int:
+        def countDepth(root):
+            h = 0
+            while root:
+                root = root.left
+                h += 1
+            return h
+
+        def helper(root):
+            if not root:
+                return 0
+            l_h = countDepth(root.left)
+            r_h = countDepth(root.right)
+            if l_h == r_h:
+                return helper(root.right) + (1<<l_h)
+            else:
+                return helper(root.left) + (1<<r_h)
+
+        return helper(root)
+```
+
+## 剑指offer系列
+#### [剑指 Offer 03. 数组中重复的数字](https://leetcode-cn.com/problems/shu-zu-zhong-zhong-fu-de-shu-zi-lcof/)
+```python
+class Solution:
+    def findRepeatNumber(self, nums: List[int]) -> int:
+        """时间, 空间O(n)"""
+        visited = set()
+        for num in nums:
+            if num in visited:
+                return num
+            else:
+                visited.add(num)
+        return -1
+
+        """利用条件数字在[0,n-1], 利用哈希冲突的思想, 时间O(n), 空间O(1)"""
+        n = len(nums)
+        for i in range(n):
+            index = nums[i]
+            if i == nums[i]:
+                continue
+            if nums[i] != nums[index]:
+                nums[i], nums[index] = nums[index], nums[i]
+            else:
+                return nums[i]
+        return -1
+```
+
+#### [剑指 Offer 04. 二维数组中的查找](https://leetcode-cn.com/problems/er-wei-shu-zu-zhong-de-cha-zhao-lcof/)
+```python
+class Solution:
+    def findNumberIn2DArray(self, matrix: List[List[int]], target: int) -> bool:
+        """时间 O(n+m) 空间 O(1)"""
+        n = len(matrix)
+        if n == 0:
+            return False
+        m = len(matrix[0])
+        row, col = n-1, 0
+        while row >= 0 and col < m:
+            if matrix[row][col] == target:
+                return True
+            elif matrix[row][col] < target:
+                col += 1
+            else:
+                row -= 1
+        return False
+```
+
+#### [剑指 Offer 10- I. 斐波那契数列](https://leetcode-cn.com/problems/fei-bo-na-qi-shu-lie-lcof/)
+https://leetcode-cn.com/problems/fibonacci-number/solution/fei-bo-na-qi-shu-by-leetcode/
+```python
+class Solution:
+    def fib(self, n: int) -> int:
+        # 迭代
+        f1, f2 = 0, 1
+        if n == 0: return f1
+        if n == 1: return f2
+        for i in range(n-1):
+            f3 = f1 + f2
+            f1 = f2
+            f2 = f3
+        return f3 % 1000000007
+
+        # 尾递归
+        def helper(n, n1, n2):
+            if n == 0:
+                return n1
+            return helper(n-1, n2, n1+n2)
+        return helper(n, 0, 1) % 1000000007
+
+        # 普通递归 O(2^n) 递归深度为n，近似完满二叉树
+        def helper(n):
+            if n < 2:
+                return n
+            return helper(n-1) + helper(n-2)
+        return helper(n) % 1000000007
+```
+快速幂: 假设要计算a^10，最通常的实现是循环 10 次自乘即可。
+更高级一点，我们可以把 10 次幂拆成两个 5 次幂，再把 5 次幂拆成一个 4 次幂和一个 1 次幂，再把 4 次幂拆成两个 2 次幂,实际上这就是二分的思想.时间空间 O(logn)
+```python
+class Solution:
+    def fib(self, N: int) -> int:
+        if (N <= 1):
+            return N
+
+        A = [[1, 1], [1, 0]]
+        self.matrix_power(A, N-1)
+
+        return A[0][0] % 1000000007
+
+    def matrix_power(self, A: list, N: int):
+        if (N <= 1):
+            return A
+
+        self.matrix_power(A, N//2)
+        self.multiply(A, A)
+        B = [[1, 1], [1, 0]]
+
+        if (N%2 != 0):
+            self.multiply(A, B)
+
+    def multiply(self, A: list, B: list):
+        x = A[0][0] * B[0][0] + A[0][1] * B[1][0]
+        y = A[0][0] * B[0][1] + A[0][1] * B[1][1]
+        z = A[1][0] * B[0][0] + A[1][1] * B[1][0]
+        w = A[1][0] * B[0][1] + A[1][1] * B[1][1]
+
+        A[0][0] = x
+        A[0][1] = y
+        A[1][0] = z
+        A[1][1] = w
+```
+#### [剑指 Offer 12. 矩阵中的路径](https://leetcode-cn.com/problems/ju-zhen-zhong-de-lu-jing-lcof/)
+时间复杂度O(nm3^k),空间O(k)
+```python
+class Solution:
+    def exist(self, board: List[List[str]], word: str) -> bool:
+        """dfs, 注意不能用lru_cache"""
+        n = len(board)
+        if n == 0: return False
+        if len(word) == 0: return True
+        m = len(board[0])
+        oriens = [(1,0),(-1,0),(0,1),(0,-1)]
+        lenth = len(word)
+        def dfs(i, j, index):
+            if index == lenth:
+                return True
+            char = board[i][j]
+            board[i][j] = None
+            for orien in oriens:
+                nxt_i, nxt_j = i+orien[0], j+orien[1]
+                if nxt_i < 0 or nxt_i >= n or nxt_j < 0 or nxt_j >= m:
+                    continue
+                if board[nxt_i][nxt_j] != word[index]:
+                    continue  
+                if dfs(nxt_i, nxt_j, index+1):
+                    return True
+            board[i][j] = char
+            return False
+
+        for i in range(n):
+            for j in range(m):
+                if board[i][j] == word[0] and dfs(i, j, index=1):
+                    return True
+        return False
+```
+
+## 面试金典系列
+#### [面试题 08.06. 汉诺塔问题](https://leetcode-cn.com/problems/hanota-lcci/)
+```python
+class Solution:
+    def hanota(self, A: List[int], B: List[int], C: List[int]) -> None:
+        def helper(n, a, b, c):
+            if n == 1:
+                c.append(a.pop())
+                return
+            # 将A上面的n-1个通过C移动到B
+            helper(n-1, a, c, b)
+            # 将A剩下的1个移动到C
+            helper(1, a, b, c)
+            # 将B的n-1个移动到C
+            helper(n-1, b, a, c)
+        helper(len(A), A, B, C)
 ```
