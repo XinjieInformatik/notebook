@@ -233,6 +233,23 @@ class Solution:
                     dp[j] = max(dp[j], dp[j-A[i-1]]+V[i-1])
         return dp[-1]
 ```
+
+#### [三维01背包](https://ac.nowcoder.com/acm/contest/6218/C)
+```python
+class Solution:
+    def minCost(self , breadNum , beverageNum , packageSum ):
+        n = len(packageSum)
+        dp = [[[float("inf")] * (beverageNum+1) for j in range(breadNum+1)] for i in range(n+1)]
+        dp[0][0][0] = 0
+        for i in range(1, n+1):
+            for j in range(breadNum, -1, -1):
+                for k in range(beverageNum, -1, -1):
+                    x = max(0, j-packageSum[i-1][0])
+                    y = max(0, k-packageSum[i-1][1])
+                    dp[i][j][k] = min(dp[i-1][j][k], dp[i-1][x][y]+packageSum[i-1][2])
+        return dp[-1][-1][-1]
+```
+
 #### [563. 背包问题 V](https://www.lintcode.com/problem/backpack-v/my-submissions)
 ```给出 n 个物品, 以及一个数组, nums[i] 代表第i个物品的大小, 保证大小均为正数,
 正整数 target 表示背包的大小, 找到能填满背包的方案数。每一个物品只能使用一次
@@ -774,7 +791,7 @@ class Solution:
 ```
 
 #### [300. 最长上升子序列](https://leetcode-cn.com/problems/longest-increasing-subsequence/)
-```给定一个无序的整数数组，找到其中最长上升子序列的长度。
+```给定一个无序的整数数组，找到其中最长上升子序列的长度。 LIS
 输入: [10,9,2,5,3,7,101,18]  输出: 4
 解释: 最长的上升子序列是 [2,3,7,101]，它的长度是 4。
 ```
@@ -821,6 +838,43 @@ class Solution:
             else:
                 dp[index] = num
         return len(dp)
+```
+
+#### [435. 无重叠区间](https://leetcode-cn.com/problems/non-overlapping-intervals/)
+将问题转化为寻找最大(非严格)递增区间. O(n^2)
+dp[i]的状态可由 1. 保留当前i区间, dp[j]+1 2.删除当前i区间 两种状态转移而来,在两种状态中取max
+```python
+class Solution:
+    def eraseOverlapIntervals(self, intervals: List[List[int]]) -> int:
+        n = len(intervals)
+        if n == 0: return 0
+        intervals = sorted(intervals, key=lambda ele:ele[1])
+        dp = [1] * n
+        res = 1
+        for i in range(n):
+            for j in range(i-1, -1, -1):
+                if intervals[i][0] >= intervals[j][1]:
+                    dp[i] = dp[j] + 1
+                    break
+            dp[i] = max(dp[i], dp[i-1])
+            res = max(dp[i], res)
+        return n - res
+```
+贪心, O(nlogn)
+```python
+class Solution:
+    def eraseOverlapIntervals(self, intervals: List[List[int]]) -> int:
+        intervals = sorted(intervals, key=lambda ele:ele[1])
+        n = len(intervals)
+        p, cnt = 0, 0
+        while p < n:
+            last = intervals[p][1]
+            j = p+1
+            while j < n and intervals[j][0] < last:
+                j += 1
+                cnt += 1
+            p = j
+        return cnt
 ```
 
 #### [376. 摆动序列](https://leetcode-cn.com/problems/wiggle-subsequence/)
@@ -2702,28 +2756,6 @@ class Solution:
 ```
 
 #### [354. 俄罗斯套娃信封问题](https://leetcode-cn.com/problems/russian-doll-envelopes/)
-```python
-class Solution:
-    def maxEnvelopes(self, envelopes: List[List[int]]) -> int:
-        """此方法为贪心，逻辑不严谨，是错误的，应考虑动态规划"""
-        if len(envelopes) < 2: return len(envelopes)
-        envelopes = sorted(envelopes, key=lambda ele: (ele[0],-ele[1]), reverse=True)
-        print(envelopes)
-        lenth = 1
-        p = 0
-        while (p < len(envelopes)):
-            next_envelop = -1
-            for i in range(p+1, len(envelopes)):
-                if envelopes[i][0] < envelopes[p][0] and envelopes[i][1] < envelopes[p][1]:
-                    next_envelop = i
-                    lenth += 1
-                    break
-            if next_envelop != -1:
-                p = next_envelop
-            else:
-                break
-        return lenth
-```
 ```python
 class Solution:
     def maxEnvelopes(self, envelopes: List[List[int]]) -> int:
@@ -4737,7 +4769,7 @@ class Solution:
 ```
 
 #### [82. 删除排序链表中的重复元素 II](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list-ii/)
-排序链表中重复的节点,均删除不保留.引入dummy节点是为了避免head就是重复元素,无法删除.
+排序链表中重复的节点,均删除不保留.引入dummy节点是为了避免head就是重复元素,无法删除. 链表重复节点.
 ```python
 class Solution:
     def deleteDuplicates(self, head: ListNode) -> ListNode:
@@ -9694,7 +9726,55 @@ class Solution:
         return helper(root)
 ```
 
+#### [306. 累加数](https://leetcode-cn.com/problems/additive-number/)
+两个for循环,如果符合,dfs检测,如果能走到末尾,符合斐波那契字符串
+```python
+class Solution:
+    def str_sum(self, s1, s2):
+        n1, n2 = len(s1), len(s2)
+        n = max(n1, n2)
+        p, carry = 1, 0
+        res = ""
+        while p <= n or carry:
+            val1 = int(s1[-p]) if p <= n1 else 0
+            val2 = int(s2[-p]) if p <= n2 else 0
+            carry, val = divmod(val1+val2+carry, 10)
+            res = str(val) + res
+            p += 1
+        return res
+
+    def isAdditiveNumber(self, num: str) -> bool:
+        n = len(num)
+        def dfs(p1, p2, p3):
+            if p3 == n:
+                return True
+            if (num[p1] == "0" and p2-p1>1) or (num[p2] == "0" and p3-p2>1) :
+                return False
+            for i in range(p3+1, n+1):
+                if num[p3:i] == self.str_sum(num[p1:p2], num[p2:p3]):
+                    # print(num[p1:p2], num[p2:p3], num[p3:i])
+                    return dfs(p2, p3, i)
+            return False
+
+        for i in range(n):
+            for j in range(i+1, n):
+                if dfs(0, i, j):
+                    return True
+        return False
+```
+
 ## 剑指offer系列
+递归时间复杂度分析
+假设递归深度, 递归调用数量为h, 递归内每次计算量O(s), 时间复杂度 O(hs)
+
+递归空间复杂度分析
+假设递归深度h, 则递归空间占用O(h), 假设每次递归中额外占用空间O(k)
+则如果每次递归中空间没释放, 空间复杂度 O(hk)
+如果每次递归中空间释放, 空间复杂度 max(O(h),O(k))
+
+如果使用了记忆化, 设状态数n, 时间复杂度 O(ns), 空间复杂度 max(O(dp), O(h), O(k)) (假设空间释放)
+尾递归的好处是，它可以避免递归调用期间栈空间开销的累积
+
 #### [剑指 Offer 03. 数组中重复的数字](https://leetcode-cn.com/problems/shu-zu-zhong-zhong-fu-de-shu-zi-lcof/)
 ```python
 class Solution:
@@ -9839,6 +9919,57 @@ class Solution:
                     return True
         return False
 ```
+#### [剑指 Offer 16. 数值的整数次方](https://leetcode-cn.com/problems/shu-zhi-de-zheng-shu-ci-fang-lcof/)
+快速幂 O(log(n))
+```python
+class Solution:
+    def myPow(self, x: float, n: int) -> float:
+        """每次将n右移一位,判断最后一位是否是1,
+        是的话乘上底数x,x不断*x累积配合n右移"""
+        if n < 0:
+            n = -n
+            x = 1/x
+        res = 1
+        while n:
+            if n & 1:
+                res *= x
+            x *= x
+            n >>= 1
+        return res
+```
+#### [剑指 Offer 18. 删除链表的节点](https://leetcode-cn.com/problems/shan-chu-lian-biao-de-jie-dian-lcof/)
+```python
+class Solution:
+    def deleteNode(self, head: ListNode, val: int) -> ListNode:
+        dummy = d_head = ListNode(-1)
+        dummy.next = head
+        while dummy.next:
+            if dummy.next.val == val:
+                dummy.next = dummy.next.next
+                break
+            dummy = dummy.next
+        return d_head.next
+```
+
+#### [剑指 Offer 19. 正则表达式匹配](https://leetcode-cn.com/problems/zheng-ze-biao-da-shi-pi-pei-lcof/)
+O(m*n)
+```python
+import functools
+class Solution:
+    def isMatch(self, s: str, p: str) -> bool:
+        n1, n2 = len(s), len(p)
+        @functools.lru_cache(None)
+        def helper(p1, p2):
+            if p2 == n2:
+                return p1 == n1
+            is_match = p1 < n1 and (p[p2] == s[p1] or (p[p2] == "." and p1 < n1))
+            if p2+1 < n2 and p[p2+1] == "*":
+                return helper(p1, p2+2) or (is_match and helper(p1+1, p2))
+            if is_match:
+                return helper(p1+1, p2+1)
+            return False
+        return helper(0,0)
+```
 
 ## 面试金典系列
 #### [面试题 08.06. 汉诺塔问题](https://leetcode-cn.com/problems/hanota-lcci/)
@@ -9856,4 +9987,46 @@ class Solution:
             # 将B的n-1个移动到C
             helper(n-1, b, a, c)
         helper(len(A), A, B, C)
+```
+
+#### [面试题 16.11. 跳水板](https://leetcode-cn.com/problems/diving-board-lcci/)
+不要用递归,会爆栈. 数学题,长度相等,输出一个答案.不相等,输出longer依次+1
+```python
+class Solution:
+    def divingBoard(self, shorter: int, longer: int, k: int) -> List[int]:
+        if k == 0:
+            return []
+        if shorter == longer:
+            return [shorter*k]
+        result = []
+        for i in range(k+1):
+            result.append((k-i)*shorter + i*longer)
+        return result
+```
+
+#### [中文转数字]
+```python
+test_str = "一亿三千二百一十万四千零二"
+num = "一二三四五六七八九"
+num_mapping = {num[i]: i+1 for i in range(len(num))}
+unit_mapping = {"十": 10, "百": 100, "千": 1000, "万": 10000, "亿": 1000000000}
+
+n = len(test_str)
+stack = []
+for char in test_str:
+    if char in num_mapping:
+        num = num_mapping[char]
+        stack.append(num)
+
+    if char in unit_mapping:
+        unit = unit_mapping[char]
+        res = 0
+        while stack and unit > stack[-1]:
+            res += stack.pop() * unit
+        val = res if res else unit
+        stack.append(val)
+ans = 0
+while stack:
+    ans += stack.pop()
+print(ans)
 ```
