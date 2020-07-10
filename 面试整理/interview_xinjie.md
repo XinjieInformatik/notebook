@@ -295,7 +295,7 @@ https://www.zhihu.com/question/29316149
 概率:基于给定模型参数，推测结果的合理性，不涉及任何观察到的数据。
 最大似然估计: 找到参数theta的一个估计值,使得当前样本出现的可能性最大.
 #### 贝叶斯
-对于大多数的分类算法，比如决策树,KNN,逻辑回归，支持向量机等，他们都是判别方法，也就是直接学习出特征输出Y和特征X之间的关系，要么是决策函数𝑌=𝑓(𝑋),要么是条件分布𝑃(𝑌|𝑋)。但是朴素贝叶斯却是生成方法，也就是直接找出特征输出Y和特征X的联合分布𝑃(𝑋,𝑌),然后用 𝑃(𝑌|𝑋)=𝑃(𝑋,𝑌)/𝑃(𝑋) 得出 𝑃(𝑌|𝑋)。朴素:指假设各个特征间相互独立.
+对于大多数的分类算法，比如决策树,KNN,逻辑回归，支持向量机等，他们都是判别方法，也就是直接学习出特征输出Y和特征X之间的关系，要么是决策函数𝑌=𝑓(𝑋),要么是条件分布𝑃(𝑌|𝑋)。但是朴素贝叶斯却是生成方法，也就是直接找出输出Y和特征X的联合分布𝑃(𝑋,𝑌),然后用 𝑃(𝑌|𝑋)=𝑃(𝑋,𝑌)/𝑃(𝑋) 得出 𝑃(𝑌|𝑋)。朴素:指假设各个特征间相互独立.
 
 参考: http://www.ruanyifeng.com/blog/2013/12/naive_bayes_classifier.html
 https://www.cnblogs.com/pinard/p/6069267.html
@@ -417,7 +417,7 @@ func(a=1,b=2,c=7)
 def log(text):
     def decorator(func):
         def wrapper(*args, **kw):
-            print('%s %s():' % (text, func.__name__))
+            print("{} {}():" % (text, func.__name__))
             return func(*args, **kw)
         return wrapper
     return decorator
@@ -428,6 +428,15 @@ def now():
 >>> now()
 >>> execute now():
 >>> 2015-3-25
+
+import time
+def time_decorator(func):
+    def wrapper(*args, **kw):
+        start = time.time()
+        result = func(*args, **kw)
+        print(time.time() - start)
+        return result
+    return wrapper
 ```
 面向切面编程. 切面:切入到 指定类or指定方法 的代码片段. 切入点:切入到 哪些类or方法
 
@@ -439,6 +448,7 @@ def now():
 
 #### python 内存管理
 参考: https://juejin.im/post/5ca2471df265da307b2d45a3
+
 ##### 内存池机制
 **内存池机制**，用于对内存的申请和释放管理。内存池的概念就是预先在内存中申请一定数量的，大小相等的内存块留作备用，当有新的内存需求时，就先从内存池中分配内存给这个需求，不够了之后再申请新的内存. 这样做最显著的优势就是能够减少内存碎片，提升效率。
 ##### 垃圾回收机制

@@ -4850,6 +4850,45 @@ class Solution:
                 return [i, lookup[val]]
         return -1
 ```
+两数之和有重复
+```python
+class Solution:
+    def twoSum(self, nums, target):
+        n = len(nums)
+        lookup = {nums[i]: i for i in range(n)}
+        result = []
+        vis = set()
+        for i in range(n):
+            val = target - nums[i]
+            if val in vis:
+                continue
+            if val in lookup:
+                result.append([nums[i], nums[lookup[val]]])
+                vis.add(nums[i])
+                vis.add(val)
+        return result
+
+    def twoSum2(self, nums, target):
+        n = len(nums)
+        if n < 2: return []
+        nums.sort()
+        p1, p2 = 0, n-1
+        result = []
+        while p1 != p2:
+            left, right = nums[p1], nums[p2]
+            val = left + right
+            if val < target:
+                p1 += 1
+            elif val > target:
+                p2 -= 1
+            else:
+                result.append([left, right])
+                while p1 < p2 and nums[p1] == left:
+                    p1 += 1
+                while p1 < p2 and nums[p2] == right:
+                    p2 -= 1
+        return result
+```
 
 #### [2. 两数相加](https://leetcode-cn.com/problems/add-two-numbers/)
 ```python
@@ -5610,42 +5649,19 @@ class Solution:
 ```python
 class Solution:
     def maxPathSum(self, root: TreeNode) -> int:
-        self.max_path = -float("inf")
+        if not root: return None
+        path = -float("inf")
         def helper(root):
-            if root == None: return 0
+            if not root:
+                return 0
             l = helper(root.left)
             r = helper(root.right)
-            val = max(root.val+l, root.val+r, root.val)
-            self.max_path = max(self.max_path, val, root.val+l+r)
+            nonlocal path
+            val = max(root.val, root.val+l, root.val+r)
+            path = max(path, val, root.val+l+r)
             return val
-        _ = helper(root)
-        return self.max_path
-```
-因为求的是任意节点到任意节点的最大路径，因此层层向上返回的时候，有三种可能
-1. return node.val + node.left.val
-2. return node.val + node.right.val
-3. return node.val
-```python
-class Solution:
-    def maxPathSum(self, root: TreeNode) -> int:
-        max_path = -float("inf")
-        def dfs(node):
-            if not node:
-                return 0
-            # 如果子树返回值小于0则截断
-            left_value = max(0, dfs(node.left))
-            right_value = max(0, dfs(node.right))
-            # node_val有可能只是该node.val或者node.val+left或者node.val+right
-            node_sum = left_value + right_value + node.val
-            # 在函数和类中用nonlocal, 函数和类外用global 申明一下
-            nonlocal max_path
-            max_path = max(max_path, node_sum)
-            # 选择left,right中大的和node一起向上返回，或者只返回node.val
-            # 注意这里是node.val 不是 node_sum
-            return node.val + max(left_value, right_value)
-
-        dfs(root)
-        return max_path
+        helper(root)
+        return path
 ```
 
 #### [958. 二叉树的完全性检验](https://leetcode-cn.com/problems/check-completeness-of-a-binary-tree/)
