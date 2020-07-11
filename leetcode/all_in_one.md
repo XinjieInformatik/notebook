@@ -1648,8 +1648,9 @@ class Solution:
         2. 左指针逐步向前收缩,不满足条件后停下,先记录最后满足条件的答案,再向前一步进入不满足状态
         3. 循环1,2, 过程中记录所有满足条件的最小值, return时如果没有被更新过, return ""
         """
-        count = Counter(t)
-        cnt = len(count)
+		count = collections.defaultdict(int)
+		for c in t:
+			count[c] += 1
         n = len(s)
         l = 0
         res = (0, n+1)
@@ -1663,7 +1664,6 @@ class Solution:
                         count[s[l]] += 1
                         if count[s[l]] == 1:
                             cnt += 1
-                            count[s[l]]
                             if r - l < res[1] - res[0]:
                                 res = (l, r)
                     l += 1
@@ -9985,6 +9985,39 @@ class Solution:
                 return helper(p1+1, p2+1)
             return False
         return helper(0,0)
+```
+
+#### [剑指 Offer 36. 二叉搜索树与双向链表](https://leetcode-cn.com/problems/er-cha-sou-suo-shu-yu-shuang-xiang-lian-biao-lcof/)
+```python
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+"""
+class Solution:
+    def treeToDoublyList(self, root: 'Node') -> 'Node':
+        def helper(node):
+            if not node:
+                return None
+            helper(node.left)
+            if self.prev:
+                node.left = self.prev
+                self.prev.right = node
+            else:
+                self.head = node
+
+            self.prev = node
+
+            helper(node.right)
+
+        self.prev = None
+        helper(root)
+        self.head.left = self.prev
+        self.prev.right = self.head
+        return self.head
 ```
 
 ## 面试金典系列
