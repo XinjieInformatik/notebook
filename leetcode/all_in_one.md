@@ -3488,29 +3488,27 @@ class Solution:
 
 #### [377. 组合总和 Ⅳ](https://leetcode-cn.com/problems/combination-sum-iv/)
 ```python
+import functools
 class Solution:
     def combinationSum4(self, nums: List[int], target: int) -> int:
-        """回溯+记忆表"""
+        n = len(nums)
         nums.sort()
-        memo = {}
-        # 可代替记忆表，但要注意输入只能是变量，不能是list，dict
-        # import functools
-        # @functools.lru_cache(None)
-        def helper(temp_sum):
-            if temp_sum == target:
+        # dp = {}
+        @functools.lru_cache(None)
+        def helper(res):
+            if res == target:
                 return 1
-            node_result = 0
-            for num in nums:
-                # temp_sum += num # dangerous
-                if temp_sum+num > target: break
-                if temp_sum+num in memo:
-                    node_result += memo[temp_sum+num]
-                    continue
-                node_result += helper(temp_sum+num)
-            if temp_sum not in memo:
-                memo[temp_sum] = node_result
-            return node_result
-
+            ans = 0
+            for i in range(n):
+                val = res + nums[i]
+                if val > target:
+                    break
+                # if val in dp:
+                #     ans += dp[val]
+                #     continue
+                ans += helper(val)
+            # dp[res] = ans
+            return ans
         return helper(0)
 ```
 
@@ -4734,20 +4732,17 @@ class Solution:
 class Solution:
     def removeNthFromEnd(self, head: ListNode, n: int) -> ListNode:
         """用dummy节点避免要删除头结点的情况"""
-        dummy = ListNode(-1)
+        dummy = d_head = ListNode(-1)
         dummy.next = head
-        slow_p = dummy
-        fast_p = dummy
-        while (n > 0):
-            fast_p = fast_p.next
+        while n:
+            dummy = dummy.next
             n -= 1
-        while (fast_p):
-            if fast_p.next == None:
-                slow_p.next = slow_p.next.next
-                break
-            fast_p = fast_p.next
-            slow_p = slow_p.next
-        return dummy.next
+        slow = d_head
+        while dummy.next:
+            slow = slow.next
+            dummy = dummy.next
+        slow.next = slow.next.next
+        return d_head.next
 ```
 
 #### [83. 删除排序链表中的重复元素](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list/)
@@ -4863,7 +4858,7 @@ class Solution:
             if val in vis:
                 continue
             if val in lookup:
-                result.append([nums[i], nums[lookup[val]]])
+                result.append([nums[i], val])
                 vis.add(nums[i])
                 vis.add(val)
         return result
@@ -4874,7 +4869,7 @@ class Solution:
         nums.sort()
         p1, p2 = 0, n-1
         result = []
-        while p1 != p2:
+        while p1 < p2:
             left, right = nums[p1], nums[p2]
             val = left + right
             if val < target:
@@ -5448,23 +5443,26 @@ class Solution:
 #### [437. 路径总和 III](https://leetcode-cn.com/problems/path-sum-iii/)
 难点:不是总从根节点出发,巧用前缀和和回溯
 ```python
+from collections import defaultdict
 class Solution:
     def pathSum(self, root: TreeNode, sum: int) -> int:
-        self.count = 0
-        def helper(node, prefix, cur_sum):
-            if not node: return
-            cur_sum += node.val
-            val = cur_sum - sum
-            if val in prefix:
-                self.count += prefix[val]
-            prefix[cur_sum] = prefix.get(cur_sum, 0) + 1
-            helper(node.left, prefix, cur_sum)
-            helper(node.right, prefix, cur_sum)
-            prefix[cur_sum] -= 1
-        prefix = {0:1}
-        helper(root, prefix, 0)
-        return self.count
+        presum = defaultdict(int)
+        presum[0] = 1
+        self.cnt = 0
+        def helper(node, curr_sum):
+            if not node:
+                return
+            curr_sum += node.val
+            if curr_sum - sum in presum:
+                self.cnt += presum[curr_sum-sum]
+            presum[curr_sum] += 1
+            helper(node.left, curr_sum)
+            helper(node.right, curr_sum)
+            presum[curr_sum] -= 1
+        helper(root, 0)
+        return self.cnt
 ```
+
 #### [129. 求根到叶子节点数字之和](https://leetcode-cn.com/problems/sum-root-to-leaf-numbers/)
 和路径之和112，113一样
 ```python
@@ -7455,33 +7453,6 @@ class Solution:
 
         return out
 ```
-#### [437. 路径总和 III](https://leetcode-cn.com/problems/path-sum-iii/submissions/)
-```python
-class Solution:
-    def pathSum(self, root: TreeNode, sum: int) -> int:
-        def traversal(node, stack):
-            if node:
-                stack.append(node.val)
-                cur = 0
-                for i in range(len(stack)-1, -1, -1):
-                    cur += stack[i]
-                    if cur == sum: # 注意比较区别 sum(stack[i:]) == sum_
-                        self.count += 1
-                traversal(node.left, stack)
-                traversal(node.right, stack)
-                stack.pop() # 注意递归变量的生命周期
-
-        self.count = 0; stack = [] # self.count与直接定义count的区别
-        traversal(root, stack)
-        return self.count
-```
-
-二叉搜索树具有以下性质：
-- 如果节点的左子树不空，则左子树上所有结点的值均小于等于它的根结点的值；
-- 如果节点的右子树不空，则右子树上所有结点的值均大于等于它的根结点的值；
-- 任意节点的左、右子树也分别为二叉查找树；（二叉搜索树的定义是递归的二叉搜索树的定义是递归的）
-- 没有键值相等的节点
-- 中序遍历是升序
 
 #### [538. 把二叉搜索树转换为累加树](https://leetcode-cn.com/problems/convert-bst-to-greater-tree/)
 这道题对理解递归，回溯很有帮助。以树为例子，递归从root开始，在root结束。
@@ -9779,6 +9750,36 @@ class Solution:
         return False
 ```
 
+#### [99. 恢复二叉搜索树](https://leetcode-cn.com/problems/recover-binary-search-tree/)
+中序遍历,找到第一个和第二个小于前继节点的,然后退出递归后交换他们的值
+```python
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def recoverTree(self, root: TreeNode) -> None:
+        self.prev = None
+        self.first, self.second = None, None
+        def helper(node):
+            if not node:
+                return
+            helper(node.left)
+            if self.prev and not self.second and node.val < self.prev.val:
+                self.first = self.prev
+            if self.prev and self.first and node.val < self.prev.val:
+                self.second = node
+            self.prev = node
+            helper(node.right)
+
+        if not root: return []
+        helper(root)
+        self.first.val, self.second.val = self.second.val, self.first.val
+        return root
+```
+
 ## 剑指offer系列
 递归时间复杂度分析
 假设递归深度, 递归调用数量为h, 递归内每次计算量O(s), 时间复杂度 O(hs)
@@ -9987,36 +9988,292 @@ class Solution:
         return helper(0,0)
 ```
 
-#### [剑指 Offer 36. 二叉搜索树与双向链表](https://leetcode-cn.com/problems/er-cha-sou-suo-shu-yu-shuang-xiang-lian-biao-lcof/)
+#### [剑指 Offer 20. 表示数值的字符串](https://leetcode-cn.com/problems/biao-shi-shu-zhi-de-zi-fu-chuan-lcof/)
+状态机判断转移是否合法
+```python
+class Solution:
+    def isNumber(self, s: str) -> bool:
+        states = [
+            { ' ': 0, 's': 1, 'd': 2, '.': 4 }, # 0. start with 'blank'
+            { 'd': 2, '.': 4 } ,                # 1. 'sign' before 'e'
+            { 'd': 2, '.': 3, 'e': 5, ' ': 8 }, # 2. 'digit' before 'dot'
+            { 'd': 3, 'e': 5, ' ': 8 },         # 3. 'digit' after 'dot'
+            { 'd': 3 },                         # 4. 'digit' after 'dot' (‘blank’ before 'dot')
+            { 's': 6, 'd': 7 },                 # 5. 'e'
+            { 'd': 7 },                         # 6. 'sign' after 'e'
+            { 'd': 7, ' ': 8 },                 # 7. 'digit' after 'e'
+            { ' ': 8 }                          # 8. end with 'blank'
+        ]
+        p = 0                           # start with state 0
+        for c in s:
+            if '0' <= c <= '9': t = 'd' # digit
+            elif c in "+-": t = 's'     # sign
+            elif c in ".eE ": t = c     # dot, e, blank
+            else: t = '?'               # unknown
+            if t not in states[p]: return False
+            p = states[p][t]
+        return p in (2, 3, 7, 8)
+```
+
+#### [剑指 Offer 21. 调整数组顺序使奇数位于偶数前面](https://leetcode-cn.com/problems/diao-zheng-shu-zu-shun-xu-shi-qi-shu-wei-yu-ou-shu-qian-mian-lcof/)
+partition 操作
+```python
+class Solution:
+    def exchange(self, nums: List[int]) -> List[int]:
+        pivot_i = 0
+        n = len(nums)
+        if n == 0: return []
+        for i in range(1, n):
+            if nums[i] & 1:
+                pivot_i += 1
+                nums[i], nums[pivot_i] = nums[pivot_i], nums[i]
+        if nums[0] & 1 == 0:
+            nums[0], nums[pivot_i] = nums[pivot_i], nums[0]
+        return nums
+```
+
+#### [剑指 Offer 22. 链表中倒数第k个节点](https://leetcode-cn.com/problems/lian-biao-zhong-dao-shu-di-kge-jie-dian-lcof/)
+```python
+class Solution:
+    def getKthFromEnd(self, head: ListNode, k: int) -> ListNode:
+        fast = head
+        while k:
+            fast = fast.next
+            k -= 1
+        if fast == None:
+            return head
+        while fast.next:
+            head = head.next
+            fast = fast.next
+        return head.next
+```
+
+#### [剑指 Offer 25. 合并两个排序的链表](https://leetcode-cn.com/problems/he-bing-liang-ge-pai-xu-de-lian-biao-lcof/)
+```python
+class Solution:
+    def mergeTwoLists(self, l1: ListNode, l2: ListNode) -> ListNode:
+        dummy = d_head = ListNode(-1)
+        while l1 and l2:
+            if l1.val < l2.val:
+                dummy.next = l1
+                l1 = l1.next
+            else:
+                dummy.next = l2
+                l2 = l2.next
+            dummy = dummy.next
+        dummy.next = l1 if l1 else l2
+        return d_head.next
+```
+
+#### [剑指 Offer 26. 树的子结构](https://leetcode-cn.com/problems/shu-de-zi-jie-gou-lcof/)
+```python
+class Solution:
+    def isSubStructure(self, A: TreeNode, B: TreeNode) -> bool:
+        def is_same(node1, node2):
+            if not node2:
+                return True
+            if not node1:
+                return False
+            if node1.val != node2.val:
+                return False
+            if not is_same(node1.left, node2.left):
+                return False
+            if not is_same(node1.right, node2.right):
+                return False
+            return True
+
+        def helper(node):
+            if not node:
+                return False
+            if node.val == B.val and is_same(node, B):
+                return True
+            if helper(node.left):
+                return True
+            if helper(node.right):
+                return True
+            return False
+
+        if not A or not B: return False
+        return helper(A)
+```
+
+#### [剑指 Offer 27. 二叉树的镜像](https://leetcode-cn.com/problems/er-cha-shu-de-jing-xiang-lcof/)
+```python
+class Solution:
+    def mirrorTree(self, root: TreeNode) -> TreeNode:
+        def helper(root):
+            if not root:
+                return None
+            helper(root.left)
+            helper(root.right)
+            root.left, root.right = root.right, root.left
+        helper(root)
+        return root
+
+        stack = [root]
+        while stack:
+            node = stack.pop()
+            if node:
+                node.left, node.right = node.right, node.left
+                stack.append(node.right)
+                stack.append(node.left)
+        return root
+```
+
+#### [剑指 Offer 28. 对称的二叉树](https://leetcode-cn.com/problems/dui-cheng-de-er-cha-shu-lcof/)
+```python
+class Solution:
+    def isSymmetric(self, root: TreeNode) -> bool:
+        def helper(node1, node2):
+            if not node1 and not node2:
+                return True
+            if not node1 or not node2:
+                return False
+            if node1.val != node2.val:
+                return False
+            if not helper(node1.left, node2.right):
+                return False
+            if not helper(node1.right, node2.left):
+                return False
+            return True
+
+        return helper(root, root)
+```
+
+#### [剑指 Offer 30. 包含min函数的栈](https://leetcode-cn.com/problems/bao-han-minhan-shu-de-zhan-lcof/)
+使用一个非递增的辅助栈,x小于栈顶入栈,pop元素为辅助栈顶元素时,辅助栈也pop()
+```python
+class MinStack:
+    def __init__(self):
+        """
+        initialize your data structure here.
+        """
+        self.stack = []
+        self.helper = []
+
+    def push(self, x: int) -> None:
+        self.stack.append(x)
+        if not self.helper or x <= self.helper[-1]:
+            self.helper.append(x)
+
+    def pop(self) -> None:
+        if self.stack.pop() == self.helper[-1]:
+            self.helper.pop()
+
+    def top(self) -> int:
+        return self.stack[-1]
+
+    def min(self) -> int:
+        return self.helper[-1]
+```
+
+#### [剑指 Offer 31. 栈的压入、弹出序列](https://leetcode-cn.com/problems/zhan-de-ya-ru-dan-chu-xu-lie-lcof/)
+```python
+class Solution:
+    def validateStackSequences(self, pushed: List[int], popped: List[int]) -> bool:
+        stack = []
+        p = 0
+        for num in pushed:
+            stack.append(num)
+            while stack and stack[-1] == popped[p]:
+                stack.pop()
+                p += 1
+        return True if p == len(popped) else False
+```
+
+#### [剑指 Offer 33. 二叉搜索树的后序遍历序列](https://leetcode-cn.com/problems/er-cha-sou-suo-shu-de-hou-xu-bian-li-xu-lie-lcof/)
+```python
+class Solution:
+    def verifyPostorder(self, postorder: List[int]) -> bool:
+        def recur(i, j):
+            if i >= j: return True
+            p = i
+            while postorder[p] < postorder[j]: p += 1
+            m = p
+            while postorder[p] > postorder[j]: p += 1
+            if p != j:
+                return False
+            else:
+                return recur(i, m - 1) and recur(m, j - 1)
+
+        return recur(0, len(postorder) - 1)
+
+        # stack, root = [], float("inf")
+        # for i in range(len(postorder) - 1, -1, -1):
+        #     if postorder[i] > root:
+        #         return False
+        #     while(stack and postorder[i] < stack[-1]):
+        #         root = stack.pop()
+        #     stack.append(postorder[i])
+        # return True
+```
+
+#### [剑指 Offer 34. 二叉树中和为某一值的路径](https://leetcode-cn.com/problems/er-cha-shu-zhong-he-wei-mou-yi-zhi-de-lu-jing-lcof/)
+注意这里是到叶子节点
+```python
+class Solution:
+    def pathSum(self, root: TreeNode, sum: int) -> List[List[int]]:
+        result = []
+        def helper(node, res, presum):
+            if not node.left and not node.right:
+                if presum + node.val == sum:
+                    result.append(res+[node.val])
+                return
+            if node.left:
+                helper(node.left, res+[node.val], presum+node.val)
+            if node.right:
+                helper(node.right, res+[node.val], presum+node.val)
+
+        if not root: return result
+        helper(root, [], 0)
+        return result
+```
+
+#### [剑指 Offer 35. 复杂链表的复制](https://leetcode-cn.com/problems/fu-za-lian-biao-de-fu-zhi-lcof/)
 ```python
 """
 # Definition for a Node.
 class Node:
-    def __init__(self, val, left=None, right=None):
-        self.val = val
-        self.left = left
-        self.right = right
+    def __init__(self, x: int, next: 'Node' = None, random: 'Node' = None):
+        self.val = int(x)
+        self.next = next
+        self.random = random
 """
 class Solution:
+    def copyRandomList(self, head: 'Node') -> 'Node':
+        visited = {}
+        def dfs(node):
+            if not node:
+                return
+            if node in visited:
+                return visited[node]
+            copy = Node(node.val, None, None)
+            visited[node] = copy
+            copy.next = dfs(node.next)
+            copy.random = dfs(node.random)
+            return copy
+        return dfs(head)
+```
+
+#### [剑指 Offer 36. 二叉搜索树与双向链表](https://leetcode-cn.com/problems/er-cha-sou-suo-shu-yu-shuang-xiang-lian-biao-lcof/)
+```python
+class Solution:
     def treeToDoublyList(self, root: 'Node') -> 'Node':
+        self.prev, self.head = None, None
         def helper(node):
             if not node:
-                return None
+                return
             helper(node.left)
-            if self.prev:
-                node.left = self.prev
-                self.prev.right = node
-            else:
+            if not self.head:
                 self.head = node
-
+            if self.prev:
+                node.left, self.prev.right = self.prev, node
             self.prev = node
-
             helper(node.right)
-
-        self.prev = None
+        if not root:
+            return root
         helper(root)
-        self.head.left = self.prev
-        self.prev.right = self.head
+        self.head.left, self.prev.right = self.prev, self.head
         return self.head
 ```
 
@@ -10078,4 +10335,45 @@ ans = 0
 while stack:
     ans += stack.pop()
 print(ans)
+```
+
+#### [长度至少为k子数组最大和]
+```python
+def maxSum(nums, k):
+	l, n = 0, len(nums)
+	if n < k: return
+	presum = 0
+	ans = -float("inf")
+	for r in range(n):
+		presum += nums[r]
+		max_temp, temp = presum, presum
+		skip_l = l
+		for l in range(l, r-k+1):
+			temp -= nums[l]
+			if temp > max_temp:
+				skip_l = l + 1
+				max_temp = temp
+		if max_temp > presum:
+			l = skip_l
+			presum = max_temp
+		if r - l >= k-1:
+			ans = max(ans, presum)
+	return ans
+
+def maxSum0(nums, k):
+	n = len(nums)
+	ans = -float("inf")
+	for i in range(n-k+1):
+		presum = 0
+		for j in range(i, n):
+			presum += nums[j]
+			if j-i >= k-1:
+				ans = max(ans, presum)
+	return ans
+
+if __name__ == "__main__":
+	nums = [-2,1,-3,1,1,2]
+	k = 3
+	ans = maxSum(nums, k)
+	print(ans)
 ```
