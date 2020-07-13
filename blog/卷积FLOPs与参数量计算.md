@@ -7,6 +7,9 @@ FLOPS：floating point operations per second的缩写，每秒浮点运算次数
 `FLOPs`：floating point operations的缩写（s表复数），浮点运算数，理解为计算量。可以用来衡量算法/模型的复杂度。
 
 ## 普通卷积层
+输出尺寸: Out = (In - k + 2p) / s + 1
+卷积向下取整, 池化向上取整.
+
 ### FLOPs 计算
 
 `不考虑bias`，只考虑滑动窗口中的$k_h * k_w * c_{in-channel}$次乘法与$k_h * k_w * c_{in-channel} - 1$次加法运算 (batch size = 1)。 H, W 是feature map 的 高宽。
@@ -103,6 +106,7 @@ def conv_forward(feature, filter, bias, conv_param):
     return feature_out, cache
 ```
 ```python
+feature = np.zeros((Ho, Wo, 3))
 matrix = np.zeros((Ho*Wo, Ci*k*k))
 row = 0
 for i in range(Ho):

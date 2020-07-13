@@ -622,7 +622,7 @@ class Solution:
                     dp[i][j] = max(dp[i][j-1], dp[i-1][j])
         return dp[-1][-1]
 
-        # 求公共子序列元素,倒序遍历,通过dp控制双指针移动
+        """ 求公共子序列元素,倒序遍历,通过dp控制双指针移动 """
         p1, p2 = n1-2, n2-2
         s = ""
         while p1 >= 0 and p2 >= 0:
@@ -653,7 +653,6 @@ class LongestSubstring:
                     dp[i][j] = 0
         return ans
 ```
-
 
 #### [72. 编辑距离](https://leetcode-cn.com/problems/edit-distance/)
 ```给你两个单词 word1 和 word2，请你计算出将 word1 转换成 word2 所使用的最少操作数
@@ -1062,8 +1061,8 @@ class Solution:
             val = int(num[i])
             # 把val<stack[-1]判断放在while,避免写break
             while stack and val < stack[-1] and cnt<k:
-                    stack.pop()
-                    cnt += 1
+                stack.pop()
+                cnt += 1
             if val == 0 and not stack: continue
             stack.append(val)
         ans = "0" if not stack else "".join(map(str, stack[:maintain]))
@@ -1227,6 +1226,25 @@ class Solution:
         return max_area
 ```
 
+#### [739. 每日温度](https://leetcode-cn.com/problems/daily-temperatures/)
+```
+根据每日 气温 列表，请重新生成一个列表，对应位置的输出是需要再等待多久温度才会升高超过该日的天数。如果之后都不会升高，请在该位置用 0 来代替。
+例如，给定一个列表 temperatures = [73, 74, 75, 71, 69, 72, 76, 73]，你的输出应该是 [1, 1, 4, 2, 1, 1, 0, 0]。
+```
+```python
+class Solution:
+    def dailyTemperatures(self, T: List[int]) -> List[int]:
+        stack = []
+        n = len(T)
+        results = [0 for i in range(n)]
+        for i in range(n):
+            while stack and T[i] > T[stack[-1]]:
+                index = stack.pop()
+                results[index] = i - index
+            stack.append(i)
+        return results
+```
+
 #### [496. 下一个更大元素 I](https://leetcode-cn.com/problems/next-greater-element-i/)
 ```
 给定两个 没有重复元素 的数组 nums1 和 nums2 ，其中nums1 是 nums2 的子集。找到 nums1 中每个元素在 nums2 中的下一个比其大的值。
@@ -1330,25 +1348,6 @@ class Solution:
             nums[inv_index-1], nums[swap_index] = nums[swap_index], nums[inv_index-1]
         else:
             nums.sort()
-```
-
-#### [739. 每日温度](https://leetcode-cn.com/problems/daily-temperatures/)
-```
-根据每日 气温 列表，请重新生成一个列表，对应位置的输出是需要再等待多久温度才会升高超过该日的天数。如果之后都不会升高，请在该位置用 0 来代替。
-例如，给定一个列表 temperatures = [73, 74, 75, 71, 69, 72, 76, 73]，你的输出应该是 [1, 1, 4, 2, 1, 1, 0, 0]。
-```
-```python
-class Solution:
-    def dailyTemperatures(self, T: List[int]) -> List[int]:
-        stack = []
-        n = len(T)
-        results = [0 for i in range(n)]
-        for i in range(n):
-            while stack and T[i] > T[stack[-1]]:
-                index = stack.pop()
-                results[index] = i - index
-            stack.append(i)
-        return results
 ```
 
 #### [901. 股票价格跨度](https://leetcode-cn.com/problems/online-stock-span/)
@@ -1742,19 +1741,18 @@ from collections import deque
 class Solution:
     def maxSlidingWindow(self, nums: List[int], k: int) -> List[int]:
         """维护单调递减的双端队列, 存储的是index"""
-        queue = deque()
-        results = []
-        for i, num in enumerate(nums):
-            # pop 离开左侧窗口的index
-            while queue and queue[0] <= i-k:
-                queue.popleft()
-            # 维护单调递减
-            while queue and num > nums[queue[-1]]:
+        queue = deque([])
+        result = []
+        n = len(nums)
+        for i in range(n):
+            while queue and nums[i] > nums[queue[-1]]:
                 queue.pop()
+            if queue and queue[0] <= i - k:
+                queue.popleft()
             queue.append(i)
             if i >= k-1:
-                results.append(nums[queue[0]])
-        return results
+                result.append(nums[queue[0]])
+        return result
 ```
 
 #### [415. 字符串相加](https://leetcode-cn.com/problems/add-strings/)
@@ -4850,21 +4848,6 @@ class Solution:
 class Solution:
     def twoSum(self, nums, target):
         n = len(nums)
-        lookup = {nums[i]: i for i in range(n)}
-        result = []
-        vis = set()
-        for i in range(n):
-            val = target - nums[i]
-            if val in vis:
-                continue
-            if val in lookup:
-                result.append([nums[i], val])
-                vis.add(nums[i])
-                vis.add(val)
-        return result
-
-    def twoSum2(self, nums, target):
-        n = len(nums)
         if n < 2: return []
         nums.sort()
         p1, p2 = 0, n-1
@@ -5647,7 +5630,6 @@ class Solution:
 ```python
 class Solution:
     def maxPathSum(self, root: TreeNode) -> int:
-        if not root: return None
         path = -float("inf")
         def helper(root):
             if not root:
@@ -5658,6 +5640,7 @@ class Solution:
             val = max(root.val, root.val+l, root.val+r)
             path = max(path, val, root.val+l+r)
             return val
+        if not root: return None
         helper(root)
         return path
 ```
@@ -8234,6 +8217,7 @@ class Solution:
 ```
 
 #### [69. x 的平方根](https://leetcode-cn.com/problems/sqrtx/)
+sqrt x
 ```python
 class Solution:
     def mySqrt(self, ａ: int) -> int:
@@ -8316,37 +8300,6 @@ class Solution:
                 else:
                     right = mid
         return -1
-```
-
-#### [81. 搜索旋转排序数组 II](https://leetcode-cn.com/problems/search-in-rotated-sorted-array-ii/)
-核心 if nums[mid] == nums[left]: left += 1
-```python
-class Solution:
-    def search(self, nums: List[int], target: int) -> bool:
-        left, right = 0, len(nums)
-        while left < right:
-            mid = left + (right - left) // 2
-            if nums[mid] == target:
-                return True
-            elif nums[mid] == nums[left]:
-                left += 1
-            elif nums[mid] < nums[left]:
-                if nums[mid] < target:
-                    if nums[left] <= target:
-                        right = mid
-                    else:
-                        left = mid + 1
-                else:
-                    right = mid
-            else:
-                if nums[mid] < target:
-                    left = mid + 1
-                else:
-                    if nums[left] <= target:
-                        right = mid
-                    else:
-                        left = mid + 1
-        return False
 ```
 
 ## 字符串
@@ -8968,6 +8921,7 @@ class Solution:
         return dp(0, 0, m-1)
 ```
 #### [114. 二叉树展开为链表](https://leetcode-cn.com/problems/flatten-binary-tree-to-linked-list/)
+二叉树转链表, 二叉树转单链表
 ```python
 class TreeNode(object):
     def __init__(self, val=0, left=None, right=None):
@@ -10207,6 +10161,24 @@ class Solution:
         #     stack.append(postorder[i])
         # return True
 ```
+二叉搜索树的前序遍历序列
+```python
+        def recur(i, r):
+            if i >= r: return True
+            p = i
+            while p<=r and preorder[p] <= preorder[i]: p += 1
+            if p == i+1:
+                return False
+            m = p
+            while p<=r and preorder[p] > preorder[i]: p += 1
+            if p-1 != r:
+                return False
+            else:
+                print(m)
+                return recur(i+1,m-1) and recur(m,r)
+
+        return recur(0, len(preorder)-1)
+```
 
 #### [剑指 Offer 34. 二叉树中和为某一值的路径](https://leetcode-cn.com/problems/er-cha-shu-zhong-he-wei-mou-yi-zhi-de-lu-jing-lcof/)
 注意这里是到叶子节点
@@ -10230,6 +10202,7 @@ class Solution:
 ```
 
 #### [剑指 Offer 35. 复杂链表的复制](https://leetcode-cn.com/problems/fu-za-lian-biao-de-fu-zhi-lcof/)
+链表复制,有随机指针
 ```python
 """
 # Definition for a Node.
@@ -10275,6 +10248,44 @@ class Solution:
         helper(root)
         self.head.left, self.prev.right = self.prev, self.head
         return self.head
+```
+
+
+
+
+
+#### [剑指 Offer 39. 数组中出现次数超过一半的数字](https://leetcode-cn.com/problems/shu-zu-zhong-chu-xian-ci-shu-chao-guo-yi-ban-de-shu-zi-lcof/)
+快速选择
+```python
+import random
+class Solution:
+    def majorityElement(self, nums: List[int]) -> int:
+        def partition(arr, l, r):
+            rand_i = random.randint(l, r-1)
+            arr[l], arr[rand_i] = arr[rand_i], arr[l]
+            pivot_i = l
+            pivot = arr[l]
+            for i in range(l+1, r):
+                if arr[i] < pivot:
+                    pivot_i += 1
+                    arr[i], arr[pivot_i] = arr[pivot_i], arr[i]
+            arr[l], arr[pivot_i] = arr[pivot_i], arr[l]
+            return pivot_i
+
+        def low_bound(nums, l, r, k):
+            while l < r:
+                pivot_i = partition(nums, l, r)
+                if pivot_i == k:
+                    return nums[pivot_i]
+                elif pivot_i < k:
+                    l = pivot_i + 1
+                else:
+                    r = pivot_i
+            return nums[l]
+
+        n = len(nums)
+        k = n >> 1 # 注意这里是n//2
+        return low_bound(nums, 0, n, k)
 ```
 
 ## 面试金典系列
@@ -10327,7 +10338,7 @@ for char in test_str:
     if char in unit_mapping:
         unit = unit_mapping[char]
         res = 0
-        while stack and unit > stack[-1]:
+        while stack and stack[-1] < unit:
             res += stack.pop() * unit
         val = res if res else unit
         stack.append(val)
