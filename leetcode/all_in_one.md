@@ -1666,7 +1666,7 @@ class Solution:
                             if r - l < res[1] - res[0]:
                                 res = (l, r)
                     l += 1
-        return s[res[0]:res[1]+1] if res != (0, n+1) else ""  
+        return s[res[0]:res[1]+1] if res != (0, n+1) else ""
 ```
 
 #### [567.字符串的排列](https://leetcode-cn.com/problems/permutation-in-string/)
@@ -5557,7 +5557,7 @@ class Solution:
                 stack.append((root, curr))
                 root = root.left
             if stack:
-                root, curr = stack.pop()  
+                root, curr = stack.pop()
                 max_depth = max(max_depth, curr)
                 root = root.right
         return max_depth
@@ -5604,7 +5604,7 @@ class Solution:
             return level
         if not root: return 0
         return bfs(root)
-```    
+```
 
 #### [110. 平衡二叉树](https://leetcode-cn.com/problems/balanced-binary-tree/)
 注意判断 if not is_left_balance的位置，紧接着dfs,如果已经失平衡，就不再进入right子树了。
@@ -5700,7 +5700,7 @@ class Solution:
 
 ```python
 class Solution:
-    def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':  
+    def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
         def helper(root):
             # 如果p,q均小于根，父节点向左移
             if max_val < root.val:
@@ -5754,7 +5754,7 @@ class Solution:
             return node
 
         return helper(root)
-```  
+```
 
 #### [1028. 从先序遍历还原二叉树](https://leetcode-cn.com/problems/recover-a-tree-from-preorder-traversal/)
 if 当前结点的深度 = 前一个结点的深度 + 1
@@ -9320,7 +9320,7 @@ class Solution:
         cb = len(pattern) - ca
         # 2、只有一种字符
         if 0==ca*cb:
-            return value==value[:len(value)//len(pattern)]*len(pattern)                
+            return value==value[:len(value)//len(pattern)]*len(pattern)
         # 3、如果有两种字符
         for la in range(len(value)//ca+1):
             # len(value) == la*ca + lb*cb
@@ -9514,7 +9514,7 @@ class DLinkedNode:
 class LRUCache:
     def __init__(self, capacity):
         self.lookup = dict()
-        # 使用伪头部和伪尾部节点    
+        # 使用伪头部和伪尾部节点
         self.head = DLinkedNode()
         self.tail = DLinkedNode()
         self.head.next = self.tail
@@ -9878,7 +9878,7 @@ class Solution:
                 if nxt_i < 0 or nxt_i >= n or nxt_j < 0 or nxt_j >= m:
                     continue
                 if board[nxt_i][nxt_j] != word[index]:
-                    continue  
+                    continue
                 if dfs(nxt_i, nxt_j, index+1):
                     return True
             board[i][j] = char
@@ -10226,6 +10226,23 @@ class Solution:
             copy.random = dfs(node.random)
             return copy
         return dfs(head)
+```
+字节面试题
+```python
+class Node:
+     self.value
+     self.neighbors = [Node, Node, ...]
+def clone_graph(node):
+    visited = {}
+    def dfs(node):
+        if node in visited:
+            return visited[node]
+        copy = Node(node.val, [])
+        visited[node] = copy
+        for neighbor in node.neighbors:
+            copy.neighbor.append(dfs(neighbor))
+        return copy
+    return dfs(node)
 ```
 
 #### [剑指 Offer 36. 二叉搜索树与双向链表](https://leetcode-cn.com/problems/er-cha-sou-suo-shu-yu-shuang-xiang-lian-biao-lcof/)

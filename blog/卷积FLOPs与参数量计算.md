@@ -106,7 +106,9 @@ def conv_forward(feature, filter, bias, conv_param):
     return feature_out, cache
 ```
 ```python
-feature = np.zeros((Ho, Wo, 3))
+feature_ori = np.zeros((Ho, Wo, 3))
+feature = np.zeros((Ho+2*p, Wo+2*p, 3))
+feature[p:-p, p:-p, :] = feature_ori
 matrix = np.zeros((Ho*Wo, Ci*k*k))
 row = 0
 for i in range(Ho):
