@@ -10267,8 +10267,33 @@ class Solution:
         return self.head
 ```
 
-
-
+#### [剑指 Offer 38. 字符串的排列](https://leetcode-cn.com/problems/zi-fu-chuan-de-pai-lie-lcof/)
+同 [47. 全排列 II](https://leetcode-cn.com/problems/permutations-ii/)
+```python
+from collections import Counter
+class Solution:
+    def permuteUnique(self, nums: List[int]) -> List[List[int]]:
+        nums.sort()
+        n = len(nums)
+        count = Counter(nums)
+        results = []
+        def helper(res, count):
+            if len(res) == n:
+                results.append(res)
+                return
+            for i in range(n):
+                # 跳过重复数字
+                if i != 0 and nums[i] == nums[i-1]:
+                    continue
+                # 跳过用尽数字
+                if count[nums[i]] == 0:
+                    continue
+                count[nums[i]] -= 1
+                helper(res+[nums[i]], count)
+                count[nums[i]] += 1
+        helper([], count)
+        return results
+```
 
 
 #### [剑指 Offer 39. 数组中出现次数超过一半的数字](https://leetcode-cn.com/problems/shu-zu-zhong-chu-xian-ci-shu-chao-guo-yi-ban-de-shu-zi-lcof/)
@@ -10304,6 +10329,19 @@ class Solution:
         k = n >> 1 # 注意这里是n//2
         return low_bound(nums, 0, n, k)
 ```
+
+#### [剑指 Offer 62. 圆圈中最后剩下的数字](https://leetcode-cn.com/problems/yuan-quan-zhong-zui-hou-sheng-xia-de-shu-zi-lcof/)
+参考题解: https://leetcode-cn.com/problems/yuan-quan-zhong-zui-hou-sheng-xia-de-shu-zi-lcof/solution/huan-ge-jiao-du-ju-li-jie-jue-yue-se-fu-huan-by-as/
+```python
+class Solution:
+    def lastRemaining(self, n: int, m: int) -> int:
+        ans = 0
+        for i in range(2, n+1):
+            ans = (ans + m) % i
+        return ans
+```
+
+
 
 ## 面试金典系列
 #### [面试题 08.06. 汉诺塔问题](https://leetcode-cn.com/problems/hanota-lcci/)
