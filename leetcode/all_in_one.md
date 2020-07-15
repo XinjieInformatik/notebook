@@ -9076,6 +9076,24 @@ class Solution:
         return results
 ```
 
+#### [448. 找到所有数组中消失的数字](https://leetcode-cn.com/problems/find-all-numbers-disappeared-in-an-array/)
+找到所有在 [1, n] 范围之间没有出现在数组中的数字
+```python
+class Solution:
+    def findDisappearedNumbers(self, nums: List[int]) -> List[int]:
+        """把 abs(nums[i])-1 索引位置的元素标记为负数, 表示i+1对应的元素出现过"""
+        n = len(nums)
+        for i in range(n):
+            index = abs(nums[i])-1
+            if nums[index] > 0:
+                nums[index] *= -1
+        result = []
+        for i in range(n):
+            if nums[i] > 0:
+                result.append(i+1)
+        return result
+```
+
 #### [218. 天际线问题](https://leetcode-cn.com/problems/the-skyline-problem/)
 ```python
 class Solution:
