@@ -1920,6 +1920,66 @@ class Solution:
                     unionfind.union(i, j)
         return unionfind.cnt
 ```
+#### [785. 判断二分图](https://leetcode-cn.com/problems/is-graph-bipartite/)
+查并集,用于无向图
+```python
+class UnionSet(object):
+    def __init__(self, n):
+        self.parent = [i for i in range(n)]
+        self.rank = [0] * n
+
+    def find(self, x):
+        if x != self.parent[x]:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+
+    def union(self, x, y):
+        px, py = self.find(x), self.find(y)
+        if self.rank[px] < self.rank[py]:
+            self.parent[px] = py
+        elif self.rank[px] > self.rank[py]:
+            self.parent[py] = px
+        else:
+            self.parent[px] = py
+            self.rank[py] += 1
+
+    def is_connect(self, x, y):
+        return self.find(x) == self.find(y)
+
+class Solution:
+    def isBipartite(self, graph: List[List[int]]) -> bool:
+        n = len(graph)
+        unionfind = UnionSet(n)
+        for i in range(n):
+            for item in graph[i]:
+                if unionfind.is_connect(i, item):
+                    return False
+                unionfind.union(item, graph[i][0])
+        return True
+```
+dfs,bfs染色法
+```python
+from collections import deque
+class Solution:
+    def isBipartite(self, graph: List[List[int]]) -> bool:
+        n = len(graph)
+        visited = [0] * n
+        for i in range(n):
+            if visited[i] != 0:
+                continue
+            queue = deque([i])
+            visited[i] = 1
+            while queue:
+                top = queue.pop()
+                for node in graph[top]:
+                    if visited[node] == visited[top]:
+                        return False
+                    if visited[node] != 0:
+                        continue
+                    queue.appendleft(node)
+                    visited[node] = -visited[top]
+        return True
+```
 
 ### 拓扑排序
 #### 同时完成项目的最短时间
@@ -2688,6 +2748,21 @@ class Solution:
             return False
         if len(nums) == 0: return False
         return low_bound(nums, 0, len(nums)-1, target)
+```
+
+#### [162. 寻找峰值](https://leetcode-cn.com/problems/find-peak-element/)
+```python
+class Solution:
+    def findPeakElement(self, nums: List[int]) -> int:
+        def get_peak(nums, l, r):
+            while l < r:
+                m = l + (r-l) // 2
+                if nums[m] < nums[m+1]:
+                    l = m + 1
+                else:
+                    r = m
+            return l
+        return get_peak(nums, 0, len(nums)-1)
 ```
 
 #### [374. 猜数字大小](https://leetcode-cn.com/problems/guess-number-higher-or-lower/)
@@ -7824,7 +7899,7 @@ class Solution:
 
 ## 排序
 排序算法测试
-[912. 排序数组](https://leetcode-cn.com/problems/sort-an-array/)
+### [912. 排序数组](https://leetcode-cn.com/problems/sort-an-array/)
 ### 比较排序
 不稳定排序算法
 堆排序,快速排序,选择排序,希尔排序
@@ -9656,7 +9731,7 @@ class Solution:
 ```
 
 #### [222. 完全二叉树的节点个数](https://leetcode-cn.com/problems/count-complete-tree-nodes/)
-很好的题目           h从1开始
+很好的题目          h从1开始
 对于完满二叉树，深度为h层的节点数 2^(h-1)，总节点数 2^h - 1
 从上往下，对于当前节点，统计左右子树的高度   (注意 << 运算优先级最低)
 - 如果左右子树高度相同，则左子树是完满二叉树，总节点数=右子树节点数 + ((l_h<<1) - 1) + 1
@@ -9683,6 +9758,34 @@ class Solution:
                 return helper(root.left) + (1<<r_h)
 
         return helper(root)
+```
+
+#### [440. 字典序的第K小数字](https://leetcode-cn.com/problems/k-th-smallest-in-lexicographical-order/)
+求字典序第k个就是上图前序遍历访问的第k节点. 但是不需要用前序遍历，如果能通过数学方法求出节点1和节点2之间需要走几步，减少很多没必要的移动。 
+- 当移动步数小于等于k，说明需要向右节点移动。
+- 当移动步数大于k，说明目标值在节点1和节点2之间，向下移动。
+```python
+class Solution:
+    def findKthNumber(self, n: int, k: int) -> int:
+        def cnt_step(n, n1, n2):
+            step = 0
+            while n1 <= n:
+                step += min(n2, n+1) - n1
+                n1 *= 10
+                n2 *= 10
+            return step
+
+        curr = 1
+        k -= 1
+        while k > 0:
+            step = cnt_step(n, curr, curr+1)
+            if step <= k:
+                curr += 1
+                k -= step
+            else:
+                curr *= 10
+                k -= 1
+        return curr
 ```
 
 #### [306. 累加数](https://leetcode-cn.com/problems/additive-number/)
@@ -9752,7 +9855,7 @@ class Solution:
         return root
 ```
 
-## 剑指offer系列
+## 递归复杂度分析
 递归时间复杂度分析
 假设递归深度, 递归调用数量为h, 递归内每次计算量O(s), 时间复杂度 O(hs)
 
@@ -9764,7 +9867,13 @@ class Solution:
 如果使用了记忆化, 设状态数n, 时间复杂度 O(ns), 空间复杂度 max(O(dp), O(h), O(k)) (假设空间释放)
 尾递归的好处是，它可以避免递归调用期间栈空间开销的累积
 
+## 剑指offer系列
+
+
 #### [剑指 Offer 03. 数组中重复的数字](https://leetcode-cn.com/problems/shu-zu-zhong-zhong-fu-de-shu-zi-lcof/)
+```在一个长度为 n 的数组 nums 里的所有数字都在 0～n-1 的范围内。数组中某些数字是重复的，但不知道有几个数字重复了，也不知道每个数字重复了几次。请找出数组中任意一个重复的数字。
+```
+
 ```python
 class Solution:
     def findRepeatNumber(self, nums: List[int]) -> int:
