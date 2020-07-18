@@ -333,6 +333,28 @@ class Solution:
         return dp[-1][-1]
 ```
 
+```python
+import functools
+class Solution:
+    def change(self, amount: int, coins: List[int]) -> int:
+        n = len(coins)
+        coins.sort() # 要break剪枝,不然超时
+        @functools.lru_cache(None)
+        def helper(amount, index):
+            if amount == 0:
+                return 1
+            if amount < 0:
+                return 0
+            res = 0
+            for i in range(index, n):
+                val = amount-coins[i]
+                if val < 0:
+                    break
+                res += helper(val, i)
+            return res
+        return helper(amount, 0)
+```
+
 #### [322. 零钱兑换](https://leetcode-cn.com/problems/coin-change/)
 ```给定不同面额的硬币 coins 和一个总金额 amount。编写一个函数来计算可以凑成总金额所需的最少的硬币个数。
 如果没有任何一种硬币组合能组成总金额，返回 -1。
@@ -1068,6 +1090,23 @@ class Solution:
         ans = "0" if not stack else "".join(map(str, stack[:maintain]))
         return ans
 ```
+#### [456. 132模式](https://leetcode-cn.com/problems/132-pattern/)
+```python
+class Solution:
+    def find132pattern(self, nums: List[int]) -> bool:
+        ak = -float("inf")
+        stack = []
+        nums = nums[::-1]
+        for num in nums:
+            if ak > num:
+                return True
+            # stack 维护单调递减栈
+            while stack and num > stack[-1]:
+                ak = stack.pop()
+            stack.append(num)
+        return False
+```
+
 #### [321. 拼接最大数](https://leetcode-cn.com/problems/create-maximum-number/)
 ```
 给定长度分别为 m 和 n 的两个数组，其元素由 0-9 构成，表示两个自然数各位上的数字
@@ -2568,7 +2607,7 @@ class Solution:
         else: nums1[p3:] = nums1_copy[p0:]
         return nums1
 ```
-#### [面试题 10.01. 合并排序的组](https://leetcode-cn.com/problems/sorted-merge-lcci/)
+#### [面试题 10.01. 合并排序的数组](https://leetcode-cn.com/problems/sorted-merge-lcci/)
 从后往前遍历，更利于数组的修改 O(n+m)
 这道题坑了我半小时！！ 注意：
 1. 循环的结束条件，B走完了即可，可以保证A中剩下的有序
@@ -2751,6 +2790,7 @@ class Solution:
 ```
 
 #### [162. 寻找峰值](https://leetcode-cn.com/problems/find-peak-element/)
+二分查找极值点
 ```python
 class Solution:
     def findPeakElement(self, nums: List[int]) -> int:
@@ -4718,15 +4758,13 @@ class Solution:
 class Solution:
     def hasCycle(self, head: ListNode) -> bool:
         """双指针 or hashmap"""
-        fast_p = head
-        slow_p = head
-        while fast_p:
-            if fast_p.next == None:
-                return False
-            fast_p = fast_p.next.next
-            slow_p = slow_p.next
-            if fast_p == slow_p:
+        fast, slow = head, head
+        while fast and fast.next:
+            fast = fast.next.next
+            slow = slow.next
+            if fast == slow:
                 return True
+        return False
 
         lookup = set()
         node = head
@@ -4740,18 +4778,19 @@ class Solution:
         return False
 ```
 
-#### [环形链表 II](https://leetcode-cn.com/problems/linked-list-cycle-ii/)
+#### [142. 环形链表 II](https://leetcode-cn.com/problems/linked-list-cycle-ii/)
 ```python
 class Solution:
     def detectCycle(self, head: ListNode) -> ListNode:
         fast, slow = head, head
-        first = True
-        while fast != slow or first:
-            if fast == None or fast.next == None:
-                return None
+        flag = True
+        while fast and fast.next:
             fast = fast.next.next
             slow = slow.next
-            first = False
+            if slow == fast:
+                flag = False
+                break
+        if flag: return None
         fast = head
         while fast != slow:
             fast = fast.next
@@ -4918,7 +4957,7 @@ class Solution:
                 return [i, lookup[val]]
         return -1
 ```
-两数之和有重复
+两数之和有重复数字,输出可能的组合
 ```python
 class Solution:
     def twoSum(self, nums, target):
@@ -4941,6 +4980,53 @@ class Solution:
                 while p1 < p2 and nums[p2] == right:
                     p2 -= 1
         return result
+```
+有多少个 (i,j) 使得 a[i] + a[j] == target
+```python
+class Solution:
+	def twoSum3(self, nums, target):
+		# [2,2,2,3,3,3,3,4] [2,2,2,3,3,3,4,4,4] 6
+		n = len(nums)
+		if n < 2: return 0
+		p1, p2 = 0, n-1
+		cnt = 0
+		while p1 < p2:
+			left, right = nums[p1], nums[p2]
+			if left + right < target:
+				p1 += 1
+			elif left + right > target:
+				p2 -= 1
+			else:
+				cnt_l, cnt_r = 0, 0
+				while p1 <= p2 and nums[p1] == left:
+					p1 += 1
+					cnt_l += 1
+				while p1 <= p2 and nums[p2] == right:
+					p2 -= 1
+					cnt_r += 1
+				if cnt_r == 0:
+					cnt += cnt_l * (cnt_l-1) // 2
+				else:
+					cnt += cnt_l * cnt_r
+		return cnt
+
+	def twoSum4(self, nums, target):
+		lookup = {}
+		for num in nums:
+			if num in lookup:
+				lookup[num] += 1
+			else:
+				lookup[num] = 1
+		cnt = 0
+		nums = set(nums)
+		for num in nums:
+			val = target - num
+			if val in lookup:
+				if val != num:
+					cnt += lookup[val] * lookup[num] / 2
+				else:
+					cnt += ((lookup[val]-1) * lookup[val]) / 2
+		return int(cnt)
 ```
 
 #### [2. 两数相加](https://leetcode-cn.com/problems/add-two-numbers/)
@@ -4970,7 +5056,38 @@ class Solution:
             nodeB = nodeB.next if nodeB else headA
         return nodeA
 ```
+```python
+class Solution:
+    def getIntersectionNode(self, headA: ListNode, headB: ListNode) -> ListNode:
+        def forward(node, step):
+            while node:
+                node = node.next
+                step += 1
+            return step
 
+        def forward2(node, step):
+            while step:
+                node = node.next
+                step -= 1
+            return node
+
+        nodeA, nodeB = headA, headB
+        stepA = forward(nodeA, 0)
+        stepB = forward(nodeB, 0)
+        nodeA, nodeB = headB, headA
+
+        if stepA < stepB:
+            nodeA = forward2(nodeA, stepB-stepA)
+        else:
+            nodeB = forward2(nodeB, stepA-stepB)
+
+        while nodeA and nodeB:
+            if nodeA == nodeB:
+                return nodeA
+            nodeA = nodeA.next
+            nodeB = nodeB.next
+        return None
+```
 #### [21. 合并两个有序链表](https://leetcode-cn.com/problems/merge-two-sorted-lists/)
 ```python
 class Solution:
@@ -5018,39 +5135,41 @@ class Solution:
 
         return True
 ```
+
 #### [143. 重排链表](https://leetcode-cn.com/problems/reorder-list/)
 ```python
 class Solution:
     def reorderList(self, head: ListNode) -> None:
-        """反转后半部分，重新链接"""
-        slow = head
-        fast = head
-        while fast:
-            if fast.next == None: break
+        """1.找中点, 2.反转后半部分, 3.dummy重新链接"""
+        if not head: return None
+        fast, slow = head.next, head
+        while fast and fast.next:
             fast = fast.next.next
             slow = slow.next
+        node = slow.next
+        slow.next = None
 
         prev = None
-        cur = slow
-        while cur:
-            nxt = cur.next
-            cur.next = prev
-            prev = cur
-            cur = nxt
+        curr = node
+        while curr:
+            nxt = curr.next
+            curr.next = prev
+            prev = curr
+            curr = nxt
 
-        dummy = ListNode(-1)
-        count = 0
+        cnt = 0
+        dummy = d_head = ListNode(-1)
         while prev and head:
-            if count % 2 == 0:
+            if cnt & 1 == 0:
                 dummy.next = head
                 head = head.next
             else:
                 dummy.next = prev
                 prev = prev.next
             dummy = dummy.next
-            count += 1
-
-        return dummy.next
+            cnt += 1
+        dummy.next = head if head else prev
+        return d_head.next
 ```
 
 #### [148. 排序链表](https://leetcode-cn.com/problems/sort-list/submissions/)
@@ -5160,6 +5279,7 @@ class Solution:
 ```
 
 #### [86. 分隔链表](https://leetcode-cn.com/problems/partition-list/)
+链表partition
 ```python
 class Solution:
     def partition(self, head: ListNode, x: int) -> ListNode:
@@ -5178,38 +5298,6 @@ class Solution:
         dummy_before.next = after_head.next
         dummy_after.next = None # important, end the linkedlist
         return before_head.next
-```
-#### [199. 二叉树的右视图](https://leetcode-cn.com/problems/binary-tree-right-side-view/)
-```python
-from collections import deque
-class Solution:
-    def rightSideView(self, root: TreeNode) -> List[int]:
-        result = []
-        def bfs(node):
-            queue = deque([node])
-            while queue:
-                for i in range(len(queue)):
-                    top = queue.pop()
-                    if i == 0:
-                        result.append(top.val)
-                    if top.right:
-                        queue.appendleft(top.right)
-                    if top.left:
-                        queue.appendleft(top.left)
-        visited = set()
-        def dfs(node, level):
-            if level not in visited:
-                result.append(node.val)
-                visited.add(level)
-            if node.right:
-                dfs(node.right, level+1)
-            if node.left:
-                dfs(node.left, level+1)
-        if root == None:
-            return result
-        # bfs(root)
-        dfs(root, level=0)
-        return result
 ```
 
 #### [23. 合并K个排序链表](https://mail.ipa.fraunhofer.de/OWA/?bO=1#path=/mail)
@@ -5294,6 +5382,39 @@ class Solution:
 ```
 
 ## Tree
+#### [199. 二叉树的右视图](https://leetcode-cn.com/problems/binary-tree-right-side-view/)
+```python
+from collections import deque
+class Solution:
+    def rightSideView(self, root: TreeNode) -> List[int]:
+        result = []
+        def bfs(node):
+            queue = deque([node])
+            while queue:
+                for i in range(len(queue)):
+                    top = queue.pop()
+                    if i == 0:
+                        result.append(top.val)
+                    if top.right:
+                        queue.appendleft(top.right)
+                    if top.left:
+                        queue.appendleft(top.left)
+        visited = set()
+        def dfs(node, level):
+            if level not in visited:
+                result.append(node.val)
+                visited.add(level)
+            if node.right:
+                dfs(node.right, level+1)
+            if node.left:
+                dfs(node.left, level+1)
+        if root == None:
+            return result
+        # bfs(root)
+        dfs(root, level=0)
+        return result
+```
+
 #### [98. 验证二叉搜索树](https://leetcode-cn.com/problems/validate-binary-search-tree/)
 递归写法
 ```python
@@ -5374,7 +5495,7 @@ class Solution:
 ```
 
 #### [226. 翻转二叉树](https://leetcode-cn.com/problems/invert-binary-tree/)
-后序遍历，交换左右子节点
+后序遍历，交换左右子节点. 反转二叉树
 ```python
 class Solution:
     def invertTree(self, root: TreeNode) -> TreeNode:
@@ -9217,6 +9338,69 @@ class Solution:
         return mergeSort(buildings)
 ```
 
+#### [564. 寻找最近的回文数](https://leetcode-cn.com/problems/find-the-closest-palindrome/)
+先取前一半（N）镜像成回文串，跟原数做比较
+如果等于原数，就取两个数，一个大于原数的回文，一个小于原数的回文。
+如果大于原数，就将前一半 N-1 加上剩余的一半再做一次镜像，得到一个小于原数的回文。
+如果小于原数，就将前一半 N+1 加上剩余的一半再做一次镜像，得到一个大于原数的回文。
+
+其中要考虑N-1的时候的特殊情况，如 1-1，10-1，100-1，等
+这些特殊情况下的处理方式都是一样的，返回原数长度 l-1 个 9即可。
+```python
+class Solution:
+    def mirror(self,n:str):
+        length = len(n)
+        half = length // 2
+        if length % 2 == 0:
+            return n[:half] + ''.join(reversed(n[:half]))
+        else:
+            return n[:half+1] + ''.join(reversed(n[:half]))
+
+    def get_small(self,n:str):
+        half = len(n) // 2
+        if len(n) % 2 == 0:
+            half -= 1
+        half_num = int (n[:half+1])
+        half_str = str (half_num-1)
+        if half_str == '0' or len(half_str) < half + 1:
+            return '9'*(len(n)-1)
+        else:
+            return self.mirror(half_str+n[half+1:])
+
+    def get_big(self, n:str):
+        half = len(n) // 2
+        if len(n) % 2 == 0:
+            half -= 1
+        half_num = int (n[:half+1])
+        half_str = str (half_num+1)
+
+        return self.mirror(half_str+n[half+1:])
+
+    def nearestPalindromic(self, n: str) -> str:
+        num = int(n)
+        if n == 0:
+            return "1"
+        if num < 10:
+            return str(num - 1)
+
+        palindromic_str = self.mirror(n)
+        palindromic_num = int(palindromic_str)
+        if palindromic_num > num:
+            small_num = int(self.get_small(n))
+            big_num = palindromic_num
+        elif palindromic_num < num:
+            small_num = palindromic_num
+            big_num = int(self.get_big(n))
+        else:
+            small_num = int(self.get_small(n))
+            big_num = int(self.get_big(n))
+
+        if abs(big_num - num) < abs(small_num - num):
+            return str(big_num)
+        else:
+            return str(small_num)
+```
+
 #### [面试题46. 把数字翻译成字符串](https://leetcode-cn.com/problems/ba-shu-zi-fan-yi-cheng-zi-fu-chuan-lcof/)
 动态规划,搜到了返回1,注意不用for,控制index移动.注意06只有一种可能
 ```python
@@ -9258,6 +9442,8 @@ class Solution:
 ```
 
 #### [1014. 最佳观光组合](https://leetcode-cn.com/problems/best-sightseeing-pair/)
+```一对景点（i < j）组成的观光组合的得分为（A[i] + A[j] + i - j）,返回一对观光景点能取得的最高分。
+```
 维护 mx = max(A[i]+i), ans = max(ans, mx + (A[i]-i))
 ```python
 class Solution:
@@ -9272,6 +9458,9 @@ class Solution:
 ```
 
 #### [71. 简化路径](https://leetcode-cn.com/problems/simplify-path/)
+``` Unix 风格给出一个文件的绝对路径，将其转换为规范路径。
+输入："/home//foo/" 输出："/home/foo"
+```
 ```python
 class Solution:
     def simplifyPath(self, path: str) -> str:
@@ -9361,7 +9550,31 @@ class Solution:
                 break
         return result
 ```
+#### [74. 搜索二维矩阵](https://leetcode-cn.com/problems/search-a-2d-matrix/)
+logn + logm 两次二分查找, 注意边界
+```python
+class Solution:
+    def searchMatrix(self, matrix: List[List[int]], target: int) -> bool:
+        t, b = 0, len(matrix)
+        if b == 0: return False
+        l, r = 0, len(matrix[0])
+        if r == 0: return False
 
+        while t < b:
+            m = t + (b-t) // 2
+            if matrix[m][-1] < target:
+                t = m + 1
+            else:
+                b = m
+        if t == len(matrix): return False
+        while l < r:
+            m = l + (r-l) // 2
+            if matrix[t][m] < target:
+                l = m + 1
+            else:
+                r = m
+        return matrix[t][l] == target
+```
 #### [240. 搜索二维矩阵 II](https://leetcode-cn.com/problems/search-a-2d-matrix-ii/)
 ```python
 class Solution:
@@ -9761,7 +9974,7 @@ class Solution:
 ```
 
 #### [440. 字典序的第K小数字](https://leetcode-cn.com/problems/k-th-smallest-in-lexicographical-order/)
-求字典序第k个就是上图前序遍历访问的第k节点. 但是不需要用前序遍历，如果能通过数学方法求出节点1和节点2之间需要走几步，减少很多没必要的移动。 
+求字典序第k个就是上图前序遍历访问的第k节点. 但是不需要用前序遍历，如果能通过数学方法求出节点1和节点2之间需要走几步，减少很多没必要的移动。
 - 当移动步数小于等于k，说明需要向右节点移动。
 - 当移动步数大于k，说明目标值在节点1和节点2之间，向下移动。
 ```python
@@ -10457,8 +10670,42 @@ class Solution:
         return low_bound(nums, 0, n, k)
 ```
 
+#### [剑指 Offer 43. 1-n整数中1出现的次数](https://leetcode-cn.com/problems/1nzheng-shu-zhong-1chu-xian-de-ci-shu-lcof/)
+```python
+class Solution:
+    def countDigitOne(self, n: int) -> int:
+        digit, res = 1, 0
+        high, cur, low = n // 10, n % 10, 0
+        while high != 0 or cur != 0:
+            if cur == 0: res += high * digit
+            elif cur == 1: res += high * digit + low + 1
+            else: res += (high + 1) * digit
+            low += cur * digit
+            cur = high % 10
+            high //= 10
+            digit *= 10
+        return res
+```
+
+#### [剑指 Offer 44. 数字序列中某一位的数字](https://leetcode-cn.com/problems/shu-zi-xu-lie-zhong-mou-yi-wei-de-shu-zi-lcof/)
+```python
+class Solution:
+    def findNthDigit(self, n: int) -> int:
+        digit, start, count = 1, 1, 9
+        while n > count: # 1.
+            n -= count
+            start *= 10
+            digit += 1
+            count = 9 * start * digit
+        num = start + (n - 1) // digit # 2.
+        return int(str(num)[(n - 1) % digit]) # 3.
+```
+
+
+
 #### [剑指 Offer 62. 圆圈中最后剩下的数字](https://leetcode-cn.com/problems/yuan-quan-zhong-zui-hou-sheng-xia-de-shu-zi-lcof/)
 参考题解: https://leetcode-cn.com/problems/yuan-quan-zhong-zui-hou-sheng-xia-de-shu-zi-lcof/solution/huan-ge-jiao-du-ju-li-jie-jue-yue-se-fu-huan-by-as/
+最后一个人
 ```python
 class Solution:
     def lastRemaining(self, n: int, m: int) -> int:
