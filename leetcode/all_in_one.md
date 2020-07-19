@@ -1,5 +1,5 @@
 # Leetcode 汇总
-### 位操作
+### 位操作/位运算
 #### [136. 只出现一次的数字](https://leetcode-cn.com/problems/single-number/)
 ```
 给定一个非空整数数组，除了某个元素只出现一次以外，其余每个元素均出现两次。找出那个只出现了一次的元素。
@@ -36,6 +36,28 @@ class Solution:
             res = ~(res ^ 0xffffffff)
         return res
 ```
+
+#### [剑指 Offer 56 - I. 数组中数字出现的次数](https://leetcode-cn.com/problems/shu-zu-zhong-shu-zi-chu-xian-de-ci-shu-lcof/)
+```一个整型数组 nums 里除两个数字之外，其他数字都出现了两次。
+```
+```python
+class Solution:
+    def singleNumbers(self, nums: List[int]) -> List[int]:
+        val = 0
+        for num in nums:
+            val ^= num
+        pivot = 1
+        while val & pivot == 0:
+            pivot <<= 1
+        a, b = 0, 0
+        for num in nums:
+            if num & pivot == 0:
+                a ^= num
+            else:
+                b ^= num
+        return [a, b]
+```
+
 #### [287. 寻找重复数](https://leetcode-cn.com/problems/find-the-duplicate-number/)
 ```python
 class Solution:
@@ -6681,6 +6703,7 @@ class Solution:
 ```
 
 #### [295. 数据流的中位数](https://leetcode-cn.com/problems/find-median-from-data-stream/)
+新数据来了,先加入大顶堆,再将大顶堆堆顶pop()加入小顶堆,如果大顶堆元素小于小顶堆,再把小顶堆堆顶pop()加入大顶堆. 然后大顶堆堆顶(奇数),大顶堆小顶堆均值(偶数),就是中位数.
 ```python
 class MaxHeap:
     def __init__(self):
@@ -6720,7 +6743,6 @@ class MaxHeap:
     def __len__(self):
         return len(self.heap)
 
-
 class MinHeap(MaxHeap):
     def __init__(self):
         self.heap = []
@@ -6747,12 +6769,8 @@ class MinHeap(MaxHeap):
 
 class MedianFinder:
     def __init__(self):
-        """
-        initialize your data structure here.
-        """
         self.max_heap = MaxHeap()
         self.min_heap = MinHeap()
-        self.max_capacity =  4
 
     def addNum(self, num: int) -> None:
         self.max_heap.add_new(num)
@@ -6760,15 +6778,9 @@ class MedianFinder:
         if len(self.max_heap) < len(self.min_heap):
             self.max_heap.add_new(self.min_heap.take())
 
-
     def findMedian(self) -> float:
         median = self.max_heap.heap[0] if len(self.max_heap) > len(self.min_heap) else (self.max_heap.heap[0]+self.min_heap.heap[0])/2
         return median
-
-# Your MedianFinder object will be instantiated and called as such:
-# obj = MedianFinder()
-# obj.addNum(num)
-# param_2 = obj.findMedian()
 ```
 
 #### [215. 数组中的第K个最大元素](https://leetcode-cn.com/problems/kth-largest-element-in-an-array/)
@@ -9753,7 +9765,7 @@ class Solution:
         return new_head
 ```
 #### [剑指 Offer 45. 把数组排成最小的数](https://leetcode-cn.com/problems/ba-shu-zu-pai-cheng-zui-xiao-de-shu-lcof/)
-重点:转成字符串,比较left[p1] + right[p2] < right[p2] + left[p1]
+字符串归并排序. 重点:转成字符串,比较left[p1] + right[p2] < right[p2] + left[p1]
 ```python
 class Solution:
     def minNumber(self, nums: List[int]) -> str:
@@ -9878,6 +9890,7 @@ class LRUCache:
 ```
 
 #### [378. 有序矩阵中第K小的元素](https://leetcode-cn.com/problems/kth-smallest-element-in-a-sorted-matrix/)
+矩阵堆排序
 ```python
 class Solution:
     def kthSmallest(self, matrix: List[List[int]], k: int) -> int:
@@ -10461,6 +10474,31 @@ class MinStack:
         return self.helper[-1]
 ```
 
+#### [剑指 Offer 59 - II. 队列的最大值](https://leetcode-cn.com/problems/dui-lie-de-zui-da-zhi-lcof/)
+```python
+from collections import deque
+class MaxQueue(object):
+    def __init__(self):
+        self.que = deque()
+        self.sort_que = deque() # 单调递减   
+
+    def max_value(self):
+        return self.sort_que[0] if self.sort_que else -1   
+
+    def push_back(self, value):
+        self.que.append(value)
+        while self.sort_que and self.sort_que[-1] < value:
+            self.sort_que.pop()
+        self.sort_que.append(value)
+
+    def pop_front(self):
+        if not self.que: return -1
+        res = self.que.popleft()
+        if res == self.sort_que[0]:
+            self.sort_que.popleft()
+        return res
+```
+
 #### [剑指 Offer 31. 栈的压入、弹出序列](https://leetcode-cn.com/problems/zhan-de-ya-ru-dan-chu-xu-lie-lcof/)
 ```python
 class Solution:
@@ -10476,6 +10514,8 @@ class Solution:
 ```
 
 #### [剑指 Offer 33. 二叉搜索树的后序遍历序列](https://leetcode-cn.com/problems/er-cha-sou-suo-shu-de-hou-xu-bian-li-xu-lie-lcof/)
+```输入一个整数数组，判断该数组是不是某二叉搜索树的后序遍历结果
+```
 ```python
 class Solution:
     def verifyPostorder(self, postorder: List[int]) -> bool:
@@ -10567,7 +10607,7 @@ class Solution:
             return copy
         return dfs(head)
 ```
-字节面试题
+字节面试题 [133. 克隆图](https://leetcode-cn.com/problems/clone-graph/)
 ```python
 class Node:
      self.value
@@ -10701,7 +10741,125 @@ class Solution:
         return int(str(num)[(n - 1) % digit]) # 3.
 ```
 
+#### [剑指 Offer 49. 丑数](https://leetcode-cn.com/problems/chou-shu-lcof/)
+```只包含质因子 2、3 和 5 的数称作丑数（Ugly Number）。求按从小到大的顺序的第 n 个丑数。
+```
+```python
+class Solution:
+    def nthUglyNumber(self, n: int) -> int:
+        dp, a, b, c = [1] * n, 0, 0, 0
+        for i in range(1, n):
+            n2, n3, n5 = dp[a] * 2, dp[b] * 3, dp[c] * 5
+            dp[i] = min(n2, n3, n5)
+            if dp[i] == n2: a += 1
+            if dp[i] == n3: b += 1
+            if dp[i] == n5: c += 1
+        return dp[-1]
+```
+#### [剑指 Offer 53 - I. 在排序数组中查找数字 I](https://leetcode-cn.com/problems/zai-pai-xu-shu-zu-zhong-cha-zhao-shu-zi-lcof/)
+两次二分, logn
+```python
+class Solution:
+    def search(self, nums: List[int], target: int) -> int:
+        def low_bound(l, r, target):
+            while l < r:
+                m = l + (r-l) // 2
+                if nums[m] < target:
+                    l = m + 1
+                else:
+                    r = m
+            return l
+        def up_bound(l, r, target):
+            while l < r:
+                m = l + (r-l) // 2
+                if nums[m] <= target:
+                    l = m + 1
+                else:
+                    r = m
+            return l
 
+        n = len(nums)
+        index = low_bound(0, n, target)
+        if index == n or nums[index] != target:
+            return 0
+        index2 = up_bound(0, n, target)
+        return index2 - index
+```
+
+#### [剑指 Offer 53 - II. 0～n-1中缺失的数字](https://leetcode-cn.com/problems/que-shi-de-shu-zi-lcof/)
+```python
+class Solution:
+    def missingNumber(self, nums: List[int]) -> int:
+        missing = len(nums)
+        for i in range(len(nums)):
+            missing ^= (i ^ nums[i])
+        return missing
+```
+
+#### [剑指 Offer 54. 二叉搜索树的第k大节点](https://leetcode-cn.com/problems/er-cha-sou-suo-shu-de-di-kda-jie-dian-lcof/)
+从右往左中序遍历
+```python
+class Solution:
+    def kthLargest(self, root: TreeNode, k: int) -> int:
+        stack = []
+        while stack or root:
+            while root:
+                stack.append(root)
+                root = root.right
+            if stack:
+                root = stack.pop()
+                k -= 1
+                if k == 0:
+                    return root.val
+                root = root.left
+        return -1
+```
+
+#### [剑指 Offer 60. n个骰子的点数](https://leetcode-cn.com/problems/nge-tou-zi-de-dian-shu-lcof/)
+```python
+import functools
+class Solution:
+    def twoSum(self, n: int) -> List[float]:
+        """搜索 n个骰子,和为k的次数. 再 /6**n 总次数"""
+        @functools.lru_cache(None)
+        def helper(n, k):
+            if n == 0:
+                return 1 if k == 0 else 0
+            res = 0
+            for i in range(1, 7):
+                res += helper(n-1, k-i)
+            return res
+
+        result = []
+        for i in range(n, 6*n+1):
+            cnt = helper(n, i)
+            result.append(cnt / 6**n)
+        return result
+```
+
+#### [剑指 Offer 61. 扑克牌中的顺子](https://leetcode-cn.com/problems/bu-ke-pai-zhong-de-shun-zi-lcof/)
+```python
+class Solution:
+    def isStraight(self, nums: List[int]) -> bool:
+        """sort"""
+        joker = 0
+        nums.sort() # 数组排序
+        for i in range(4):
+            if nums[i] == 0: joker += 1 # 统计大小王数量
+            elif nums[i] == nums[i + 1]: return False # 若有重复，提前返回 false
+        return nums[4] - nums[joker] < 5 # 最大牌 - 最小牌 < 5 则可构成顺子
+
+        """hashmap"""
+        repeat = set()
+        ma, mi = 0, 14
+        for num in nums:
+            if num == 0: continue # 跳过大小王
+            ma = max(ma, num) # 最大牌
+            mi = min(mi, num) # 最小牌
+            if num in repeat: return False # 若有重复，提前返回 false
+            repeat.add(num) # 添加牌至 Set
+        return ma - mi < 5 # 最大牌 - 最小牌 < 5 则可构成顺子  
+```
 
 #### [剑指 Offer 62. 圆圈中最后剩下的数字](https://leetcode-cn.com/problems/yuan-quan-zhong-zui-hou-sheng-xia-de-shu-zi-lcof/)
 参考题解: https://leetcode-cn.com/problems/yuan-quan-zhong-zui-hou-sheng-xia-de-shu-zi-lcof/solution/huan-ge-jiao-du-ju-li-jie-jue-yue-se-fu-huan-by-as/
@@ -10715,7 +10873,33 @@ class Solution:
         return ans
 ```
 
+#### [剑指 Offer 65. 不用加减乘除做加法](https://leetcode-cn.com/problems/bu-yong-jia-jian-cheng-chu-zuo-jia-fa-lcof/)
+不考虑进位求和的话，可以直接采用异或运算。而计算进位的话，直接用位与和左移一位就行了
+```python
+class Solution:
+    def add(self, a: int, b: int) -> int:
+        a &= 0xffffffff
+        b &= 0xffffffff
+        while b != 0:
+            carry = ((a & b) << 1) & 0xffffffff
+            a ^= b
+            b = carry
+        return a if a < 0x80000000 else ~(a^0xffffffff)
+```
 
+#### [剑指 Offer 66. 构建乘积数组](https://leetcode-cn.com/problems/gou-jian-cheng-ji-shu-zu-lcof/)
+TODO: 不能用乘法
+```python
+class Solution:
+    def constructArr(self, a: List[int]) -> List[int]:
+        b, tmp = [1] * len(a), 1
+        for i in range(1, len(a)):
+            b[i] = b[i - 1] * a[i - 1] # 下三角
+        for i in range(len(a) - 2, -1, -1):
+            tmp *= a[i + 1] # 上三角
+            b[i] *= tmp # 下三角 * 上三角
+        return b
+```
 
 ## 面试金典系列
 #### [面试题 08.06. 汉诺塔问题](https://leetcode-cn.com/problems/hanota-lcci/)

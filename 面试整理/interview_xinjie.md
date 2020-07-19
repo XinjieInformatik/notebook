@@ -248,7 +248,7 @@ https://github.com/zziz/mean-shift
 - 欠拟合: 高偏差, 低方差. 增加模型复杂度, 增加训练时长
 - 过拟合: 低偏差, 高方差. 数据增强, 提前结束训练, 正则化
 #### SGD, Adam 区别
-SGD为随机梯度下降,每一次迭代计算数据集的mini-batch的梯度,然后对参数进行跟新。
+SGD为随机梯度下降,每一次迭代计算数据集的mini-batch的梯度,然后对参数进行更新。
 Momentum参考了动量的概念,前几次的梯度也会参与到当前的计算中,但是前几轮的梯度叠加在当前计算中会有一定的衰减。
 Adagard在训练的过程中可以自动变更学习的速率,设置一个全局的学习率,而实际的学习率与以往的参数模和的开方成反比。
 Adam利用梯度的一阶矩估计和二阶矩估计动态调整每个参数的学习率,使得参数更新较为平稳。
@@ -370,7 +370,7 @@ blending 每次只训练一个模型，而stacking训练模型数和交叉验证
 blending 训练时训练集和验证集是确定不变的，stacking则是通过交叉验证使得所有数据都做过验证集。
 
 #### Adaboost
-基学习器G加权误差率e,基学习器权重系数a,训练集样本权重w
+基学习器G加权误差率e, 基学习器权重系数a, 训练集每个样本的相对误差 e_i, 训练集每个样本权重w
 每个样本的相对误差 e_i
 $$ e_i = \frac{|y_i-G_k(x_i)|}{max(|y_i-G_k(x_i)|)} $$
 基学习器G加权误差e
@@ -896,3 +896,26 @@ https://zhuanlan.zhihu.com/p/54771264
 
 #### 色彩空间
 HSV(色相, 饱和度, 明度), HSL(色相, 饱和度, 亮度), LAB(亮度, 绿到红, 蓝到黄)
+
+#### knn python 实现
+```python
+def classify_two(inX, dataSet, labels, k):
+    m, n = dataSet.shape   # shape（m, n）m列n个特征
+    # 计算测试数据到每个点的欧式距离
+    distances = []
+    for i in range(m):
+        sum = 0
+        for j in range(n):
+            sum += (inX[j] - dataSet[i][j]) ** 2
+        distances.append(sum ** 0.5)
+
+    sortDist = sorted(distances)
+
+    # k 个最近的值所属的类别
+    classCount = {}
+    for i in range(k):
+        voteLabel = labels[ distances.index(sortDist[i])]
+        classCount[voteLabel] = classCount.get(voteLabel, 0) + 1 # 0:map default
+    sortedClass = sorted(classCount.items(), key=lambda d:d[1], reverse=True)
+    return sortedClass[0][0]
+```
