@@ -883,6 +883,24 @@ class Solution:
         return len(dp)
 ```
 
+#### [674. 最长连续递增序列](https://leetcode-cn.com/problems/longest-continuous-increasing-subsequence/)
+```
+给定一个未经排序的整数数组，找到最长且连续的的递增序列，并返回该序列的长度。
+```
+```python
+class Solution:
+    def findLengthOfLCIS(self, nums: List[int]) -> int:
+        n = len(nums)
+        if n == 0: return 0
+        dp = [1] * n
+        max_len = 1
+        for i in range(1, n):
+            if nums[i] > nums[i-1]:
+                dp[i] = dp[i-1] + 1
+            max_len = max(max_len, dp[i])
+        return max_len
+```
+
 #### [435. 无重叠区间](https://leetcode-cn.com/problems/non-overlapping-intervals/)
 将问题转化为寻找最大(非严格)递增区间. O(n^2)
 dp[i]的状态可由 1. 保留当前i区间, dp[j]+1 2.删除当前i区间 两种状态转移而来,在两种状态中取max
@@ -2616,19 +2634,20 @@ class Solution:
 ```python
 class Solution:
     def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:
-        nums1_copy = nums1[:m].copy()
-        p0 = 0; p1 = 0; p3 = 0
-        while (p0 < m and p1 < n):
-            if nums1_copy[p0] < nums2[p1]:
-                nums1[p3] = nums1_copy[p0]
-                p0 += 1; p3 += 1
+        p1, p2, p3 = m-1, n-1, len(nums1)-1
+        while p3 >= 0 and p2 >=0:
+            if nums1[p1] < nums2[p2]:
+                nums1[p3] = nums2[p2]
+                p2 -= 1
             else:
-                nums1[p3] = nums2[p1]
-                p1 += 1; p3 += 1
-        if p0 == m: nums1[p3:] = nums2[p1:]
-        else: nums1[p3:] = nums1_copy[p0:]
+                nums1[p3] = nums1[p1]
+                p1 -= 1
+            p3 -= 1
+        if p2 >= 0:
+            nums1[:p2+1] = nums2[:p2+1]
         return nums1
 ```
+
 #### [面试题 10.01. 合并排序的数组](https://leetcode-cn.com/problems/sorted-merge-lcci/)
 从后往前遍历，更利于数组的修改 O(n+m)
 这道题坑了我半小时！！ 注意：
@@ -3829,37 +3848,73 @@ class Solution:
 
 #### [200. 岛屿数量](https://leetcode-cn.com/problems/number-of-islands/)
 ```python
+from collections import deque
 class Solution:
     def numIslands(self, grid: List[List[str]]) -> int:
-        height = len(grid)
-        if height == 0: return 0
-        width = len(grid[0])
-        visited = set()
-        directions = [[1,0],[-1,0],[0,1],[0,-1]]
-        def bfs(i,j):
-            from collections import deque
-
+        def bfs(i, j):
             queue = deque([(i,j)])
-            visited.add((i,j))
-
+            grid[i][j] = "0"
+            oriens = [(1,0),(-1,0),(0,1),(0,-1)]
             while queue:
-                top = queue.pop()
-                for direction in directions:
-                    row = top[0]+direction[0]
-                    col = top[1]+direction[1]
-                    if row < height and row >= 0 and col < width and col >= 0:
-                        if (row,col) not in visited and grid[row][col] == "1":
-                            queue.appendleft((row,col))
-                            visited.add((row,col))
+                for _ in range(len(queue)):
+                    row, col = queue.pop()
+                    for orien in oriens:
+                        nxt_row, nxt_col = row+orien[0], col+orien[1]
+                        if nxt_row < 0 or nxt_row >= n or nxt_col < 0 or nxt_col >= m:
+                            continue
+                        if grid[nxt_row][nxt_col] == "0":
+                            continue
+                        queue.appendleft((nxt_row, nxt_col))
+                        grid[nxt_row][nxt_col] = "0"
 
-        count = 0
-        for i in range(height):
-            for j in range(width):
-                if grid[i][j] == "1" and (i,j) not in visited:
-                    count += 1
-                    bfs(i,j)
+        n = len(grid)
+        if n == 0: return 0
+        m = len(grid[0])
+        if m == 0: return 0
+        cnt = 0
+        for i in range(n):
+            for j in range(m):
+                if grid[i][j] == "1":
+                    bfs(i, j)
+                    cnt += 1
+        return cnt
+```
 
-        return count
+#### [1254. 统计封闭岛屿的数目](https://leetcode-cn.com/problems/number-of-closed-islands/)
+```python
+class Solution:
+    def closedIsland(self, grid: List[List[int]]) -> int:
+        n = len(grid)
+        if n == 0: return 0
+        m = len(grid[0])
+        if m == 0: return 0
+        oriens = [(-1,0),(1,0),(0,-1),(0,1)]
+
+        def dfs(i, j):
+            for orien in oriens:
+                nxt_i, nxt_j = i+orien[0], j+orien[1]
+                if nxt_i < 0 or nxt_i >= n or nxt_j < 0 or nxt_j >= m:
+                    continue
+                if nxt_i == 0 or nxt_i == n-1 or nxt_j == 0 or nxt_j == m-1:
+                    if grid[nxt_i][nxt_j] == 0:
+                        self.flag = False
+                if grid[nxt_i][nxt_j] == 1:
+                    continue
+                grid[nxt_i][nxt_j] = 1
+                dfs(nxt_i, nxt_j)
+
+        cnt = 0
+        for i in range(n):
+            for j in range(m):
+                if grid[i][j] == 0:
+                    if i == 0 or i == n-1 or j == 0 or j == m-1:
+                        continue
+                    self.flag = True
+                    grid[i][j] = 1
+                    dfs(i, j)
+                    if self.flag:
+                        cnt += 1
+        return cnt
 ```
 
 #### [130. 被围绕的区域](https://leetcode-cn.com/problems/surrounded-regions/)
@@ -4861,6 +4916,40 @@ class Solution:
       return odd_head
 ```
 
+#### [奇偶链表]
+题目描述：一个链表，奇数位升序偶数位降序，让链表变成升序的。
+比如：1 8 3 6 5 4 7 2 9，最后输出1 2 3 4 5 6 7 8 9。
+```python
+def sort_linkedlist(head):
+	if head == None: return None
+	dummy1 = node1 = head
+	dummy2 = node2 = head.next
+	while node2.next:
+		node1.next = node2.next
+		node2.next = node2.next.next
+		node1 = node1.next
+		node2 = node2.next
+
+	prev = None
+	curr = dummy2
+	while curr:
+		nxt = curr.next
+		curr.next = prev
+		prev = curr
+		curr = nxt
+
+	dummy = d_head = Linkedlist(-1)
+	while prev and dummy1:
+		if prev.val > dummy1.val:
+			dummy.next = dummy1
+			dummy1 = dummy1.next
+		else:
+			dummy.next = prev
+			prev = prev.next
+		dummy = dummy.next
+	dummy.next = prev if prev else dummy1
+	return d_head
+```
 #### [19. 删除链表的倒数第N个节点](https://leetcode-cn.com/problems/remove-nth-node-from-end-of-list/)
 ```python
 class Solution:
@@ -5194,88 +5283,6 @@ class Solution:
         return d_head.next
 ```
 
-#### [148. 排序链表](https://leetcode-cn.com/problems/sort-list/submissions/)
-```python
-class Solution:
-    def cut(self, head):
-        slow, fast = head, head.next
-        while fast and fast.next:
-            fast = fast.next.next
-            slow = slow.next
-        temp = slow.next
-        slow.next = None
-        return head, temp
-
-    def merge(self, left, right):
-        dummy = head = ListNode(-1)
-        while left and right:
-            if left.val < right.val:
-                dummy.next = left
-                left = left.next
-            else:
-                dummy.next = right
-                right = right.next
-            dummy = dummy.next
-        dummy.next = left if left else right
-        return head.next
-
-    def sortList(self, head: ListNode) -> ListNode:
-        def helper(head):
-            if head.next == None:
-                return head
-            left, right = self.cut(head)
-            l_sort = self.sortList(left)
-            r_sort = self.sortList(right)
-            return self.merge(l_sort, r_sort)
-        if not head: return []
-        return helper(head)
-
-    def sortList(self, head: ListNode) -> ListNode:
-        """非递归版本"""
-        h, length, intv = head, 0, 1
-        while h:
-            h = h.next
-            length += 1
-        res = ListNode(0)
-        res.next = head
-        # merge the list in different intv.
-        while intv < length:
-            pre = res
-            h = res.next
-            while h:
-                # get the two merge head `h1`, `h2`
-                h1, i = h, intv
-                while i and h:
-                    h = h.next
-                    i -= 1
-                if i: break # no need to merge because the `h2` is None.
-                h2, i = h, intv
-                while i and h:
-                    h = h.next
-                    i -= 1
-                c1, c2 = intv, intv - i # the `c2`: length of `h2` can be small than the `intv`.
-                # merge the `h1` and `h2`.
-                while c1 and c2:
-                    if h1.val < h2.val:
-                        pre.next = h1
-                        h1 = h1.next
-                        c1 -= 1
-                    else:
-                        pre.next = h2
-                        h2 = h2.next
-                        c2 -= 1
-                    pre = pre.next
-                pre.next = h1 if c1 else h2
-                while c1 > 0 or c2 > 0:
-                    pre = pre.next
-                    c1 -= 1
-                    c2 -= 1
-                pre.next = h
-            intv *= 2
-
-        return res.next
-```
-
 #### [61. 旋转链表](https://leetcode-cn.com/problems/rotate-list/)
 ```python
 class Solution:
@@ -5378,7 +5385,7 @@ class Solution:
 ```python
 class Solution:
     def insertionSortList(self, head: ListNode) -> ListNode:
-        fhead = ListNode(float('-Inf'))
+        fhead = ListNode(-float('inf'))
         fhead.next = head
         pcur = fhead
         cur = head
@@ -5401,6 +5408,112 @@ class Solution:
             cur = pcur.next
 
         return fhead.next
+```
+```python
+class Solution:
+    def insertionSortList(self, head: ListNode) -> ListNode:
+        """ 选择排序. 在原链表中一轮轮地找最大的那个结点，找到之后就把它从原链表中抽出来用头插法加到新的链表中。 需要注意这个最大的结点是否为头结点 """
+        dummy = None
+        while head:
+            max_node = head
+            premax = None
+            pret = head
+            t = head.next
+            while t:
+                if t.val > max_node.val:
+                    max_node = t
+                    premax = pret
+                pret = t
+                t = t.next
+            if max_node == head:
+                head = head.next
+            else:
+                premax.next = max_node.next
+            max_node.next = dummy
+            dummy = max_node
+        return dummy
+```
+
+#### [148. 排序链表](https://leetcode-cn.com/problems/sort-list/submissions/)
+```python
+class Solution:
+    def cut(self, head):
+        slow, fast = head, head.next
+        while fast and fast.next:
+            fast = fast.next.next
+            slow = slow.next
+        temp = slow.next
+        slow.next = None
+        return head, temp
+
+    def merge(self, left, right):
+        dummy = head = ListNode(-1)
+        while left and right:
+            if left.val < right.val:
+                dummy.next = left
+                left = left.next
+            else:
+                dummy.next = right
+                right = right.next
+            dummy = dummy.next
+        dummy.next = left if left else right
+        return head.next
+
+    def sortList(self, head: ListNode) -> ListNode:
+        def helper(head):
+            if head.next == None:
+                return head
+            left, right = self.cut(head)
+            l_sort = self.sortList(left)
+            r_sort = self.sortList(right)
+            return self.merge(l_sort, r_sort)
+        if not head: return []
+        return helper(head)
+
+    def sortList(self, head: ListNode) -> ListNode:
+        """非递归版本"""
+        h, length, intv = head, 0, 1
+        while h:
+            h = h.next
+            length += 1
+        res = ListNode(0)
+        res.next = head
+        # merge the list in different intv.
+        while intv < length:
+            pre = res
+            h = res.next
+            while h:
+                # get the two merge head `h1`, `h2`
+                h1, i = h, intv
+                while i and h:
+                    h = h.next
+                    i -= 1
+                if i: break # no need to merge because the `h2` is None.
+                h2, i = h, intv
+                while i and h:
+                    h = h.next
+                    i -= 1
+                c1, c2 = intv, intv - i # the `c2`: length of `h2` can be small than the `intv`.
+                # merge the `h1` and `h2`.
+                while c1 and c2:
+                    if h1.val < h2.val:
+                        pre.next = h1
+                        h1 = h1.next
+                        c1 -= 1
+                    else:
+                        pre.next = h2
+                        h2 = h2.next
+                        c2 -= 1
+                    pre = pre.next
+                pre.next = h1 if c1 else h2
+                while c1 > 0 or c2 > 0:
+                    pre = pre.next
+                    c1 -= 1
+                    c2 -= 1
+                pre.next = h
+            intv *= 2
+
+        return res.next
 ```
 
 ## Tree
@@ -5575,6 +5688,28 @@ class Solution:
             return False
 
         return helper(s, t)
+```
+####［662. 二叉树最大宽度](https://leetcode-cn.com/problems/maximum-width-of-binary-tree/)
+```python
+from collections import deque
+class Solution:
+    def widthOfBinaryTree(self, root: TreeNode) -> int:
+        queue = deque([(root, 0)])
+        max_width = 0
+        while queue:
+            left, right, n = 0, 0, len(queue)
+            for i in range(n):
+                top, index = queue.pop()
+                if i == 0:
+                    left = index
+                if i == n-1:
+                    right = index
+                if top.left:
+                    queue.appendleft((top.left, 2*index+1))
+                if top.right:
+                    queue.appendleft((top.right, 2*index+2))
+            max_width = max(max_width, right-left+1)
+        return max_width
 ```
 
 #### [257. 二叉树的所有路径](https://leetcode-cn.com/problems/binary-tree-paths/)
@@ -7156,11 +7291,12 @@ class Solution:
 
 class Solution:
     def countSubstrings(self, s: str) -> int:
-        # 二维dp
-        dp = [[0]*len(s) for _ in range(len(s))]
-        for i in range(len(s)):
+        # 二维dp. dp[i][j] s[i:j+1]是否是回文
+        n = len(s)
+        dp = [[0]*n for _ in range(n)]
+        for i in range(n):
             dp[i][i] = 1
-        for i in range(1, len(s)):
+        for i in range(1, n):
             for j in range(0, i):
                 # 对角线旁的特殊处理
                 if i-j == 1:
@@ -7170,7 +7306,7 @@ class Solution:
                     if s[i] == s[j] and dp[i-1][j+1]:
                         dp[i][j] = 1
         count = 0
-        for i in range(len(s)):
+        for i in range(n):
             count += sum(dp[i])
         return count
 
@@ -7826,6 +7962,47 @@ class Solution:
                     stack.append(curr)
         return results if numCourses==0 else []
 ```
+
+#### [261. 以图判树](https://leetcode-cn.com/problems/graph-valid-tree/)
+并查集判断无向图是否有环.
+```python
+class UnionSet(object):
+    def __init__(self, n):
+        self.parent = [i for i in range(n)]
+        self.rank = [0] * n
+        self.cnt = n
+
+    def find(self, x):
+        if x != self.parent[x]:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+
+    def union(self, x, y):
+        px, py = self.find(x), self.find(y)
+        if self.rank[px] < self.rank[py]:
+            self.parent[px] = py
+        elif self.rank[px] > self.rank[py]:
+            self.parent[py] = px
+        else:
+            self.parent[px] = py
+            self.rank[py] += 1
+        self.cnt -= 1
+
+    def is_connect(self, x, y):
+        return self.find(x) == self.find(y)
+
+
+class Solution:
+    def validTree(self, n: int, edges: List[List[int]]) -> bool:
+        unionfind = UnionSet(n)
+        for edge in edges:
+            x, y = edge
+            if unionfind.is_connect(x, y):
+                return False
+            unionfind.union(x, y)
+        return unionfind.cnt == 1
+```
+
 #### [1042. 不邻接植花](https://leetcode-cn.com/problems/flower-planting-with-no-adjacent)
 ```python
 class Solution:
@@ -8307,6 +8484,36 @@ def radixSort(array):
                 array.append(item)
 ```
 
+#### [164. 最大间距](https://leetcode-cn.com/problems/maximum-gap/)
+一个无序的数组，找出数组在排序之后，相邻元素之间最大的差值. 桶排序
+相邻的最大差值一定不小于该数组的最大值减去最小值除以间隔个数. 所以，只需要比较桶之间的差值，只需要保持同一桶里的最大值，和最小值即可.
+```python
+class Solution:
+    def maximumGap(self, nums: List[int]) -> int:
+        n = len(nums)
+        if n < 2: return 0
+        max_num = max(nums)
+        min_num = min(nums)
+        gap = math.ceil((max_num - min_num)/(n - 1))
+        bucket = [[float("inf"), -float("inf")] for _ in range(n-1)]
+        # 求出每个桶的最大值，和最小值
+        for num in nums:
+            if num == max_num or num == min_num:
+                continue
+            loc = (num - min_num) // gap
+            bucket[loc][0] = min(num, bucket[loc][0])
+            bucket[loc][1] = max(num, bucket[loc][1])
+        # 遍历整个桶
+        pre_min = min_num
+        res = -float("inf")
+        for l, r in bucket:
+            if l == float("inf") :
+                continue
+            res = max(res, l - pre_min)
+            pre_min = r
+        res = max(res, max_num - pre_min)
+        return res
+```
 
 ## 二分查找
 ### 基础 (前提，数组有序)
@@ -10081,6 +10288,49 @@ class Solution:
         return root
 ```
 
+#### [165. 比较版本号](https://leetcode-cn.com/problems/compare-version-numbers/)
+```python
+class Solution:
+    def compareVersion(self, version1: str, version2: str) -> int:
+        nums1 = version1.split(".")
+        nums1 = list(map(int, nums1))
+        nums2 = version2.split(".")
+        nums2 = list(map(int, nums2))
+        n1, n2 = len(nums1), len(nums2)
+        for i in range(max(n1,n2)):
+            val1 = nums1[i] if i < n1 else 0
+            val2 = nums2[i] if i < n2 else 0
+            if val1 != val2:
+                return 1 if val1 > val2 else -1
+        return 0
+```
+线性时间,O(1)空间
+```python
+class Solution:
+    def get_val(self, version, n, p):
+        if p > n - 1:
+            return 0, p
+        p_end = p
+        while p_end < n and version[p_end] != '.':
+            p_end += 1
+        i = int(version[p:p_end]) if p_end != n - 1 else int(version[p:n])
+        p = p_end + 1
+
+        return i, p
+
+    def compareVersion(self, version1: str, version2: str) -> int:
+        p1 = p2 = 0
+        n1, n2 = len(version1), len(version2)
+
+        while p1 < n1 or p2 < n2:
+            val1, p1 = self.get_val(version1, n1, p1)
+            val2, p2 = self.get_val(version2, n2, p2)            
+            if val1 != val2:
+                return 1 if val1 > val2 else -1
+
+        return 0
+```
+
 ## 递归复杂度分析
 递归时间复杂度分析
 假设递归深度, 递归调用数量为h, 递归内每次计算量O(s), 时间复杂度 O(hs)
@@ -10210,7 +10460,7 @@ class Solution:
         A[1][1] = w
 ```
 #### [剑指 Offer 12. 矩阵中的路径](https://leetcode-cn.com/problems/ju-zhen-zhong-de-lu-jing-lcof/)
-时间复杂度O(nm3^k),空间O(k)
+时间复杂度O(nm3^k),空间O(k) 矩阵中搜索单词. 同79. 单词搜索
 ```python
 class Solution:
     def exist(self, board: List[List[str]], word: str) -> bool:
@@ -10340,6 +10590,7 @@ class Solution:
 ```
 
 #### [剑指 Offer 22. 链表中倒数第k个节点](https://leetcode-cn.com/problems/lian-biao-zhong-dao-shu-di-kge-jie-dian-lcof/)
+链表倒数k个节点
 ```python
 class Solution:
     def getKthFromEnd(self, head: ListNode, k: int) -> ListNode:
@@ -10624,7 +10875,28 @@ def clone_graph(node):
         return copy
     return dfs(node)
 ```
-
+字节面试题 空间O(1) 数组长度<n, 数组中每个数字0<=ai<n, 统计每个数字出现的次数
+```python
+def cnt_num(nums):
+	p = 0
+	n = len(nums)
+	while p < n:
+		index = nums[p]
+		if nums[p] < 0:
+			p += 1
+			continue
+		if nums[index] != "0" and nums[index] >= 0:
+			nums[p] = nums[index]
+			nums[index] = -1
+		else:
+			if nums[index] == "0":
+				nums[index] = -1
+			else:
+				nums[index] -= 1
+			nums[p] = "0"
+			p += 1
+	print(nums)
+```
 #### [剑指 Offer 36. 二叉搜索树与双向链表](https://leetcode-cn.com/problems/er-cha-sou-suo-shu-yu-shuang-xiang-lian-biao-lcof/)
 ```python
 class Solution:
@@ -10787,6 +11059,7 @@ class Solution:
 ```
 
 #### [剑指 Offer 53 - II. 0～n-1中缺失的数字](https://leetcode-cn.com/problems/que-shi-de-shu-zi-lcof/)
+index [0,n-1], 数组元素 [0,n-1], 异或以后就是缺失数字
 ```python
 class Solution:
     def missingNumber(self, nums: List[int]) -> int:
@@ -11000,4 +11273,13 @@ if __name__ == "__main__":
 	k = 3
 	ans = maxSum(nums, k)
 	print(ans)
+```
+#### [Knuth洗牌算法]
+```python
+def knuth_shuffle(list):
+    # no extra space
+    for i in range(len(list)-1, 0, -1):
+        p = random.randrange(0, i + 1)
+        list[i], list[p] = list[p], list[i]
+    return list
 ```
