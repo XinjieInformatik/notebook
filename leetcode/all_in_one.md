@@ -476,6 +476,7 @@ class Solution:
 1. 每次从上一index+1开始遍历
 2. 如果 已选+剩余可选 < k: break
 3. results.append()后要return
+时间复杂度 k*C_n^k
 ```python
 class Solution:
     def combine(self, n: int, k: int) -> List[List[int]]:
@@ -499,6 +500,7 @@ class Solution:
 输出:[[3],[1],[2],[1,2,3],[1,3],[2,3],[1,2],[]]
 ```
 1. 注意是i+1 不是 index+1
+时间, 空间复杂度 O(N 2^N)
 ```python
 class Solution:
     def subsets(self, nums: List[int]) -> List[List[int]]:
@@ -6606,53 +6608,52 @@ class Solution:
 ```
 
 #### [394. 字符串解码](https://leetcode-cn.com/problems/decode-string/)
-单个栈
+递归
 ```python
 class Solution:
     def decodeString(self, s: str) -> str:
-        stack = []
-        str_out = ""
+        n = len(s)
+        def helper(i):
+            num = 0
+            res = ""
+            while i < n:
+                if "0" <= s[i] <= "9":
+                    num = num * 10 + int(s[i])
+                elif s[i] == "[":
+                    temp, i = helper(i+1)
+                    res += max(0, num) * temp
+                    num = 0
+                elif s[i] == "]":
+                    return res, i
+                else:
+                    res += s[i]
+                i += 1
+            return res
 
-        for index, item in enumerate(s):
-            if item != ']':
-                stack.append(item)
-            else:
-                str_temp = ""
-                str_num = ""
-                count = 1
-                sign = stack[-1]
-
-                while (sign != '['):
-                    str_temp += stack.pop()
-                    sign = stack[-1]
-
-                stack.pop() # delete '['
-                sign = stack[-1]
-
-                while (sign.isdigit()):
-                    str_num += stack.pop()
-                    if stack:
-                        sign = stack[-1]
-                    else:
-                        sign = "end"
-
-                str_num = str_num[::-1]
-                str_temp = str_temp[::-1]
-
-                try:
-                    num = int(str_num)
-                except:
-                    num = 1
-                str_temp *= num
-                for item in str_temp:
-                    stack.append(item)
-
-        if stack:
-            str_out = ''.join(stack)
-
-        return str_out
+        return helper(0)
 ```
-
+栈: 遇到[时,将当前res,num保存,重置res,num,遇到]时将stack中与当前res拼接.
+```python
+class Solution:
+    def decodeString(self, s: str) -> str:
+        n = len(s)
+        stack = []
+        res = ""
+        num = 0
+        for i in range(n):
+            if "0" <= s[i] <= "9":
+                num = num * 10 + int(s[i])
+            elif s[i] == "[":
+                stack.append((num, res))
+                num = 0
+                res = ""
+            elif s[i] == "]":
+                prev_num, prev_res = stack.pop()
+                res = prev_res + max(1, prev_num) * res
+            else:
+                res += s[i]
+        return res
+```
 
 ## 堆
 #### [347. 前 K 个高频元素](https://leetcode-cn.com/problems/top-k-frequent-elements)
@@ -9864,6 +9865,23 @@ class Solution:
         return False
 ```
 
+#### [50. Pow(x, n)](https://leetcode-cn.com/problems/powx-n/)
+```python
+class Solution:
+    def myPow(self, x: float, n: int) -> float:
+        """快速幂,二进制表示指数"""
+        if n < 0:
+            x = 1/x
+            n = -n
+        res = 1
+        while n:
+            if n & 1:
+                res *= x
+            x *= x
+            n >>= 1
+        return res
+```
+
 #### [343. 整数拆分](https://leetcode-cn.com/problems/integer-break/)
 ```python
 import functools
@@ -10331,6 +10349,42 @@ class Solution:
         return 0
 ```
 
+#### [392. 判断子序列](https://leetcode-cn.com/problems/is-subsequence/)
+给定字符串 s 和 t ，判断 s 是否为 t 的子序列。
+双指针,贪心,最终判断p1是否走到头.
+```python
+class Solution:
+    def isSubsequence(self, s: str, t: str) -> bool:
+        p1, p2 = 0, 0
+        n1, n2 = len(s), len(t)
+        while p1<n1 and p2<n2:
+            if s[p1] == t[p2]:
+                p1 += 1
+                p2 += 1
+            else:
+                p2 += 1
+        return p1 == n1
+```
+
+#### [面试题 08.03. 魔术索引](https://leetcode-cn.com/problems/magic-index-lcci/)
+```python
+class Solution:
+    def findMagicIndex(self, nums: List[int]) -> int:
+        def helper(l, r):
+            if l > r:
+                return None
+            m = l + (r-l) // 2
+            if nums[m] - m == 0:
+                return m
+            left = helper(l, m-1) # becareful
+            if left != None: return left
+            right = helper(m+1, r)
+            if right != None: return right
+            return None
+        index = helper(0, len(nums)-1) # becareful
+        return -1 if index == None else index
+```
+
 ## 递归复杂度分析
 递归时间复杂度分析
 假设递归深度, 递归调用数量为h, 递归内每次计算量O(s), 时间复杂度 O(hs)
@@ -10401,14 +10455,13 @@ https://leetcode-cn.com/problems/fibonacci-number/solution/fei-bo-na-qi-shu-by-l
 class Solution:
     def fib(self, n: int) -> int:
         # 迭代
-        f1, f2 = 0, 1
-        if n == 0: return f1
-        if n == 1: return f2
-        for i in range(n-1):
-            f3 = f1 + f2
+        f0 = 0
+        f1 = 1
+        for i in range(n):
+            f2 = f0 + f1
+            f0 = f1
             f1 = f2
-            f2 = f3
-        return f3 % 1000000007
+        return f0 % 1000000007
 
         # 尾递归
         def helper(n, n1, n2):
@@ -10426,6 +10479,9 @@ class Solution:
 ```
 快速幂: 假设要计算a^10，最通常的实现是循环 10 次自乘即可。
 更高级一点，我们可以把 10 次幂拆成两个 5 次幂，再把 5 次幂拆成一个 4 次幂和一个 1 次幂，再把 4 次幂拆成两个 2 次幂,实际上这就是二分的思想.时间空间 O(logn)
+
+![20200801_181403_99](assets/20200801_181403_99.png)
+
 ```python
 class Solution:
     def fib(self, N: int) -> int:
@@ -10464,35 +10520,72 @@ class Solution:
 ```python
 class Solution:
     def exist(self, board: List[List[str]], word: str) -> bool:
-        """dfs, 注意不能用lru_cache"""
-        n = len(board)
-        if n == 0: return False
-        if len(word) == 0: return True
-        m = len(board[0])
-        oriens = [(1,0),(-1,0),(0,1),(0,-1)]
-        lenth = len(word)
-        def dfs(i, j, index):
-            if index == lenth:
+        def dfs(i, j, k):
+            if k == len(word):
                 return True
             char = board[i][j]
             board[i][j] = None
             for orien in oriens:
-                nxt_i, nxt_j = i+orien[0], j+orien[1]
-                if nxt_i < 0 or nxt_i >= n or nxt_j < 0 or nxt_j >= m:
+                nxt_i = orien[0] + i
+                nxt_j = orien[1] + j
+                if nxt_i < 0 or nxt_i >= n:
                     continue
-                if board[nxt_i][nxt_j] != word[index]:
+                if nxt_j < 0 or nxt_j >= m:
                     continue
-                if dfs(nxt_i, nxt_j, index+1):
-                    return True
+                if board[nxt_i][nxt_j] == word[k]:
+                    if dfs(nxt_i, nxt_j, k+1):
+                        return True
             board[i][j] = char
             return False
 
+        oriens = [(-1,0),(1,0),(0,-1),(0,1)]
+        n = len(board)
+        if n == 0: return False
+        m = len(board[0])
+        if m == 0: return False
         for i in range(n):
             for j in range(m):
-                if board[i][j] == word[0] and dfs(i, j, index=1):
-                    return True
+                if board[i][j] == word[0]:
+                    if dfs(i, j, 1):
+                        return True
         return False
 ```
+
+#### [剑指 Offer 13. 机器人的运动范围](https://leetcode-cn.com/problems/ji-qi-ren-de-yun-dong-fan-wei-lcof/)
+注意是数位之和
+```python
+class Solution:
+    def movingCount(self, m: int, n: int, k: int) -> int:
+
+        def digSum(num):
+            res = 0
+            while num:
+                res += num % 10
+                num //= 10
+            return res
+
+        oriens = [(0,1),(0,-1),(1,0),(-1,0)]
+        visited = set()
+        def helper(i, j):
+            for orien in oriens:
+                nxt_i = orien[0] + i
+                nxt_j = orien[1] + j
+                if nxt_i < 0 or nxt_i >= n:
+                    continue
+                if nxt_j < 0 or nxt_j >= m:
+                    continue
+                if digSum(nxt_i)+digSum(nxt_j) > k:
+                    continue
+                if (nxt_i, nxt_j) in visited:
+                    continue
+                visited.add((nxt_i, nxt_j))
+                helper(nxt_i, nxt_j)
+
+        visited.add((0,0))
+        helper(0, 0)
+        return len(visited)
+```
+
 #### [剑指 Offer 16. 数值的整数次方](https://leetcode-cn.com/problems/shu-zhi-de-zheng-shu-ci-fang-lcof/)
 快速幂 O(log(n))
 ```python
@@ -10773,9 +10866,11 @@ class Solution:
         def recur(i, j):
             if i >= j: return True
             p = i
-            while postorder[p] < postorder[j]: p += 1
+            while postorder[p] < postorder[j]:
+                p += 1
             m = p
-            while postorder[p] > postorder[j]: p += 1
+            while postorder[p] > postorder[j]:
+                p += 1
             if p != j:
                 return False
             else:
@@ -10797,15 +10892,16 @@ class Solution:
         def recur(i, r):
             if i >= r: return True
             p = i
-            while p<=r and preorder[p] <= preorder[i]: p += 1
+            while p<=r and preorder[p] <= preorder[i]:
+                p += 1
             if p == i+1:
                 return False
             m = p
-            while p<=r and preorder[p] > preorder[i]: p += 1
+            while p<=r and preorder[p] > preorder[i]:
+                p += 1
             if p-1 != r:
                 return False
             else:
-                print(m)
                 return recur(i+1,m-1) and recur(m,r)
 
         return recur(0, len(preorder)-1)

@@ -897,6 +897,20 @@ https://zhuanlan.zhihu.com/p/54771264
 #### 色彩空间
 HSV(色相, 饱和度, 明度), HSL(色相, 饱和度, 亮度), LAB(亮度, 绿到红, 蓝到黄)
 
+#### 霍夫变换
+霍夫变换(Hough Transform)可以理解为图像处理中的一种特征提取技术，通过投票算法检测具有特定形状的物体。霍夫变换运用两个坐标空间之间的变换将在一个空间中具有相同形状的曲线或直线映射到另一个坐标空间中的一个点形成峰值，从而把检测任意形状的问题转化为统计峰值问题。
+参考: https://github.com/GYee/CV_interviews_Q-A/blob/master/%E5%9B%BE%E5%83%8F%E5%A4%84%E7%90%86/15_Hough%E5%8F%98%E6%8D%A2%E6%A3%80%E6%B5%8B%E7%9B%B4%E7%BA%BF%E4%B8%8E%E5%9C%86%E7%9A%84%E5%8E%9F%E7%90%86.md
+
+#### HOG
+待整理
+https://github.com/GYee/CV_interviews_Q-A/blob/master/%E5%9B%BE%E5%83%8F%E5%A4%84%E7%90%86/02_HOG%E7%AE%97%E6%B3%95%E5%8E%9F%E7%90%86.md
+
+#### LBP
+待整理
+https://github.com/GYee/CV_interviews_Q-A/blob/master/%E5%9B%BE%E5%83%8F%E5%A4%84%E7%90%86/01_LBP%E7%AE%97%E6%B3%95%E5%8E%9F%E7%90%86.md
+
+
+
 #### knn python 实现
 ```python
 def classify_two(inX, dataSet, labels, k):
