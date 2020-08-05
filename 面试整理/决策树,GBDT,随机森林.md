@@ -119,6 +119,12 @@ https://snaildove.github.io/2018/10/02/get-started-XGBoost/
 
 这个文章讲的比较好: https://www.xuyindavid.top/2019/11/23/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AE%97%E6%B3%95%E4%B8%93%E9%A2%98/xgboost/%E7%99%BE%E9%97%AExgboost/
 
+### xgboost 特征重要性
+xgboost实现中Booster类get_score方法输出特征重要性，其中importance_type参数支持三种特征重要性的计算方法：
+1. importance_type=weight（默认值），特征重要性使用特征在所有树中作为划分属性的次数。
+2. importance_type=gain，特征重要性使用特征在作为划分属性时loss平均的降低量。
+3. importance_type=cover，特征重要性使用特征在作为划分属性时对样本的覆盖度。
+
 ### 不需要归一化原因
 增益gain的计算与特征值范围无关,是采用生成树的结构与权重计算的,所以不需要对特征进行归一化处理.
 

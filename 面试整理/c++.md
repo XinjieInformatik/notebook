@@ -98,6 +98,9 @@ int main() {
 - sizeof 是一个编译时运算符，参数可以是数组、指针、类型、对象、函数等。用于统计类型或者变量所占的内存字节数。由于在编译时计算，因此sizeof不能用来返回动态分配的内存空间的大小。
 - sizeof 在统计字符串 str 的长度时，包含结束字符 '\0'
 
+### 内存对齐
+https://blog.nowcoder.net/n/cc17d398f41a4beb82b663ca0a72f35c
+
 ### 纯虚函数
 - 虚函数，在类成员方法的声明（不是定义）语句前加“virtual”, 如 virtual void func()
 - 纯虚函数，在虚函数后加“=0”，如 virtual void func()=0

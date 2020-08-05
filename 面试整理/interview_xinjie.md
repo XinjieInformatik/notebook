@@ -230,6 +230,28 @@ def kmeans(self, X, k, dist=np.median):
 
     return centers
 ```
+#### knn python 实现
+```python
+def classify_two(inX, dataSet, labels, k):
+    m, n = dataSet.shape   # shape（m, n）m列n个特征
+    # 计算测试数据到每个点的欧式距离
+    distances = []
+    for i in range(m):
+        dist_sum = 0
+        for j in range(n):
+            dist_sum += (inX[j] - dataSet[i][j]) ** 2
+        distances.append(dist_sum ** 0.5)
+
+    sortDist = sorted(distances)
+
+    # k 个最近的值所属的类别
+    classCount = {}
+    for i in range(k):
+        voteLabel = labels[ distances.index(sortDist[i])]
+        classCount[voteLabel] = classCount.get(voteLabel, 0) + 1
+    sortedClass = sorted(classCount.items(), key=lambda d:d[1], reverse=True)
+    return sortedClass[0][0]
+```
 
 ### mean shift 聚类流程：
 mean shift就是沿着密度上升的方向寻找同属一个簇的数据点。图像分割、图像跟踪，需要加入核函数。
@@ -283,9 +305,6 @@ $$ C=sum(A^2,axis=1)∗ones((1,3))+ones((2,1))∗sum(B^2,axis=1)^T − 2AB^T $$
 https://zhuanlan.zhihu.com/p/77686118
 MSE, MAE, SMOOTH L1, CE, Hinge Loss
 
-#### 为什么平方损失函数不适用分类问题
-1. 反向传播时，经过softmax的MSE难优化
-2. KL散度衡量两个分布的相似度，交叉熵和KL散度同增同减，是等价的，所以在优化时，如果要衡量两个分布相似度，交叉熵是一个合适的选择
 
 #### 特征工程
 https://www.zhihu.com/question/29316149
@@ -670,8 +689,8 @@ if __name__ == '__main__':
 ```python
 >>> class MyClass():
 ...     def __init__(self):
-...             self.__superprivate = "Hello"
-...             self._semiprivate = ", world!"
+...         self.__superprivate = "Hello"
+...         self._semiprivate = ", world!"
 ...
 >>> mc = MyClass()
 >>> print mc.__superprivate
@@ -908,28 +927,3 @@ https://github.com/GYee/CV_interviews_Q-A/blob/master/%E5%9B%BE%E5%83%8F%E5%A4%8
 #### LBP
 待整理
 https://github.com/GYee/CV_interviews_Q-A/blob/master/%E5%9B%BE%E5%83%8F%E5%A4%84%E7%90%86/01_LBP%E7%AE%97%E6%B3%95%E5%8E%9F%E7%90%86.md
-
-
-
-#### knn python 实现
-```python
-def classify_two(inX, dataSet, labels, k):
-    m, n = dataSet.shape   # shape（m, n）m列n个特征
-    # 计算测试数据到每个点的欧式距离
-    distances = []
-    for i in range(m):
-        sum = 0
-        for j in range(n):
-            sum += (inX[j] - dataSet[i][j]) ** 2
-        distances.append(sum ** 0.5)
-
-    sortDist = sorted(distances)
-
-    # k 个最近的值所属的类别
-    classCount = {}
-    for i in range(k):
-        voteLabel = labels[ distances.index(sortDist[i])]
-        classCount[voteLabel] = classCount.get(voteLabel, 0) + 1 # 0:map default
-    sortedClass = sorted(classCount.items(), key=lambda d:d[1], reverse=True)
-    return sortedClass[0][0]
-```

@@ -62,20 +62,23 @@ class Solution:
 ```python
 class Solution:
     def findDuplicate(self, nums: List[int]) -> int:
-        def low_bound(nums, l, r):
-            while l < r:
-                m = l + (r-l) // 2
-                cnt = 0
-                for num in nums:
-                    if num <= m:
-                        cnt += 1
-                if cnt > m:
-                    r = m
-                else:
-                    l = m + 1
-            return l
-
-        return low_bound(nums, 0, len(nums))
+        """二分尝试法. 在区间[0,n]搜索, 每次统计数组小于mid的元素个数
+        如果 cnt<=mid 说明重复元素在mid之后, 反之在mid之前
+        时间 O(nlogn) 空间 O(1)
+        """
+        n = len(nums)
+        l, r = 0, n
+        while l < r:
+            mid = l + (r-l) // 2
+            cnt = 0
+            for num in nums:
+                if num <= mid:
+                    cnt += 1
+            if cnt <= mid:
+                l = mid + 1
+            else:
+                r = mid
+        return l
 ```
 #### [169. 多数元素](https://leetcode-cn.com/problems/majority-element/)
 ```python
@@ -7913,55 +7916,56 @@ class Solution:
 
 #### [207. 课程表](https://leetcode-cn.com/problems/course-schedule)
 ```python
+from collections import defaultdict
 class Solution:
     def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:
-        indegrees = [0 for _ in range(numCourses)]
-        adjacency = [[] for _ in range(numCourses)]
+        adjacency = defaultdict(list)
+        indegrees = [0] * numCourses
 
-        for item in prerequisites:
-            curr, pre = item[0], item[1]
-            adjacency[pre].append(curr)
+        for i in range(len(prerequisites)):
+            curr, prev = prerequisites[i]
             indegrees[curr] += 1
-        queue = []
-        for i, degree in enumerate(indegrees):
-            if degree == 0:
-                queue.append(i)
-        while queue:
-            pre = queue.pop()
+            adjacency[prev].append(curr)
+
+        stack = []
+        for i in range(numCourses):
+            if indegrees[i] == 0:
+                stack.append(i)
+
+        while stack:
+            prev = stack.pop()
             numCourses -= 1
-            for curr in adjacency[pre]:
+            for curr in adjacency[prev]:
                 indegrees[curr] -= 1
                 if indegrees[curr] == 0:
-                    queue.append(curr)
+                    stack.append(curr)
 
-        return True if numCourses == 0 else False
+        return numCourses == 0
 ```
 
 #### [210. 课程表 II](https://leetcode-cn.com/problems/course-schedule-ii)
 ```python
+from collections import defaultdict
 class Solution:
     def findOrder(self, numCourses: int, prerequisites: List[List[int]]) -> List[int]:
-        adjacency = [[] for i in range(numCourses)]
-        outdegree = [0 for i in range(numCourses)]
-        for condition in prerequisites:
-            curr, prev = condition
+        adjacency = defaultdict(list)
+        indegrees = [0] * numCourses
+        for curr, prev in prerequisites:
             adjacency[prev].append(curr)
-            outdegree[curr] += 1
+            indegrees[curr] += 1
         stack = []
-        for idx, item in enumerate(outdegree):
-            if item == 0:
-                stack.append(idx)
-
-        results = []
+        for i in range(numCourses):
+            if indegrees[i] == 0:
+                stack.append(i)
+        result = []
         while stack:
             prev = stack.pop()
-            numCourses -= 1
-            results.append(prev)
+            result.append(prev)
             for curr in adjacency[prev]:
-                outdegree[curr] -= 1
-                if outdegree[curr] == 0:
+                indegrees[curr] -= 1
+                if indegrees[curr] == 0:
                     stack.append(curr)
-        return results if numCourses==0 else []
+        return result if len(result) == numCourses else []
 ```
 
 #### [261. 以图判树](https://leetcode-cn.com/problems/graph-valid-tree/)
@@ -9336,6 +9340,52 @@ class Solution:
 
         return dp(0, 0, m-1)
 ```
+
+#### [410. 分割数组的最大值](https://leetcode-cn.com/problems/split-array-largest-sum/)
+```python
+class Solution:
+    def splitArray(self, nums: List[int], m: int) -> int:
+        """dp[i][j]: 将数组的前 ii 个数分割为 jj 段所能得到的最大连续子数组和的最小值
+        时间 O(n^2 m), 空间 O(n m)
+        """
+        n = len(nums)
+        presum = [0] * (n+1)
+        for i in range(n):
+            presum[i+1] = presum[i] + nums[i]
+        dp = [[float("inf")] * (m+1) for i in range(n+1)]
+        dp[0][0] = 0
+        for i in range(1, n+1):
+            for j in range(1, min(i,m)+1):
+                for k in range(i):
+                    dp[i][j] = min(dp[i][j], max(dp[k][j-1], presum[i]-presum[k]))
+        return dp[-1][-1]
+
+        """二分尝试法. 将数组分为每份和不超过mid,如果能分m份,说明mid小了
+        如果不能分m份,说明mid大了.因此二分的在区间尝试出mid的值即为答案.
+        时间 O(n log(sum-max))  空间 O(1)
+        """
+        def check(mid, m):
+            presum = 0
+            for num in nums:
+                presum += num
+                if presum > mid:
+                    m -= 1
+                    presum = num
+                    if m == 0:
+                        return True
+            return False
+
+        l = max(nums)
+        r = sum(nums)
+        while l < r:
+            mid = l + (r-l) // 2
+            if check(mid, m):
+                l = mid + 1
+            else:
+                r = mid
+        return l
+```
+
 #### [114. 二叉树展开为链表](https://leetcode-cn.com/problems/flatten-binary-tree-to-linked-list/)
 二叉树转链表, 二叉树转单链表
 ```python
@@ -9737,6 +9787,7 @@ class Solution:
 ```
 #### [二叉树的锯齿形层次遍历](https://leetcode-cn.com/problems/binary-tree-zigzag-level-order-traversal/)
 双栈stack(left,right), stack_inv(right,left)
+Z字型遍历
 ```python
 class Solution:
     def zigzagLevelOrder(self, root: TreeNode) -> List[List[int]]:
