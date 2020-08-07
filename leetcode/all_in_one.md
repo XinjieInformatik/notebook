@@ -975,18 +975,7 @@ class Solution:
 ```
 
 #### [121. 买卖股票的最佳时机](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock/)
-```python
-class Solution:
-    def maxProfit(self, prices: List[int]) -> int:
-        n = len(prices)
-        if n == 0: return 0
-        min_price = prices[0]
-        max_profit = 0
-        for i in range(1, n):
-            profit = prices[i] - min_price
-            max_profit = max(max_profit, profit)
-            min_price = min(min_price, prices[i])
-        return max_profit
+```最多只允许完成一笔交易（即买入和卖出一支股票一次）
 ```
 ```python
 class Solution:
@@ -1006,6 +995,8 @@ class Solution:
 ```
 
 #### [122. 买卖股票的最佳时机 II](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-ii/)
+```可以尽可能地完成更多的交易（多次买卖一支股票）。
+```
 ```python
 class Solution:
     def maxProfit(self, prices: List[int]) -> int:
@@ -7335,6 +7326,39 @@ class Solution:
             count += sum(dp)
         return count+1
 ```
+
+#### [336. 回文对](https://leetcode-cn.com/problems/palindrome-pairs/)
+```
+给定一组 互不相同 的单词， 找出所有不同 的索引对(i, j)，使得列表中的两个单词， words[i] + words[j] ，可拼接成回文串。
+```
+用哈希表存储逆序的word，遍历words，遍历word，看是否能在左侧或者右侧是否能添加哈希表中的逆序串
+时间 O(nk) O(n)
+```python
+class Solution:
+    def palindromePairs(self, words: List[str]) -> List[List[int]]:
+        lookup = {}
+        n = len(words)
+        empty_index = None
+        for i in range(n):
+            lookup[words[i][::-1]] = i
+            if len(words[i]) == 0:
+                empty_index = i
+
+        result = []
+        for i in range(n):
+            word = words[i]
+            for k in range(len(words[i])):
+                # 在左侧添加, 非空情况下 word[:k+1]情况可以不考虑，因为如果单词本身就是回文，加上一个数必不是回文
+                if word[:k] == word[:k][::-1] and word[k:] in lookup and i != lookup[word[k:]]:
+                    result.append([lookup[word[k:]], i])  
+                # 在右侧添加, 非空情况已经考虑了
+                if word[k:] == word[k:][::-1] and word[:k] in lookup and i != lookup[word[:k]]:
+                    result.append([i, lookup[word[:k]]])
+            if word and empty_index != None and word == word[::-1]:
+                result.append([empty_index, i])
+        return result
+```
+
 ## 贪心算法
 在每一步选择中都采取在当前状态下最好或最优（即最有利）的选择，从而希望导致结果是最好或最优的算法,
 贪心使用前提,局部最优可实现全局最优.
@@ -10771,16 +10795,16 @@ class Solution:
 ```python
 class Solution:
     def isSubStructure(self, A: TreeNode, B: TreeNode) -> bool:
-        def is_same(node1, node2):
-            if not node2:
+        def is_same(A, B):
+            if not B:
                 return True
-            if not node1:
+            if not A:
                 return False
-            if node1.val != node2.val:
+            if A.val != B.val:
                 return False
-            if not is_same(node1.left, node2.left):
+            if not is_same(A.left, B.left):
                 return False
-            if not is_same(node1.right, node2.right):
+            if not is_same(A.right, B.right):
                 return False
             return True
 
@@ -10789,13 +10813,11 @@ class Solution:
                 return False
             if node.val == B.val and is_same(node, B):
                 return True
-            if helper(node.left):
-                return True
-            if helper(node.right):
+            if helper(node.left) or helper(node.right):
                 return True
             return False
 
-        if not A or not B: return False
+        if not B: return False
         return helper(A)
 ```
 
@@ -10817,8 +10839,8 @@ class Solution:
             node = stack.pop()
             if node:
                 node.left, node.right = node.right, node.left
-                stack.append(node.right)
                 stack.append(node.left)
+                stack.append(node.right)
         return root
 ```
 
@@ -10840,6 +10862,36 @@ class Solution:
             return True
 
         return helper(root, root)
+```
+
+#### [剑指 Offer 29. 顺时针打印矩阵](https://leetcode-cn.com/problems/shun-shi-zhen-da-yin-ju-zhen-lcof/)
+```python
+class Solution:
+    def spiralOrder(self, matrix: List[List[int]]) -> List[int]:
+        n = len(matrix)
+        if n == 0: return []
+        m = len(matrix[0])
+        if m == 0: return []
+        l, r, t, b = 0, m, 0, n
+        result = []
+        while True:
+            for j in range(l, r):
+                result.append(matrix[t][j])
+            t += 1
+            if t == b: break
+            for i in range(t, b):
+                result.append(matrix[i][r-1])
+            r -= 1
+            if r == l: break
+            for j in range(r-1, l-1, -1):
+                result.append(matrix[b-1][j])
+            b -= 1
+            if b == t: break
+            for i in range(b-1, t-1, -1):
+                result.append(matrix[i][l])
+            l += 1
+            if l == r: break
+        return result
 ```
 
 #### [剑指 Offer 30. 包含min函数的栈](https://leetcode-cn.com/problems/bao-han-minhan-shu-de-zhan-lcof/)
