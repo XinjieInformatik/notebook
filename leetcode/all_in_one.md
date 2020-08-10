@@ -730,6 +730,37 @@ class Solution:
         return dp[-1][-1]
 ```
 
+#### [97. 交错字符串](https://leetcode-cn.com/problems/interleaving-string/)
+```
+给定三个字符串 s1, s2, s3, 验证 s3 是否是由 s1 和 s2 交错组成的。
+```
+二维dp
+```python
+class Solution:
+    def isInterleave(self, s1: str, s2: str, s3: str) -> bool:
+        n1, n2, n3 = len(s1), len(s2), len(s3)
+        if n1 + n2 != n3:
+            return False
+        dp = [[False] * (n2+1) for i in range(n1+1)]
+        dp[0][0] = True
+        for i in range(1, n1+1):
+            if s1[i-1] == s3[i-1]:
+                dp[i][0] = True
+            else:
+                break
+        for j in range(1, n2+1):
+            if s2[j-1] == s3[j-1]:
+                dp[0][j] = True
+            else:
+                break
+        for i in range(1, n1+1):
+            for j in range(1, n2+1):
+                flag1 = dp[i-1][j] and s3[i+j-1] == s1[i-1]
+                flag2 = dp[i][j-1] and s3[i+j-1] == s2[j-1]
+                dp[i][j] = flag1 or flag2
+        return dp[-1][-1]
+```
+
 #### [正则表达式匹配](https://leetcode-cn.com/problems/regular-expression-matching/)
 递归中枚举所有情况,加上记忆化
 ```python
@@ -9018,6 +9049,28 @@ class Solution:
         return s_reverse
 ```
 
+#### [696. 计数二进制子串](https://leetcode-cn.com/problems/count-binary-substrings/)
+```给定一个字符串 s，计算具有相同数量0和1的非空(连续)子字符串的数量，并且这些子字符串中的所有0和所有1都是组合在一起的。
+重复出现的子串要计算它们出现的次数。
+```
+```python
+class Solution:
+    def countBinarySubstrings(self, s: str) -> int:
+        n = len(s)
+        last = 0
+        cnt = 1
+        total = 0
+        for i in range(1, n):
+            if s[i] == s[i-1]:
+                cnt += 1
+            else:
+                total += min(last, cnt)
+                last = cnt
+                cnt = 1
+        total += min(last, cnt)
+        return total
+```
+
 #### [438. 找到字符串中所有字母异位词](https://leetcode-cn.com/problems/find-all-anagrams-in-a-string)、
 方法一，通过双重for找到第一个满足的后，往后依次遍历。最直观但是超时
 ```python
@@ -10118,75 +10171,166 @@ class CQueue:
         return self.stack2.pop()
 ```
 
-#### [LRU](https://leetcode-cn.com/problems/lru-cache/solution/lruhuan-cun-ji-zhi-by-leetcode-solution/)
-首先使用哈希表进行定位，找出缓存项在双向链表中的位置，随后将其移动到双向链表的头部(最近使用的)，即可在 O(1) 时间内完成 get 或者 put 操作
+#### [146. LRU缓存机制](https://leetcode-cn.com/problems/lru-cache/solution/lruhuan-cun-ji-zhi-by-leetcode-solution/)
+用 双端链表节点DLinkedNode，哈希表(key:node) 实现 LRU。
+如果超出容量，移除尾部节点，如果访问该节点，将该节点移动至头部。
+- DLinkedNode 是每个(key:value)的基本单元，同时具有前后指针，方便在LRU中的移动。
+- 哈希表(key:node) 实现cache通过key访问node的机制。
+- class LRUCache 实现 addToHead, removeNode, removeTail 操作 对 DLinkedNode 进行管理，类似于LFU中的DLinkedList，使得最经常访问的node在头部，不经常在尾部。
+
+get操作：如果在哈希表cache中，取出node，并移动至head
+put操作：如果key存在，更新哈希表key对应的node.val，并移动至双端链表头部
+        如果key不存在，新建node加入哈希表cache，并加入双端链表头部
+        如果超出容量，移除双端链表尾部节点，并移除哈希表cache中该节点
 ```python
 class DLinkedNode:
-    def __init__(self, key=0, val=0):
+    def __init__(self, key=-1, val=-1):
         self.key = key
         self.val = val
         self.prev = None
         self.next = None
 
-
 class LRUCache:
-    def __init__(self, capacity):
-        self.lookup = dict()
-        # 使用伪头部和伪尾部节点
+    def __init__(self, capacity: int):
+        self.size = 0
+        self.capacity = capacity
+        self.cache = {}
         self.head = DLinkedNode()
         self.tail = DLinkedNode()
         self.head.next = self.tail
         self.tail.prev = self.head
-        self.capacity = capacity
-        self.size = 0
 
-    def get(self, key):
-        if key not in self.lookup:
-            return -1
-        # 如果 key 存在，先通过哈希表定位，再移到头部
-        node = self.lookup[key]
-        self.moveToHead(node)
-        return node.val
+    def get(self, key: int) -> int:
+        if key in self.cache:
+            node = self.cache[key]
+            self.moveToHead(node)
+            return node.val
+        return -1
 
-    def put(self, key, val):
-        if key not in self.lookup:
-            # 如果key不存在，创建一个新的节点
-            node = DLinkedNode(key, val)
-            # 添加进哈希表
-            self.lookup[key] = node
-            # 添加至双向链表的头部
-            self.addToHead(node)
+    def put(self, key: int, value: int) -> None:
+        # 如果key已经存在，更新val，移动到head
+        if key in self.cache:
+            node = self.cache[key]
+            node.val = value
+            self.moveToHead(node)
+        # 如果key不存在，在head添加，如果超过容量，删除最后一个节点
+        else:
             self.size += 1
             if self.size > self.capacity:
-                # 如果超出容量，删除双向链表的尾部节点
-                removed = self.removeTail()
-                # 删除哈希表中对应的项
-                self.lookup.pop(removed.key)
+                node = self.removeTail()
+                self.cache.pop(node.key)
                 self.size -= 1
-        else:
-            # 先通过哈希表定位，再修改 value，并移到头部
-            node = self.lookup[key]
-            node.val = val
-            self.moveToHead(node)
-
-    def addToHead(self, node):
-        node.prev = self.head
-        node.next = self.head.next
-        self.head.next.prev = node
-        self.head.next = node
-
-    def removeNode(self, node):
-        node.prev.next = node.next
-        node.next.prev = node.prev
+            node = DLinkedNode(key, value)
+            self.addToHead(node)
+            self.cache[key] = node
 
     def moveToHead(self, node):
         self.removeNode(node)
         self.addToHead(node)
 
+    def removeNode(self, node):
+        node.prev.next = node.next
+        node.next.prev = node.prev
+
+    def addToHead(self, node):
+        node.prev = self.head
+        node.next = self.head.next
+        self.head.next = node
+        node.next.prev = node
+
     def removeTail(self):
         node = self.tail.prev
         self.removeNode(node)
         return node
+```
+
+#### [460. LFU缓存](https://leetcode-cn.com/problems/lfu-cache/)
+用 带freq值的节点Node，双端链表DLinkedList，哈希表1(key:node)，哈希表2(freq:DLinkedList)，维护min_freq 实现 LFU。
+如果超出容量，移除min_freq对应双端链表的尾节点。如果访问，对应node freq+1，并更新其在哈希表2中的位置。
+- class Node 是每个(key:value)的基本单元，同时具有freq与前后指针。
+- class DLinkedList 实现 addToHead, removeNode, removeTail 操作，类似LRU管理node节点，使得最经常访问的node在头部，不经常在尾部。
+- 哈希表1(key:node) 实现cache通过key访问node的机制。
+- 哈希表2(freq:DLinkedList)与min_freq 实现基于频率管理node，每个node被放置于哈希表2相应freq中(每个freq下node基于DLinkedList管理)
+
+get操作：如果key在cache中，取出node，freq+1后放入哈希表2 key为freq+1的DLinkedList头部，同时维护min_freq
+put操作：如果key已存在，更新node.val，freq+1后放入哈希表2 key为freq+1的DLinkedList头部，同时维护min_freq
+        如果key不存在，新建node，放入哈希表2 key为1的DLinkedList头部，更新min_freq为1。
+        如果超过容量，移除哈希表2 min_freq对应DLinkedList中的尾节点，并移除哈希表1中key对应的节点。
+```python
+class Node:
+    def __init__(self, key=-1, val=-1):
+        self.key = key
+        self.val = val
+        self.freq = 1
+        self.prev = None
+        self.next = None
+
+class DLinkedList:
+    def __init__(self):
+        self.head = Node()
+        self.tail = Node()
+        self.head.next = self.tail
+        self.tail.prev = self.head
+        self.size = 0
+
+    def addToHead(self, node):
+        node.prev = self.head
+        node.next = self.head.next
+        self.head.next = node
+        node.next.prev = node
+        self.size += 1
+
+    def removeNode(self, node):
+        node.prev.next = node.next
+        node.next.prev = node.prev
+        self.size -= 1
+
+    def removeTail(self):
+        node = self.tail.prev
+        self.removeNode(node)
+        return node
+
+from collections import defaultdict
+class LFUCache:
+    def __init__(self, capacity: int):
+        self.cache = {}
+        self.freq = defaultdict(DLinkedList)
+        self.size = 0
+        self.capacity = capacity
+        self.min_freq = 0
+
+    def get(self, key: int) -> int:
+        if key in self.cache:
+            node = self.cache[key]
+            self.freq[node.freq].removeNode(node)
+            if self.min_freq == node.freq and self.freq[node.freq].size == 0:
+                self.min_freq += 1
+            node.freq += 1
+            self.freq[node.freq].addToHead(node)  
+            return node.val
+        return -1
+
+    def put(self, key: int, value: int) -> None:
+        if self.capacity == 0:
+            return
+        if key in self.cache:
+            node = self.cache[key]
+            node.val = value
+            self.freq[node.freq].removeNode(node)
+            if self.min_freq == node.freq and self.freq[node.freq].size == 0:
+                self.min_freq += 1
+            node.freq += 1
+            self.freq[node.freq].addToHead(node)
+        else:
+            self.size += 1
+            if self.size > self.capacity:
+                node = self.freq[self.min_freq].removeTail()
+                self.cache.pop(node.key)
+                self.size -= 1
+            node = Node(key, value)
+            self.cache[key] = node
+            self.freq[1].addToHead(node)
+            self.min_freq = 1
 ```
 
 #### [378. 有序矩阵中第K小的元素](https://leetcode-cn.com/problems/kth-smallest-element-in-a-sorted-matrix/)
