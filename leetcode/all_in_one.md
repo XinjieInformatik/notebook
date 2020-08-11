@@ -10498,28 +10498,22 @@ class Solution:
 #### [99. 恢复二叉搜索树](https://leetcode-cn.com/problems/recover-binary-search-tree/)
 中序遍历,找到第一个和第二个小于前继节点的,然后退出递归后交换他们的值
 ```python
-# Definition for a binary tree node.
-# class TreeNode:
-#     def __init__(self, val=0, left=None, right=None):
-#         self.val = val
-#         self.left = left
-#         self.right = right
 class Solution:
     def recoverTree(self, root: TreeNode) -> None:
         self.prev = None
-        self.first, self.second = None, None
+        self.first = None
+        self.second = None
+
         def helper(node):
             if not node:
                 return
             helper(node.left)
-            if self.prev and not self.second and node.val < self.prev.val:
+            if self.prev and not self.first and node.val < self.prev.val:
                 self.first = self.prev
-            if self.prev and self.first and node.val < self.prev.val:
+            if self.first and node.val < self.prev.val:
                 self.second = node
             self.prev = node
             helper(node.right)
-
-        if not root: return []
         helper(root)
         self.first.val, self.second.val = self.second.val, self.first.val
         return root
@@ -10541,30 +10535,29 @@ class Solution:
                 return 1 if val1 > val2 else -1
         return 0
 ```
-线性时间,O(1)空间
+
+时间O(n),空间O(1)
 ```python
 class Solution:
-    def get_val(self, version, n, p):
-        if p > n - 1:
+    def get_val(self, p, n, version):
+        if p > n-1:
             return 0, p
-        p_end = p
-        while p_end < n and version[p_end] != '.':
-            p_end += 1
-        i = int(version[p:p_end]) if p_end != n - 1 else int(version[p:n])
-        p = p_end + 1
-
-        return i, p
+        r = p
+        while r < n and version[r] != ".":
+            r += 1
+        return int(version[p:r]), r+1
 
     def compareVersion(self, version1: str, version2: str) -> int:
-        p1 = p2 = 0
-        n1, n2 = len(version1), len(version2)
-
+        n1 = len(version1)
+        n2 = len(version2)
+        p1, p2 = 0, 0
         while p1 < n1 or p2 < n2:
-            val1, p1 = self.get_val(version1, n1, p1)
-            val2, p2 = self.get_val(version2, n2, p2)            
-            if val1 != val2:
-                return 1 if val1 > val2 else -1
-
+            val1, p1 = self.get_val(p1, n1, version1)
+            val2, p2 = self.get_val(p2, n2, version2)
+            if val1 < val2:
+                return -1
+            elif val1 > val2:
+                return 1
         return 0
 ```
 
@@ -11201,6 +11194,7 @@ class Solution:
             return copy
         return dfs(head)
 ```
+
 字节面试题 [133. 克隆图](https://leetcode-cn.com/problems/clone-graph/)
 ```python
 class Node:
