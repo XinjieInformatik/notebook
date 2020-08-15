@@ -381,8 +381,7 @@ class Solution:
 ```
 
 #### [322. 零钱兑换](https://leetcode-cn.com/problems/coin-change/)
-```给定不同面额的硬币 coins 和一个总金额 amount。编写一个函数来计算可以凑成总金额所需的最少的硬币个数。
-如果没有任何一种硬币组合能组成总金额，返回 -1。
+```给定不同面额的硬币 coins 和一个总金额 amount。编写一个函数来计算可以凑成总金额所需的最少的硬币个数。如果没有任何一种硬币组合能组成总金额，返回 -1。
 ```
 ```python
 from collections import deque
@@ -7381,7 +7380,7 @@ class Solution:
             for k in range(len(words[i])):
                 # 在左侧添加, 非空情况下 word[:k+1]情况可以不考虑，因为如果单词本身就是回文，加上一个数必不是回文
                 if word[:k] == word[:k][::-1] and word[k:] in lookup and i != lookup[word[k:]]:
-                    result.append([lookup[word[k:]], i])  
+                    result.append([lookup[word[k:]], i])
                 # 在右侧添加, 非空情况已经考虑了
                 if word[k:] == word[k:][::-1] and word[:k] in lookup and i != lookup[word[:k]]:
                     result.append([i, lookup[word[:k]]])
@@ -10306,7 +10305,7 @@ class LFUCache:
             if self.min_freq == node.freq and self.freq[node.freq].size == 0:
                 self.min_freq += 1
             node.freq += 1
-            self.freq[node.freq].addToHead(node)  
+            self.freq[node.freq].addToHead(node)
             return node.val
         return -1
 
@@ -11064,10 +11063,10 @@ from collections import deque
 class MaxQueue(object):
     def __init__(self):
         self.que = deque()
-        self.sort_que = deque() # 单调递减   
+        self.sort_que = deque() # 单调递减
 
     def max_value(self):
-        return self.sort_que[0] if self.sort_que else -1   
+        return self.sort_que[0] if self.sort_que else -1
 
     def push_back(self, value):
         self.que.append(value)
@@ -11468,7 +11467,7 @@ class Solution:
             mi = min(mi, num) # 最小牌
             if num in repeat: return False # 若有重复，提前返回 false
             repeat.add(num) # 添加牌至 Set
-        return ma - mi < 5 # 最大牌 - 最小牌 < 5 则可构成顺子  
+        return ma - mi < 5 # 最大牌 - 最小牌 < 5 则可构成顺子
 ```
 
 #### [剑指 Offer 62. 圆圈中最后剩下的数字](https://leetcode-cn.com/problems/yuan-quan-zhong-zui-hou-sheng-xia-de-shu-zi-lcof/)

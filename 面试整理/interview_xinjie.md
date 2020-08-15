@@ -222,7 +222,7 @@ def kmeans(self, X, k, dist=np.median):
         curr_cls = np.argmin(distances, axis=1) # (n,)
         # centers won't change
         if (prev_cls == curr_cls).all():
-            break  
+            break
         # update centers coordinates
         for i in range(k):
             centers[i] = dist(X[curr_cls == i], axis=0)
@@ -343,7 +343,8 @@ X投影后的方差就是协方差矩阵的特征值。要找到最大的方差�
 5. 对样本集中的每一个样本𝑥(𝑖),转化为新的样本 $𝑧(𝑖)=𝑊^𝑇𝑥(𝑖)$
 6. 得到输出样本集𝐷′=(𝑧(1),𝑧(2),...,𝑧(𝑚))
 
-在上面的PCA算法中，我们假设存在一个线性的超平面，可以让我们对数据进行投影。但是有些时候，数据不是线性的，不能直接进行PCA降维。这里就需要用到和支持向量机一样的核函数的思想，先把数据集从n维映射到线性可分的高维N>n,然后再从N维降维到一个低维度n', 这里的维度之间满足n'<n<N。
+在上面的PCA算法中，我们假设存在一个线性的超平面，可以让我们对数据进行投影。但是有些时候，数据不是线性的，不能直接进行PCA降维。这里就需要用到和支持向量机一样的核函数的思想，先把数据集从n维映射到线性可分的高维N>n,然后再从N维降维到一个低维度n', 这里的维度之间满足$n'<n<N$。
+
 使用了核函数的主成分分析一般称之为核主成分分析(Kernelized PCA)
 通过在高维空间进行协方差矩阵的特征值分解，然后用和PCA一样的方法进行降维。一般来说，映射𝜙不用显式的计算，而是在需要计算的时候通过核函数完成。由于KPCA需要核函数的运算，因此它的计算量要比PCA大很多。
 
@@ -411,7 +412,7 @@ $$ Z = \sum^m_{i=1} w_k e^{-a_k y G_k(x)} $$
 ### python 知识点
 #### 深拷贝,浅拷贝
 直接赋值：为对象取别名,两个对象的id相同. a=1, b=a
-浅拷贝(copy)：拷贝父对象，不会拷贝对象的内部的子对象. 1维数组
+浅拷贝(copy)：创建一个新对象，这个对象有着原始对象属性值的一份精确拷贝。如果属性是基本类型，拷贝的就是基本类型的值，如果属性是引用类型，拷贝的就是内存地址 ，所以如果其中一个对象改变了这个地址，就会影响到另一个对象。
 深拷贝(deepcopy)：拷贝父对象,并递归的拷贝原对象所包含的子对象.深拷贝出来的对象与原对象没有任何关联. 2维数组
 
 #### GIL
@@ -426,7 +427,7 @@ GIL 是python的全局解释器锁，同一进程中假如有多个线程运行�
 ```python
 def func(*args):
     for i in args:
-        print(i)  
+        print(i)
 func(3,2,1,4,7)
 ```
 
@@ -673,15 +674,15 @@ self和cls是对类或者实例的绑定,对于一般的函数来说我们可以
 类变量：是可在类的所有实例之间共享的值（也就是说，它们不是单独分配给每个实例的）
 实例变量：实例化之后，每个实例单独拥有的变量。
 ```python
-class Test(object):  
-    num_of_instance = 0  
-    def __init__(self, name):  
-        self.name = name  
-        Test.num_of_instance += 1  
+class Test(object):
+    num_of_instance = 0
+    def __init__(self, name):
+        self.name = name
+        Test.num_of_instance += 1
 
-if __name__ == '__main__':  
+if __name__ == '__main__':
     print Test.num_of_instance   # 0
-    t1 = Test('jack')  
+    t1 = Test('jack')
     print Test.num_of_instance   # 1
 ```
 
