@@ -415,6 +415,18 @@ $$ Z = \sum^m_{i=1} w_k e^{-a_k y G_k(x)} $$
 浅拷贝(copy)：创建一个新对象，这个对象有着原始对象属性值的一份精确拷贝。如果属性是基本类型，拷贝的就是基本类型的值，如果属性是引用类型，拷贝的就是内存地址 ，所以如果其中一个对象改变了这个地址，就会影响到另一个对象。
 深拷贝(deepcopy)：拷贝父对象,并递归的拷贝原对象所包含的子对象.深拷贝出来的对象与原对象没有任何关联. 2维数组
 
+```python
+def deepcopy(entry):
+  if isinstance(entry, dict):
+    return {k: deepcopy(v) for k, v in entry.items()}
+  elif isinstance(entry, list):
+    return [deepcopy(item) for item in entry]
+  elif isinstance(entry, tuple):
+    return (deepcopy(item) for item in entry)
+  else:
+    return entry
+```
+
 #### GIL
 GIL 是python的全局解释器锁，同一进程中假如有多个线程运行，一个线程在运行python程序的时候会霸占python解释器（加了一把锁即GIL），使该进程内的其他线程无法运行，等该线程运行完后其他线程才能运行。如果线程运行过程中遇到耗时操作，则解释器锁解开，使其他线程运行。所以在多线程中，线程的运行仍是有先后顺序的，并不是同时进行。
 

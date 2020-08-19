@@ -600,7 +600,8 @@ class Solution:
 ```
 ### 二维dp(字符串)
 #### [5. 最长回文子串](https://leetcode-cn.com/problems/longest-palindromic-substring/)
-```给定一个字符串 s，找到 s 中最长的回文子串。
+```
+给定一个字符串 s，找到 s 中最长的回文子串。
 输入: "babad" 输出: "bab" 注意: "aba" 也是一个有效答案。
 ```
 从上到下,从左到右
@@ -629,7 +630,8 @@ class Solution:
 ```
 
 #### [516. 最长回文子序列](https://leetcode-cn.com/problems/longest-palindromic-subsequence/)
-```给定一个字符串s，找到其中最长的回文子序列，并返回该序列的长度。 输入: "bbbab"  输出: 4
+```
+给定一个字符串s，找到其中最长的回文子序列，并返回该序列的长度。 输入: "bbbab"  输出: 4
 ```
 ```python
 class Solution:
@@ -651,7 +653,8 @@ class Solution:
 ```
 
 #### [1143. 最长公共子序列](https://leetcode-cn.com/problems/longest-common-subsequence/)
-```给定两个字符串 text1 和 text2，返回这两个字符串的最长公共子序列的长度。
+```
+给定两个字符串 text1 和 text2，返回这两个字符串的最长公共子序列的长度。
 例如，"ace" 是 "abcde" 的子序列，但 "aec" 不是 "abcde" 的子序列.
 ```
 ```python
@@ -703,7 +706,8 @@ class LongestSubstring:
 ```
 
 #### [72. 编辑距离](https://leetcode-cn.com/problems/edit-distance/)
-```给你两个单词 word1 和 word2，请你计算出将 word1 转换成 word2 所使用的最少操作数
+```
+给你两个单词 word1 和 word2，请你计算出将 word1 转换成 word2 所使用的最少操作数
 你可以对一个单词： 插入一个字符 删除一个字符 替换一个字符
 输入：word1 = "horse", word2 = "ros"  输出：3
 horse -> rorse (将 'h' 替换为 'r')
@@ -974,7 +978,8 @@ class Solution:
 ```
 
 #### [376. 摆动序列](https://leetcode-cn.com/problems/wiggle-subsequence/)
-```如果连续数字之间的差严格地在正数和负数之间交替，则数字序列称为摆动序列。
+```
+如果连续数字之间的差严格地在正数和负数之间交替，则数字序列称为摆动序列。
 第一个差（如果存在的话）可能是正数或负数。少于两个元素的序列也是摆动序列。
 输入: [1,7,4,9,2,5]   输出: 6
 解释: 整个序列均为摆动序列。
@@ -1005,7 +1010,8 @@ class Solution:
 ```
 
 #### [121. 买卖股票的最佳时机](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock/)
-```最多只允许完成一笔交易（即买入和卖出一支股票一次）
+```
+最多只允许完成一笔交易（即买入和卖出一支股票一次）
 ```
 ```python
 class Solution:
@@ -1025,7 +1031,8 @@ class Solution:
 ```
 
 #### [122. 买卖股票的最佳时机 II](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-ii/)
-```可以尽可能地完成更多的交易（多次买卖一支股票）。
+```
+可以尽可能地完成更多的交易（多次买卖一支股票）。
 ```
 ```python
 class Solution:
@@ -2177,14 +2184,14 @@ class Solution:
             curr = nxt
         return prev
 
-    # 非递归
+    # 递归
     def reverseList(self, head: ListNode) -> ListNode:
         if(head==None or head.next==None):
-			return head
-		cur = self.reverseList(head.next)
-		head.next.next = head
-		head.next = None
-		return cur
+            return head
+		    cur = self.reverseList(head.next)
+		    head.next.next = head
+		    head.next = None
+		    return cur
 ```
 #### [92. 反转链表 II](https://leetcode-cn.com/problems/reverse-linked-list-ii/)
 ```
@@ -7319,21 +7326,22 @@ class Solution:
         # 二维dp. dp[i][j] s[i:j+1]是否是回文
         n = len(s)
         dp = [[0]*n for _ in range(n)]
+        cnt = 0
         for i in range(n):
             dp[i][i] = 1
-        for i in range(1, n):
-            for j in range(0, i):
+            cnt += 1
+        for i in range(n):
+            for j in range(i):
                 # 对角线旁的特殊处理
                 if i-j == 1:
                     if s[i] == s[j]:
                         dp[i][j] = 1
+                        cnt += 1
                 else:
                     if s[i] == s[j] and dp[i-1][j+1]:
                         dp[i][j] = 1
-        count = 0
-        for i in range(n):
-            count += sum(dp[i])
-        return count
+                        cnt += 1
+        return cnt
 
 class Solution:
     def countSubstrings(self, s: str) -> int:

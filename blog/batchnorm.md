@@ -40,7 +40,7 @@ https://www.zhihu.com/question/38102762/answer/391649040
 
 ## 融合Conv和BN层
 BN 可以写成
-![20200623_233911_84](assets/20200623_233911_84.png),即
+![20200623_233911_84](assets/20200623_233911_84.png), 即
 $$ W_{bn} = \frac{\gamma}{\sigma^2 + \varepsilon} $$
 $$ b_{bn} = \beta - \frac{\gamma u}{\sqrt{\sigma^2 + \varepsilon}} $$
 现在融合卷积与BN
