@@ -97,7 +97,7 @@ def conv_forward(feature, filter, bias, conv_param):
     feature_pad = np.pad(x, ((0,0), (0,0), (pad,pad),(pad,pad)), 'constant')
     feature_out_h = 1 + int((feature_h + 2 * pad - filter_h) / stride)
     feature_out_w = 1 + int((feature_w + 2 * pad - filter_w) / stride)
-    feature_out = np.zeros((batch, feature_out_h, feature_out_w, filter_num))
+    feature_out = np.zeros((batch, filter_num, feature_out_h, feature_out_w))
 
     for b in range(barch):
         for f in range(filter_num):

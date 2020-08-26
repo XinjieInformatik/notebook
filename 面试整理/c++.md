@@ -112,6 +112,7 @@ int main() {
 - sizeof 在统计字符串 str 的长度时，包含结束字符 '\0'
 
 ### 内存对齐
+内存会对齐到类内定义的最大的那个数据类型的size上，类内所有的变量根据定义顺序占的内存都会按照那个size对齐
 https://blog.nowcoder.net/n/cc17d398f41a4beb82b663ca0a72f35c
 
 

@@ -38,7 +38,8 @@ class Solution:
 ```
 
 #### [剑指 Offer 56 - I. 数组中数字出现的次数](https://leetcode-cn.com/problems/shu-zu-zhong-shu-zi-chu-xian-de-ci-shu-lcof/)
-```一个整型数组 nums 里除两个数字之外，其他数字都出现了两次。
+```
+一个整型数组 nums 里除两个数字之外，其他数字都出现了两次。
 ```
 ```python
 class Solution:
@@ -147,6 +148,33 @@ class Solution:
         return [n for n in (candidate1, candidate2) if nums.count(n) > len(nums) // 3] # 注意最后有一个对c1,c2的筛选
 ```
 #### [1018. 可被 5 整除的二进制前缀](https://leetcode-cn.com/problems/binary-prefix-divisible-by-5/)
+
+#### [201. 数字范围按位与](https://leetcode-cn.com/problems/bitwise-and-of-numbers-range/)
+```python
+class Solution:
+    def rangeBitwiseAnd(self, m: int, n: int) -> int:
+        """寻找相同前缀1，后面补0"""
+        cnt = 0
+        while (m != n):
+            m >>= 1
+            n >>= 1
+            cnt += 1
+        return m << cnt
+```
+```cpp
+class Solution {
+public:
+    int rangeBitwiseAnd(int m, int n) {
+        int cnt = 0;
+        while (m != n){
+            m >>= 1;
+            n >>= 1;
+            cnt += 1;
+        }
+        return m << cnt;
+    }
+};
+```
 
 ## 动态规划
 ### 背包问题
@@ -470,6 +498,25 @@ class Solution:
             return res
         return helper(n)
 ```
+```cpp
+class Solution {
+public:
+    int numWays(int n) {
+        if (n <= 1) return 1;
+        if (n == 2) return 2;
+        int prev = 1;
+        int curr = 2;
+        int nxt = 3;
+        while (n > 2){
+            nxt = (prev + curr) % 1000000007;
+            prev = curr;
+            curr = nxt;
+            n--;
+        }
+        return nxt;
+    }
+};
+```
 
 #### [77. 组合](https://leetcode-cn.com/problems/combinations/)
 ```给定两个整数 n 和 k，返回 1 ... n 中所有可能的 k 个数的组合。
@@ -598,6 +645,33 @@ class Solution:
         helper(0, "")
         return results
 ```
+```cpp
+class Solution {
+private:
+    vector<string> result;
+    unordered_map<char, string> lookup{{'2', "abc"}, {'3', "def"}, {'4', "ghi"},
+    {'5', "jkl"}, {'6', "mno"}, {'7', "pqrs"}, {'8', "tuv"}, {'9', "wxyz"}};
+
+public:
+    vector<string> letterCombinations(string digits) {
+        int n = digits.size();
+        if (n == 0) return result;
+        helper(0, digits, "", n);
+        return result;
+    }
+    void helper(int index, const string &input, string res, const int &n){
+        if (index == n){
+            result.push_back(res);
+            return;
+        }
+        char c = input[index];
+        for (char item : lookup[c]){
+            helper(index+1, input, res+item, n);
+        }
+    }
+};
+```
+
 ### 二维dp(字符串)
 #### [5. 最长回文子串](https://leetcode-cn.com/problems/longest-palindromic-substring/)
 ```
@@ -2193,6 +2267,31 @@ class Solution:
 		    head.next = None
 		    return cur
 ```
+
+```cpp
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode(int x) : val(x), next(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+        ListNode *prev = nullptr, *curr = head, *nxt = head;
+        while (curr){
+            nxt = curr->next;
+            curr->next = prev;
+            prev = curr;
+            curr = nxt;
+        }
+        return prev;
+    }
+};
+```
+
 #### [92. 反转链表 II](https://leetcode-cn.com/problems/reverse-linked-list-ii/)
 ```
 反转从位置 m 到 n 的链表。请使用一趟扫描完成反转。
@@ -2804,6 +2903,24 @@ class Solution:
 
         index = search(nums, 0, len(nums)-1)
         return nums[index]
+```
+```cpp
+class Solution {
+public:
+    int minArray(vector<int>& numbers) {
+        int index = low_bound(numbers, 0, numbers.size()-1);
+        return numbers[index];
+    }
+    int low_bound(const vector<int> &numbers, int l, int r){
+        while (l < r){
+            int m = l + (r - l) / 2;
+            if (numbers[m] < numbers[r]) r = m;
+            else if (numbers[m] > numbers[r]) l = m + 1;
+            else r--;
+        }
+        return l;
+    }
+};
 ```
 
 #### [33. 搜索旋转排序数组](https://leetcode-cn.com/problems/search-in-rotated-sorted-array/)
@@ -5101,6 +5218,26 @@ class Solution:
                 return [i, lookup[val]]
         return -1
 ```
+```cpp
+class Solution {
+public:
+    vector<int> twoSum(vector<int>& nums, int target) {
+        vector<int> ans;
+        unordered_map<int,int> hashmap;
+        for (int i=0; i < nums.size(); i++){
+            if (hashmap.count(target-nums[i])){
+                ans.push_back(i);
+                ans.push_back(hashmap[target-nums[i]]);
+                return ans;
+            }
+            else{
+                hashmap[nums[i]] = i;
+            }
+        }
+        return ans;
+    }
+};
+```
 两数之和有重复数字,输出可能的组合
 ```python
 class Solution:
@@ -6209,6 +6346,37 @@ class Solution:
 
         root = helper(0, 0, n)
         return root
+```
+```cpp
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    unordered_map<int, int> lookup;
+    TreeNode* buildTree(vector<int>& preorder, vector<int>& inorder) {
+        int n = inorder.size();
+        for (int i = 0; i < n; i++){
+            lookup[inorder[i]] = i;
+        }
+        return helper(preorder, inorder, 0, 0, n);
+    }
+    // helper 中 root_i 是相对于先序遍历的index，l, r 是相对中序遍历的index
+    TreeNode* helper(const vector<int>& preorder, const vector<int>& inorder, int root_i, int l, int r){
+        if (l >= r) return nullptr;
+        TreeNode* root = new TreeNode(preorder[root_i]);
+        int in_i = lookup[preorder[root_i]];
+        root->left = helper(preorder, inorder, root_i+1, l, in_i);
+        root->right = helper(preorder, inorder, root_i+1+in_i-l, in_i+1, r);
+        return root;
+    }
+};
 ```
 
 #### [106. 从中序与后序遍历序列构造二叉树](https://leetcode-cn.com/problems/construct-binary-tree-from-inorder-and-postorder-traversal/)
@@ -9548,6 +9716,48 @@ class Solution:
                         p2 -= 1
         return results
 ```
+```cpp
+class Solution {
+public:
+    vector<vector<int>> threeSum(vector<int>& nums) {
+        int n = nums.size();
+        sort(nums.begin(), nums.end());
+        vector<vector<int>> ans;
+        for (int i=0; i < n; i++){
+            if (i > 0 && nums[i] == nums[i-1]){
+                continue;
+            }
+            if (nums[i] > 0){
+                break;
+            }
+            int r = n - 1;
+            int l = i + 1;
+            while (l < r){
+                int val = nums[i] + nums[l] + nums[r];
+                if (val > 0){
+                    r -= 1;
+                }
+                else if (val < 0){
+                    l += 1;
+                }
+                else{
+                    ans.push_back(vector<int> {nums[i], nums[l], nums[r]});
+                    while (l < r && nums[r] == nums[r-1]){
+                        r--;
+                    }
+                    while (l < r && nums[l] == nums[l+1]){
+                        l++;
+                    }
+                    l++;
+                    r--;
+                }
+            }
+        }
+        return ans;
+    }
+};
+```
+
 #### [18. 四数之和](https://leetcode-cn.com/problems/4sum/)
 ```python
 class Solution:
@@ -9592,6 +9802,41 @@ class Solution:
                         while p2 < p3 and nums[p3] == nums[p3+1]:
                             p3 -= 1
         return results
+```
+```cpp
+class Solution {
+public:
+    vector<vector<int>> fourSum(vector<int>& nums, int target) {
+        vector<vector<int>> ans;
+        sort(nums.begin(), nums.end());
+        int n = nums.size();
+        for (int i = 0; i < n-3; i++){
+            if (i > 0 && nums[i] == nums[i-1]) continue;
+            if (nums[i] + nums[i+1] + nums[i+2] + nums[i+3] > target) break;
+            if (nums[i] + nums[n-1] + nums[n-2] + nums[n-3] < target) continue;
+            for (int j = i+1; j < n-2; j++){
+                if (j > i+1 && nums[j] == nums[j-1]) continue;
+                if (nums[i] + nums[j] + nums[j+1] + nums[j+2] > target) break;
+                if (nums[i] + nums[j] + nums[n-1] + nums[n-2] < target) continue;
+                int l = j + 1;
+                int r = n - 1;
+                while (l < r){
+                    int val = nums[i] + nums[j] + nums[l] + nums[r];
+                    if (val > target) r--;
+                    else if (val < target) l++;
+                    else{
+                        ans.push_back(vector<int> {nums[i], nums[j], nums[l], nums[r]});
+                        while (l < r && nums[r] == nums[r-1]) r--;
+                        while (l < r && nums[l] == nums[l+1]) l++;
+                        l++;
+                        r--;
+                    }
+                }
+            }
+        }
+        return ans;
+    }
+};
 ```
 
 #### [面试题29. 顺时针打印矩阵](https://leetcode-cn.com/problems/shun-shi-zhen-da-yin-ju-zhen-lcof/)
@@ -10018,6 +10263,7 @@ class Solution:
 ```
 
 #### [343. 整数拆分](https://leetcode-cn.com/problems/integer-break/)
+剪绳子
 ```python
 import functools
 class Solution:
@@ -10033,6 +10279,27 @@ class Solution:
                 res = max(res, split, not_split)
             return res
         return helper(n)
+```
+```cpp
+class Solution {
+public:
+    int cuttingRope(int n) {
+        vector<int> dp;
+        dp.assign(n+1, 0);
+        return helper(n, dp);
+    }
+    int helper(int boundary, vector<int> &dp){
+        int res = 0;
+        if (dp[boundary] != 0) return dp[boundary];
+        for (int i=1; i < boundary; i++){
+            int split = i * helper(boundary - i, dp);
+            int not_split = i * (boundary - i);
+            res = max(res, max(split, not_split));
+        }
+        dp[boundary] = res;
+        return res;
+    }
+};
 ```
 
 #### [4. 寻找两个正序数组的中位数](https://leetcode-cn.com/problems/median-of-two-sorted-arrays/)
@@ -10176,6 +10443,37 @@ class CQueue:
             while self.stack1:
                 self.stack2.append(self.stack1.pop())
         return self.stack2.pop()
+```
+```cpp
+class CQueue {
+private:
+    stack<int> stack1, stack2;
+public:
+    CQueue() {
+        while (!stack1.empty()) stack1.pop();
+        while (!stack2.empty()) stack2.pop();
+    }
+
+    void appendTail(int value) {
+        stack1.push(value);
+    }
+
+    int deleteHead() {
+        if (stack2.empty()){
+            while (!stack1.empty()){
+                int val = stack1.top();
+                stack1.pop();
+                stack2.push(val);
+            }
+        }
+        if (!stack2.empty()){
+            int val = stack2.top();
+            stack2.pop();
+            return val;
+        }
+        else return -1;
+    }
+};
 ```
 
 #### [146. LRU缓存机制](https://leetcode-cn.com/problems/lru-cache/solution/lruhuan-cun-ji-zhi-by-leetcode-solution/)
@@ -10647,8 +10945,32 @@ class Solution:
                 return nums[i]
         return -1
 ```
+```cpp
+class Solution {
+public:
+    int findRepeatNumber(vector<int>& nums) {
+        unordered_set<int> visited;
+        int n = nums.size();
+        for (int i=0; i < n; i++){
+            if (visited.count(nums[i])) return nums[i];
+            visited.insert(nums[i]);
+        }
+        return -1;
+
+        int n = nums.size();
+        for (int i = 0; i < n; i++){
+            auto index = nums[i];
+            if (i == index) continue;
+            if (nums[index] != nums[i]) swap(nums[index], nums[i]);
+            else return nums[i];
+            }
+        return -1;
+        }
+};
+```
 
 #### [剑指 Offer 04. 二维数组中的查找](https://leetcode-cn.com/problems/er-wei-shu-zu-zhong-de-cha-zhao-lcof/)
+把字符串 s 中的每个空格替换成"%20"
 ```python
 class Solution:
     def findNumberIn2DArray(self, matrix: List[List[int]], target: int) -> bool:
@@ -10666,6 +10988,55 @@ class Solution:
             else:
                 row -= 1
         return False
+```
+
+```cpp
+class Solution {
+public:
+    bool findNumberIn2DArray(vector<vector<int>>& matrix, int target) {
+        int row = matrix.size();
+        if (row == 0) return false;
+        int col = matrix[0].size();
+        if (col == 0) return false;
+        int i = row - 1;
+        int j = 0;
+        while (i >= 0 && j < col){
+            if (matrix[i][j] == target) return true;
+            else if (matrix[i][j] < target) j++;
+            else i--;
+        }
+        return false;
+    }
+};
+```
+
+#### [剑指 Offer 05. 替换空格](https://leetcode-cn.com/problems/ti-huan-kong-ge-lcof/)
+```cpp
+class Solution {
+public:
+    string replaceSpace(string s) {
+        // python 中 str 为不可变对象，无法使用该O（1）的方法
+        int n1 = s.size();
+        int cnt = 0;
+        for (int i = 0; i < n1; i++){
+            if (s[i] == ' ') { cnt++; }
+        }
+        int n2 = n1 + 2 * cnt;
+        s.resize(n2);
+        int p = n2 - 1;
+        for (int i = n1-1; i >= 0; i--){
+            if (s[i] == ' '){
+                s[p--] = '0';
+                s[p--] = '2';
+                s[p--] = '%';
+            }
+            else{
+                s[p--] = s[i];
+            }
+        }
+        return s;
+    }
+};
 ```
 
 #### [剑指 Offer 10- I. 斐波那契数列](https://leetcode-cn.com/problems/fei-bo-na-qi-shu-lie-lcof/)
@@ -10769,6 +11140,44 @@ class Solution:
                         return True
         return False
 ```
+```cpp
+class Solution {
+private:
+    int oriens[4][2] = {{1,0},{0,1},{-1,0},{0,-1}};
+
+public:
+    bool exist(vector<vector<char>>& board, string word) {
+        int n = board.size();
+        if (n == 0) return false;
+        int m = board[0].size();
+        if (m == 0) return false;
+        for (int i = 0; i < n; i++){
+            for (int j = 0; j < m; j++){
+                if (board[i][j] == word[0]){
+                    board[i][j] = ' ';
+                    if (dfs(board, word, 1, i, j, n, m)) return true;
+                    board[i][j] = word[0];
+                }
+            }
+        }
+        return false;
+    }
+
+    bool dfs(vector<vector<char>> &board, const string &word, int index, int i, int j, const int &n, const int &m){
+        if (index == word.size()) return true;
+        for (auto orien : oriens){
+            int nxt_i = orien[0] + i;
+            int nxt_j = orien[1] + j;
+            if (nxt_i < 0 || nxt_i >= n || nxt_j < 0 || nxt_j >= m) continue;
+            if (word[index] != board[nxt_i][nxt_j]) continue;
+            board[nxt_i][nxt_j] = ' ';
+            if (dfs(board, word, index+1, nxt_i, nxt_j, n, m)) return true;
+            board[nxt_i][nxt_j] = word[index];
+        }
+        return false;
+    }
+};
+```
 
 #### [剑指 Offer 13. 机器人的运动范围](https://leetcode-cn.com/problems/ji-qi-ren-de-yun-dong-fan-wei-lcof/)
 注意是数位之和
@@ -10803,6 +11212,52 @@ class Solution:
         visited.add((0,0))
         helper(0, 0)
         return len(visited)
+```
+```cpp
+class Solution {
+private:
+    int oriens[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};
+    int cnt = 1;
+
+public:
+    int movingCount(int m, int n, int k) {
+        if (k == 0) return 1;
+        vector<vector<int>> vis(m, vector<int>(n, 0));
+        vis[0][0] = 1;
+        dfs(0, 0, m, n, k, vis);
+        return cnt;
+    }
+    void dfs(int i, int j, const int &m, const int &n, const int &k, vector<vector<int>> &vis){
+        for (auto orien : oriens){
+            int nxt_i = i + orien[0];
+            int nxt_j = j + orien[1];
+            if (nxt_i < 0 || nxt_i >= m || nxt_j < 0 || nxt_j >= n) continue;
+            if (vis[nxt_i][nxt_j]) continue;
+            if (check(nxt_i)+check(nxt_j) <= k){
+                cnt += 1;
+                vis[nxt_i][nxt_j] = 1;
+                dfs(nxt_i, nxt_j, m, n, k, vis);
+            }
+        }
+    }
+    bool check(const int &k, const int &i, const int &j){
+        string merge = to_string(i) + to_string(j);
+        int val = 0;
+        for (char c : merge){
+            val += c - '0';
+            if (val > k) return false;
+        }
+        return true;
+    }
+    int check(int val){
+        int res = 0;
+        while (val){
+            res += val % 10;
+            val /= 10;
+        }
+        return res;
+    }
+};
 ```
 
 #### [剑指 Offer 16. 数值的整数次方](https://leetcode-cn.com/problems/shu-zhi-de-zheng-shu-ci-fang-lcof/)
@@ -11626,4 +12081,56 @@ def knuth_shuffle(list):
         p = random.randrange(0, i + 1)
         list[i], list[p] = list[p], list[i]
     return list
+```
+
+
+### C++ 输入输出
+cin, scanf 会忽略空格，回车等间隔符。
+字符串使用cin， cout。
+#### [读取多行数字](https://ac.nowcoder.com/acm/contest/5649/G)
+```cpp
+#include<iostream>
+using namespace std;
+
+int main(){
+    int num, sum;
+    sum = 0;
+    while (scanf("%d", &num) != EOF){
+        sum += num;
+        if (getchar() == '\n'){
+            printf("%d\n", sum);
+            sum = 0;
+        }
+    }
+    return 0;
+}
+```
+#### [字符串](https://ac.nowcoder.com/acm/contest/5649/J)
+```cpp
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <sstream>
+using namespace std;
+
+int main(){
+    string str;
+    vector<string> s_list;
+    while (getline(cin, str)){
+        stringstream s_stream(str);
+        string s;
+        while (getline(s_stream, s, ',')){
+            s_list.push_back(s);
+        }
+        sort(s_list.begin(), s_list.end());
+        int n = s_list.size();
+        for (int i = 0; i < n-1; i++){
+            cout << s_list[i] << ',';
+        }
+        cout << s_list[n-1] << endl;
+        s_list.clear();
+    }
+    return 0;
+}
 ```
