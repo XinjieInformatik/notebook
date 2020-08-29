@@ -100,6 +100,29 @@ class Solution:
             res = ~(res ^ 0xffffffff)
         return res
 ```
+```cpp
+class Solution {
+public:
+    int majorityElement(vector<int>& nums) {
+        int n = nums.size();
+        vector<int> stat(32, 0);
+        for (int num : nums){
+            for (int i = 0; i < 32; i++){
+                stat[i] += num & 1;
+                num >>= 1;
+            }
+        }
+        int res = 0;
+        for (int i = 0; i < 32; i++){
+            if (stat[i] > n / 2){
+                res |= (1 << i);
+            }
+        }
+        return res;
+    }
+};
+```
+
 哈希表：O(n), O(n)
 ```python
 class Solution:
@@ -120,14 +143,13 @@ class Solution:
     def majorityElement(self, nums: List[int]) -> int:
         count = 0
         candidate = None
-
         for num in nums:
             if count == 0:
                 candidate = num
             count += (1 if num == candidate else -1)
-
         return candidate
 ```
+
 #### [229. 求众数 II](https://leetcode-cn.com/problems/majority-element-ii/)
 ```python
 class Solution:
@@ -148,7 +170,6 @@ class Solution:
         return [n for n in (candidate1, candidate2) if nums.count(n) > len(nums) // 3] # 注意最后有一个对c1,c2的筛选
 ```
 #### [1018. 可被 5 整除的二进制前缀](https://leetcode-cn.com/problems/binary-prefix-divisible-by-5/)
-
 #### [201. 数字范围按位与](https://leetcode-cn.com/problems/bitwise-and-of-numbers-range/)
 ```python
 class Solution:
@@ -175,6 +196,19 @@ public:
     }
 };
 ```
+#### [190. 颠倒二进制位](https://leetcode-cn.com/problems/reverse-bits/)
+颠倒给定的 32 位无符号整数的二进制位
+一共32位，先16，16交换，再8，8交换，再4，4交换，再2，2交换，再1，1交换。
+```python
+class Solution:
+    def reverseBits(self, n: int) -> int:
+        n = (n >> 16) | (n << 16)
+        n = ((n & 0xff00ff00) >> 8) | ((n & 0x00ff00ff) << 8)
+        n = ((n & 0xf0f0f0f0) >> 4) | ((n & 0x0f0f0f0f) << 4)
+        n = ((n & 0xcccccccc) >> 2) | ((n & 0x33333333) << 2)
+        n = ((n & 0xaaaaaaaa) >> 1) | ((n & 0x55555555) << 1)
+        return n
+```
 
 ## 动态规划
 ### 背包问题
@@ -184,8 +218,10 @@ public:
 - 01背包在 物体i-1重量j维度 逆序遍历,保证每个物体只使用一次
 - 多重背包在 物体i重量j维度 正向遍历,保证物体可以重复使用
 **dp二维改一维,还是双重循环,框架不变,只是dp只使用重量j的维度**
+
 #### [简化01背包](https://www.lintcode.com/problem/backpack/description)
-```在n个物品中挑选若干物品装入背包，最多能装多满？假设背包的大小为m，每个物品的大小为A[i]
+```
+在n个物品中挑选若干物品装入背包，最多能装多满？假设背包的大小为m，每个物品的大小为A[i]
 ```
 ```python
 class Solution:
@@ -236,8 +272,8 @@ class Solution:
         return dp[-1]
 ```
 #### [经典01背包](https://www.lintcode.com/problem/backpack-ii/description)
-```有 n 个物品和一个大小为 m 的背包. 给定数组 A 表示每个物品的大小和数组 V 表示每个物品的价值.
-问最多能装入背包的总价值是多大?
+```
+有 n 个物品和一个大小为 m 的背包. 给定数组 A 表示每个物品的大小和数组 V 表示每个物品的价值. 问最多能装入背包的总价值是多大?
 ```
 为什么不能 return value
 ```python
@@ -304,7 +340,8 @@ class Solution:
 ```
 
 #### [563. 背包问题 V](https://www.lintcode.com/problem/backpack-v/my-submissions)
-```给出 n 个物品, 以及一个数组, nums[i] 代表第i个物品的大小, 保证大小均为正数,
+```
+给出 n 个物品, 以及一个数组, nums[i] 代表第i个物品的大小, 保证大小均为正数,
 正整数 target 表示背包的大小, 找到能填满背包的方案数。每一个物品只能使用一次
 ```
 ```python
@@ -360,8 +397,8 @@ class Solution:
         return helper(0, 0)
 ```
 #### [562. 背包问题 IV](https://www.lintcode.com/problem/backpack-iv/description)
-```给出 n 个物品, 以及一个数组, nums[i]代表第i个物品的大小, 保证大小均为正数并且没有重复,
-正整数 target 表示背包的大小, 找到能填满背包的方案数。每一个物品可以使用无数次
+```
+给出 n 个物品, 以及一个数组, nums[i]代表第i个物品的大小, 保证大小均为正数并且没有重复,正整数 target 表示背包的大小, 找到能填满背包的方案数。每一个物品可以使用无数次
 ```
 #### [518. 零钱兑换 II](https://leetcode-cn.com/problems/coin-change-2/)
 ```python
@@ -409,7 +446,8 @@ class Solution:
 ```
 
 #### [322. 零钱兑换](https://leetcode-cn.com/problems/coin-change/)
-```给定不同面额的硬币 coins 和一个总金额 amount。编写一个函数来计算可以凑成总金额所需的最少的硬币个数。如果没有任何一种硬币组合能组成总金额，返回 -1。
+```
+给定不同面额的硬币 coins 和一个总金额 amount。编写一个函数来计算可以凑成总金额所需的最少的硬币个数。如果没有任何一种硬币组合能组成总金额，返回 -1。
 ```
 ```python
 from collections import deque
@@ -519,7 +557,8 @@ public:
 ```
 
 #### [77. 组合](https://leetcode-cn.com/problems/combinations/)
-```给定两个整数 n 和 k，返回 1 ... n 中所有可能的 k 个数的组合。
+```
+给定两个整数 n 和 k，返回 1 ... n 中所有可能的 k 个数的组合。
 输入: 3, 2  输出: [[1,2],[1,3],[2,3]]
 ```
 1. 每次从上一index+1开始遍历
@@ -544,7 +583,8 @@ class Solution:
 ```
 
 #### [78. 子集](https://leetcode-cn.com/problems/subsets/)
-```给定一组不含重复元素的整数数组 nums，返回该数组所有可能的子集（幂集）。
+```
+给定一组不含重复元素的整数数组 nums，返回该数组所有可能的子集（幂集）。
 输入: nums = [1,2,3]
 输出:[[3],[1],[2],[1,2,3],[1,3],[2,3],[1,2],[]]
 ```
@@ -566,7 +606,8 @@ class Solution:
 ```
 
 #### [46. 全排列](https://leetcode-cn.com/problems/permutations/)
-```给定一个 没有重复 数字的序列，返回其所有可能的全排列。
+```
+给定一个 没有重复 数字的序列，返回其所有可能的全排列。
 输入: [1,2,3]
 输出: [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
 ```
@@ -589,7 +630,8 @@ class Solution:
 ```
 
 #### [47. 全排列 II](https://leetcode-cn.com/problems/permutations-ii/)
-```给定一个可包含重复数字的序列，返回所有不重复的全排列。
+```
+给定一个可包含重复数字的序列，返回所有不重复的全排列。
 输入: [1,1,2]   输出: [[1,1,2],[1,2,1],[2,1,1]]
 ```
 ```python
@@ -861,7 +903,8 @@ class Solution:
 4. 输出
 
 #### [152. 乘积最大子数组](https://leetcode-cn.com/problems/maximum-product-subarray/)
-```给你一个整数数组 nums ，请你找出数组中乘积最大的连续子数组（该子数组中至少包含一个数字），并返回该子数组所对应的乘积。
+```
+给你一个整数数组 nums ，请你找出数组中乘积最大的连续子数组（该子数组中至少包含一个数字），并返回该子数组所对应的乘积。
 输入: [2,3,-2,4]  输出: 6
 ```
 ```python
@@ -916,7 +959,8 @@ class Solution:
 ```
 
 #### [53. 最大子序和](https://leetcode-cn.com/problems/maximum-subarray/)
-```给定一个整数数组 nums ，找到一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。
+```
+给定一个整数数组 nums ，找到一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。
 输入: [-2,1,-3,4,-1,2,1,-5,4], 输出: 6
 解释: 连续子数组 [4,-1,2,1] 的和最大，为 6。
 ```
@@ -947,7 +991,8 @@ class Solution:
 ```
 
 #### [300. 最长上升子序列](https://leetcode-cn.com/problems/longest-increasing-subsequence/)
-```给定一个无序的整数数组，找到其中最长上升子序列的长度。 LIS
+```
+给定一个无序的整数数组，找到其中最长上升子序列的长度。 LIS
 输入: [10,9,2,5,3,7,101,18]  输出: 4
 解释: 最长的上升子序列是 [2,3,7,101]，它的长度是 4。
 ```
@@ -1213,8 +1258,7 @@ class Solution:
 Leetcode: 402, 316, 42, 84, 739, 496, 503, 901
 #### [402. 移掉K位数字](https://leetcode-cn.com/problems/remove-k-digits/)
 ```
-给定一个以字符串表示的非负整数 num，移除这个数中的 k 位数字，使得剩下的数字最小。
-输入: num = "1432219", k = 3  输出: "1219"
+给定一个以字符串表示的非负整数 num，移除这个数中的 k 位数字，使得剩下的数字最小。输入: num = "1432219", k = 3  输出: "1219"
 解释: 移除掉三个数字 4, 3, 和 2 形成一个新的最小的数字 1219。
 ```
 维护一个删除k次的单调递增栈
@@ -2763,23 +2807,6 @@ class Solution:
 1. 一次遍历就可以了. O(n)
 
 #### [88. 合并两个有序数组](https://leetcode-cn.com/problems/merge-sorted-array/)
-```python
-class Solution:
-    def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:
-        p1, p2, p3 = m-1, n-1, len(nums1)-1
-        while p3 >= 0 and p2 >=0:
-            if nums1[p1] < nums2[p2]:
-                nums1[p3] = nums2[p2]
-                p2 -= 1
-            else:
-                nums1[p3] = nums1[p1]
-                p1 -= 1
-            p3 -= 1
-        if p2 >= 0:
-            nums1[:p2+1] = nums2[:p2+1]
-        return nums1
-```
-
 #### [面试题 10.01. 合并排序的数组](https://leetcode-cn.com/problems/sorted-merge-lcci/)
 从后往前遍历，更利于数组的修改 O(n+m)
 这道题坑了我半小时！！ 注意：
@@ -2800,6 +2827,24 @@ class Solution:
                 A[p3] = B[p2]
                 p2 -= 1
             p3 -= 1
+```
+```cpp
+class Solution {
+public:
+    void merge(vector<int>& nums1, int m, vector<int>& nums2, int n) {
+        int p1 = m - 1, p2 = n - 1, p3 = n + m - 1;
+        while (p2 >= 0){
+            if (p1 >=0 && nums1[p1] > nums2[p2]){
+                nums1[p3--] = nums1[p1];
+                p1--;
+            }
+            else{
+                nums1[p3--] = nums2[p2];
+                p2--;
+            }
+        }
+    }
+};
 ```
 
 #### [75. 颜色分类](https://leetcode-cn.com/problems/sort-colors/)
@@ -3231,7 +3276,7 @@ next部分匹配表为对应元素前后缀共同元素的个数，以"ABCDABD"�
 
 具体如何实现子串公共前后缀数目的计算呢，这里使用到双指针i, j，以"ABCDABD"为例。
 i指针遍历子串，如果没有相等元素，j指针保留在头部，如果遇到相同元素，j指针后移，当元素再次不相同时，j指针回到头部。
-可以看到，其实i指针后缀，j指针前缀，实现前后缀相同元素的计数。
+可以看到，其实**i指针后缀，j指针前缀，实现前后缀相同元素的计数**。
 ```sh
 i         i          i           i            i             i             i
 ABCDABD  ABCDABD   ABCDABD    ABCDABD     ABCDABD      ABCDABD      ABCDABD
@@ -3252,37 +3297,95 @@ class Solution:
             ABCDABD   ABCDABD    ABCDABD     ABCDABD      ABCDABD      ABCDABD        ABCDABD
             j         j          j           j            j             j             j
             """
-            _next = [0] * (len(p)+1) #      A  B  C  D  A  B  D
-            _next[0] = -1            # [-1, 0, 0, 0, 0, 1, 2, 0]
+            _nxt = [0] * (len(p)+1) #      A  B  C  D  A  B  D
+            _nxt[0] = -1            # [-1, 0, 0, 0, 0, 1, 2, 0]
             i, j = 0, -1
             while (i < len(p)):
                 if (j == -1 or p[i] == p[j]):
                     i += 1
                     j += 1
-                    _next[i] = j
+                    _nxt[i] = j
                 else:
-                    j = _next[j]
-            return _next
+                    j = _nxt[j]
+            return _nxt
 
-        def kmp(s, p, _next):
+        def kmp(s, p, _nxt):
             """kmp O(m+n). s以 "BBC ABCDAB ABCDABCDABDE" 为例"""
+            # 注意在构造_nxt表时，p[i] p[j]相比较，所以j必须从-1开始，这里s与p比较，j从0开始可以避免空串时的特殊情况
             i, j = 0, 0
             while (i < len(s) and j < len(p)):
                 if (j == -1 or s[i] == p[j]):
                     i += 1
                     j += 1
                 else:
-                    j = _next[j]
-            if j == len(p):
-                return i - j
-            else:
-                return -1
-
+                    j = _nxt[j]
+            return i - j if j == len(p) else -1
         return kmp(haystack, needle, get_next(needle))
 ```
 参考理解KMP比较好的两个链接
 http://www.ruanyifeng.com/blog/2013/05/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm.html
 https://www.zhihu.com/question/21923021/answer/281346746
+
+#### [459. 重复的子字符串](https://leetcode-cn.com/problems/repeated-substring-pattern/)
+给定一个非空的字符串，判断它是否可以由它的一个子串重复多次构成。
+```python
+class Solution:
+    def repeatedSubstringPattern(self, s: str) -> bool:
+        ss = s + s
+        n = len(ss)
+        return self.kmp_find(ss[1:n-1], s) != -1
+        # return ss[1:n-1].find(s) != -1
+
+    def kmp_find(self, string, sub_string):
+        def get_next(sub_string):
+            n = len(sub_string)
+            _nxt = [0] * (len(sub_string)+1)
+            _nxt[0] = -1
+            i, j = 0, -1
+            while (i < n):
+                if (j == -1 or sub_string[i] == sub_string[j]):
+                    i += 1
+                    j += 1
+                    _nxt[i] = j
+                else:
+                    j = _nxt[j]
+            return _nxt
+
+        def kmp(string, sub_string, _nxt):
+            i, j = 0, 0
+            while (i < len(string) and j < len(sub_string)):
+                if (j == -1 or string[i] == sub_string[j]):
+                    i += 1
+                    j += 1
+                else:
+                    j = _nxt[j]
+            return i-j if j == len(sub_string) else -1
+
+        return kmp(string, sub_string, get_next(sub_string))
+```
+
+#### [214. 最短回文串](https://leetcode-cn.com/problems/shortest-palindrome/)
+给定一个字符串 s，你可以通过在字符串前面添加字符将其转换为回文串。找到并返回可以用这种方式转换的最短回文串。
+```python
+class Solution:
+    def shortestPalindrome(self, s: str) -> str:
+        """求merge_s的最长公共前后缀 即为 s最长回文前缀"""
+        rev_s = s[::-1]
+        merge_s = s + '#' + rev_s
+        n = len(merge_s)
+        nxt = [0] * (n+1)
+        nxt[0] = -1
+        i, j = 0, -1
+        while (i < n):
+            if (j == -1 or merge_s[i] == merge_s[j]):
+                i += 1
+                j += 1
+                nxt[i] = j
+            else:
+                j = nxt[j]
+        prefix = nxt[-1]
+        return s[prefix:][::-1] + s
+```
 
 #### [14. 最长公共前缀](https://leetcode-cn.com/problems/longest-common-prefix/)
 ```python
@@ -7119,7 +7222,7 @@ class MedianFinder:
 ```
 
 #### [215. 数组中的第K个最大元素](https://leetcode-cn.com/problems/kth-largest-element-in-an-array/)
-1. 规模为k的最小堆
+1. 规模为k的小顶堆
 ```python
 class Solution:
     def findKthLargest(self, nums: List[int], k: int) -> int:
@@ -8142,6 +8245,55 @@ class Solution:
             return False
 
         return dfs(0,0,0)
+```
+
+#### [332. 重新安排行程](https://leetcode-cn.com/problems/reconstruct-itinerary/)
+```python
+from collections import defaultdict
+class Solution:
+    def findItinerary(self, tickets: List[List[str]]) -> List[str]:
+        adjacency = defaultdict(list)
+        for start, end in tickets:
+            adjacency[start].append(end)
+        start = "JFK"
+        result = []
+        def dfs(start):
+            adjacency[start].sort(reverse=True)
+            while adjacency[start]:
+                end = adjacency[start].pop()
+                print(end)
+                dfs(end)
+            # 尾部入result（无环路径先加入result）
+            result.append(start)
+        dfs(start)
+        # 返回逆序，先走有环路径，保证一笔画
+        return result[::-1]
+```
+```cpp
+class Solution {
+public:
+    vector<string> result;
+    vector<string> findItinerary(vector<vector<string>>& tickets) {
+        unordered_map<string, vector<string>> adjacency;
+        for (auto connect : tickets){
+            string start = connect[0];
+            string end = connect[1];
+            adjacency[start].push_back(end);
+        }
+        dfs(adjacency, "JFK");
+        reverse(result.begin(), result.end());
+        return result;
+    }
+    void dfs(unordered_map<string, vector<string>> &adjacency, string start){
+        sort(adjacency[start].begin(), adjacency[start].end(), greater<>());
+        while (adjacency[start].size() > 0){
+            string end = adjacency[start].back();
+            adjacency[start].pop_back();
+            dfs(adjacency, end);
+        }
+        result.push_back(start);
+    }
+};
 ```
 
 #### [207. 课程表](https://leetcode-cn.com/problems/course-schedule)
@@ -10192,6 +10344,23 @@ class Solution:
             else:
                 return True
         return False
+```
+```cpp
+class Solution {
+public:
+    bool searchMatrix(vector<vector<int>>& matrix, int target) {
+        int rows = matrix.size();
+        if (rows == 0) return false;
+        int cols = matrix[0].size();
+        int row = rows - 1, col = 0;
+        while (row >= 0 && col < cols){
+            if (matrix[row][col] == target) return true;
+            else if (matrix[row][col] < target) col++;
+            else row--;
+        }
+        return false;
+    }
+};
 ```
 
 #### [1296. 划分数组为连续数字的集合](https://leetcode-cn.com/problems/divide-array-in-sets-of-k-consecutive-numbers/)
