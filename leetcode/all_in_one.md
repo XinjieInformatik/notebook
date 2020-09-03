@@ -319,7 +319,7 @@ class Solution:
                 if j < A[i-1]:
                     continue
                 else:
-                    dp[j] = max(dp[j], dp[j-A[i-1]]+V[i-1])
+                    dp[j] = max(dp[j], dp[j-A[i-1]] + V[i-1])
         return dp[-1]
 ```
 
@@ -552,6 +552,55 @@ public:
             n--;
         }
         return nxt;
+    }
+};
+```
+
+#### [486. 预测赢家](https://leetcode-cn.com/problems/predict-the-winner/)
+```python
+class Solution:
+    def PredictTheWinner(self, nums: List[int]) -> bool:
+        def helper(index, l, r):
+            if l > r:
+                return 0
+            sign = -1 if (index & 1) else 1
+            l_score = helper(index+1, l+1, r) + sign * nums[l]
+            r_score = helper(index+1, l, r-1) + sign * nums[r]
+            # sign妙了，s2也想让自己利益最大化
+            return max(l_score*sign, r_score*sign) * sign
+
+        """动态规划"""
+        n = len(nums)
+        dp = [[0] * n for i in range(n)]
+        def dp_helper(sign, l, r):
+            if l > r:
+                return 0
+            if dp[l][r] != 0:
+                return dp[l][r]
+            l_score = dp_helper(-sign, l+1, r) + sign * nums[l]
+            r_score = dp_helper(-sign, l, r-1) + sign * nums[r]
+            dp[l][r] = max(l_score*sign, r_score*sign) * sign
+            return dp[l][r]
+
+        return dp_helper(1, 0, len(nums)-1) >= 0
+```
+```cpp
+class Solution {
+public:
+    bool PredictTheWinner(vector<int>& nums) {
+        int n = nums.size();
+        vector<vector<int>> dp(n, vector<int> (n, 0));
+        int result = helper(1, 0, n-1, dp, nums);
+        return result >= 0;
+    }
+
+    int helper(int sign, int l, int r, vector<vector<int>> &dp, vector<int> &nums){
+        if (l > r) return 0;
+        if (dp[l][r] != 0) return dp[l][r];
+        int l_score = helper(-sign, l+1, r, dp, nums) + sign * nums[l];
+        int r_score = helper(-sign, l, r-1, dp, nums) + sign * nums[r];
+        dp[l][r] = max(sign*l_score, sign*r_score) * sign;
+        return dp[l][r];
     }
 };
 ```
@@ -4350,6 +4399,36 @@ class Solution:
 
         helper(1, [])
         return results
+```
+```cpp
+class Solution {
+public:
+    vector<int> vis_col, vis_diag, vis_udiag;
+    vector<vector<string>> solveNQueens(int n) {
+        vis_col = vector<int> (n, 0);
+        vis_diag = vector<int> (2*n, 0);
+        vis_udiag = vector<int> (2*n, 0);
+        vector<string> matrix(n, string(n, '.'));
+        vector<vector<string>> result;
+        helper(0, matrix, result);
+        return result;
+    }
+
+    void helper(int row, vector<string> &matrix, vector<vector<string>> &result){
+        if (row == matrix.size()){
+            result.push_back(matrix);
+            return;
+        }
+        for (int col = 0; col < matrix.size(); col++){
+            if (vis_col[col] || vis_diag[row+col] || vis_udiag[matrix.size()+row-col]) continue;
+            matrix[row][col] = 'Q';
+            vis_col[col] = vis_diag[row+col] = vis_udiag[matrix.size()+row-col] = 1;
+            helper(row+1, matrix, result);
+            matrix[row][col] = '.';
+            vis_col[col] = vis_diag[row+col] = vis_udiag[matrix.size()+row-col] = 0;
+        }
+    }
+};
 ```
 
 #### [52. N皇后 II](https://leetcode-cn.com/problems/n-queens-ii/)
