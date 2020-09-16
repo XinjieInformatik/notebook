@@ -630,6 +630,32 @@ class Solution:
         helper(1, [])
         return results
 ```
+写函数的时候，输入参数在前，输出参数在后，输入参数写引用，输出参数写指针的形式
+调用函数时，输出参数正常申明，传地址进去。
+```cpp
+class Solution {
+public:
+    vector<vector<int>> combine(int n, int k) {
+        vector<int> res;
+        vector<vector<int>> result;
+        helper(1, n+1, k, res, &result);
+        return result;
+    }
+
+    void helper(int index, const int &n, const int &k, vector<int> &res, vector<vector<int>> *result) {
+        if (res.size() == k) {
+            result->push_back(res);
+            return;
+        }
+        for (int i = index; i < n; i++) {
+            if (n - i + 1 < k - res.size()) break;
+            res.push_back(i);
+            helper(i+1, n, k, res, result);
+            res.pop_back();
+        }
+    }
+};
+```
 
 #### [78. 子集](https://leetcode-cn.com/problems/subsets/)
 ```
@@ -662,20 +688,25 @@ class Solution:
 ```
 1. 每次都从index为0开始遍历
 2. 当前数字不能在已添加数字里
+3. 用vis实现O(1)的查询
 ```python
 class Solution:
     def permute(self, nums: List[int]) -> List[List[int]]:
-        results = []
+        result = []
+        vis = {num:0 for num in nums}
         n = len(nums)
         def helper(res):
             if len(res) == n:
-                results.append(res)
+                result.append(res)
                 return
-            for i in range(0, n):
-                if nums[i] not in res:
-                    helper(res+[nums[i]])
+            for num in nums:
+                if vis[num]:
+                    continue
+                vis[num] = 1
+                helper(res + [num])
+                vis[num] = 0
         helper([])
-        return results
+        return result
 ```
 
 #### [47. 全排列 II](https://leetcode-cn.com/problems/permutations-ii/)
@@ -707,6 +738,65 @@ class Solution:
                 count[nums[i]] += 1
         helper([], count)
         return results
+```
+
+#### [60. 第k个排列](https://leetcode-cn.com/problems/permutation-sequence/)
+直接去找第k个排列，剪枝。提前计算好剩余数字对应排列数，然后有剩余就都跳过。
+```python
+class Solution:
+    def getPermutation(self, n: int, k: int) -> str:
+        self.k = k
+        vis = [0] * n
+        stat = [1] * (n+1)
+        for i in range(1, n+1):
+            stat[i] = i * stat[i-1]
+
+        def helper(s):
+            if len(s) == n:
+                return s
+            for i in range(1, n+1):
+                if vis[i-1]:
+                    continue
+                val = self.k - stat[n-len(s)-1]
+                if val > 0:
+                    self.k = val
+                    continue
+                vis[i-1] = 1
+                ans = helper(s + str(i))
+                vis[i-1] = 0
+                return ans
+
+        return helper("")
+```
+```cpp
+class Solution {
+public:
+    string getPermutation(int n, int k) {
+        vector<int> stat(n+1, 1);
+        vector<int> vis(n+1, 0);
+        for (int i = 1; i < n+1; i++){
+            stat[i] = stat[i-1] * i;
+        }
+        return helper("", stat, vis, k, n);
+
+    }
+
+    string helper(string s, vector<int> &stat, vector<int> vis, int &k, int n){
+        if (s.size() == n) return s;
+        for (int i = 1; i < n+1; i++){
+            if (vis[i]) continue;
+            int val = k - stat[n-s.size()-1];
+            if (val > 0){
+                k = val;
+                continue;
+            }
+            vis[i] = 1;
+            return helper(s + to_string(i), stat, vis, k, n);
+            vis[i] = 0;
+        }
+        return s;
+    }
+};
 ```
 
 #### [17. 电话号码的字母组合](https://leetcode-cn.com/problems/letter-combinations-of-a-phone-number/)
@@ -2362,20 +2452,23 @@ class Solution:
 ```
 
 ```cpp
-/**
- * Definition for singly-linked list.
- * struct ListNode {
- *     int val;
- *     ListNode *next;
- *     ListNode(int x) : val(x), next(NULL) {}
- * };
- */
+#include <iostream>
+#include <vector>
+using namespace std;
+
+struct ListNode {
+    int val;
+    ListNode *next;
+    ListNode(int x): val(x), next(nullptr) {}
+};
+
 class Solution {
 public:
-    ListNode* reverseList(ListNode* head) {
-        ListNode *prev = nullptr, *curr = head, *nxt = head;
-        while (curr){
-            nxt = curr->next;
+    ListNode* reverseList(ListNode *head) {
+        ListNode *prev = nullptr;
+        ListNode *curr = head;
+        while (curr) {
+            ListNode *nxt = curr->next;
             curr->next = prev;
             prev = curr;
             curr = nxt;
@@ -2383,6 +2476,25 @@ public:
         return prev;
     }
 };
+
+int main() {
+    vector<int> nums{1,2,3,4,5};
+    auto *dummy = new ListNode(-1);
+    ListNode *d_head = dummy;
+    for (auto num : nums) {
+        dummy->next = new ListNode(num);
+        dummy = dummy->next;
+    }
+    dummy->next = nullptr;
+
+    auto solver = Solution();
+    ListNode *rev_head = solver.reverseList(d_head->next);
+    while (rev_head) {
+        printf("\033[0:1:31m%d ", rev_head->val);
+        rev_head = rev_head->next;
+    }
+    return 0;
+}
 ```
 
 #### [92. 反转链表 II](https://leetcode-cn.com/problems/reverse-linked-list-ii/)
@@ -2960,11 +3072,16 @@ class Solution:
 二分查找
 
 #### [153. 寻找旋转排序数组中的最小值](https://leetcode-cn.com/problems/find-minimum-in-rotated-sorted-array/)
-注意 1.while 循环条件 l<r 2.右边界取闭区间 3.与右端点比
+> 假设按照升序排序的数组在预先未知的某个点上进行了旋转。
+( 例如，数组 [0,1,2,4,5,6,7] 可能变为 [4,5,6,7,0,1,2] )。
+请找出其中最小的元素。
+假设数组中不存在重复元素。
+
+154题 while l<=r 也可，有r--去避免死循环，这题只能用 while l < r
 ```python
 class Solution:
     def findMin(self, nums: List[int]) -> int:
-        def low_bound(nums, l, r):
+        def search(nums, l, r):
             while l < r:
                 m = l + (r - l) // 2
                 if nums[m] > nums[r]:
@@ -2972,18 +3089,23 @@ class Solution:
                 else:
                     r = m
             return l
-        if len(nums) == 0: return None
-        # 右边界-1是为了中点取靠前的,方便与右端点比较.
-        index = low_bound(nums, 0, len(nums)-1)
+
+        index = search(nums, 0, len(nums)-1)
         return nums[index]
 ```
 
 #### [154. 寻找旋转排序数组中的最小值 II](https://leetcode-cn.com/problems/find-minimum-in-rotated-sorted-array-ii/)
-注意 1.while 循环条件 l<r 2.右边界取闭区间 3.与右端点比 4.如果等于右端点,r-=1
+> 假设按照升序排序的数组在预先未知的某个点上进行了旋转。
+( 例如，数组 [0,1,2,4,5,6,7] 可能变为 [4,5,6,7,0,1,2] )。
+请找出其中最小的元素。注意数组中可能存在重复的元素。
+
+1. 中点与右边界比较，确定在前还是后段区间
+2. 如果nums[m]==nums[right]，则无法确定中点所处区间，则收缩右边界 r--
+3. len(nums)-1, l < r. len(nums)-1为了偶数时取靠前的一个，l < r 没有=，用于没有target，而是寻找峰值，能正确退出。
+
 ```python
 class Solution:
     def findMin(self, nums: List[int]) -> int:
-        """因为有重复元素,所以会有nums[m]==nums[r]的情况,这时候r-=1可以保证数组不越界且最小值不丢失"""
         def search(nums, l, r):
             while l < r:
                 m = l + (r - l) // 2
@@ -3001,81 +3123,118 @@ class Solution:
 ```cpp
 class Solution {
 public:
-    int minArray(vector<int>& numbers) {
-        int index = low_bound(numbers, 0, numbers.size()-1);
-        return numbers[index];
+    int findMin(vector<int>& nums) {
+        int idx = low_bound(nums, 0, nums.size()-1);
+        return nums[idx];
     }
-    int low_bound(const vector<int> &numbers, int l, int r){
-        while (l < r){
-            int m = l + (r - l) / 2;
-            if (numbers[m] < numbers[r]) r = m;
-            else if (numbers[m] > numbers[r]) l = m + 1;
-            else r--;
+
+    int low_bound(vector<int> &nums, int left, int right) {
+        while (left <= right) {
+            int m = left + (right - left) / 2;
+            if (nums[m] < nums[right]) right = m;
+            else if (nums[m] > nums[right]) left = m + 1;
+            else --right;
         }
-        return l;
+        return left;
     }
 };
 ```
 
 #### [33. 搜索旋转排序数组](https://leetcode-cn.com/problems/search-in-rotated-sorted-array/)
-注意 1.while 循环条件 l<=r 2.右边界取闭区间 3.与左端点比
-先与左端点(注意是nums[l])比,确定nums[m]在哪个区间,再确定target在哪个区间
+> 假设按照升序排序的数组在预先未知的某个点上进行了旋转。
+( 例如，数组 [0,1,2,4,5,6,7] 可能变为 [4,5,6,7,0,1,2] )。
+搜索一个给定的目标值，如果数组中存在这个目标值，则返回它的索引，否则返回 -1 。
+假设数组中不存在重复的元素。
+
+与81不同的是，去掉重复元素时的--r, 但是 nums[m] >= nums[right] 必须是大于等于，不然死循环
 ```python
 class Solution:
     def search(self, nums: List[int], target: int) -> int:
-        def low_bound(nums, l, r, target):
-            while l <= r:
-                m = l + (r - l) // 2
-                if nums[m] == target:
+        def low_bound(nums, left, right, target):
+            while (left <= right):
+                m = left + (right - left) // 2
+                if (nums[m] == target):
                     return m
-                if nums[m] >= nums[l]:
-                    # 如果在有序区间,收缩边界,否则排除有序区间
-                    if nums[l] <= target < nums[m]:
-                        r = m
+                if (nums[m] >= nums[right]):
+                    if (nums[m] > target and target >= nums[left]):
+                        right = m
                     else:
-                        l = m + 1
+                        left = m + 1
                 else:
-                    if nums[m] < target <= nums[r]:
-                        l = m + 1
+                    if (nums[m] < target and target <= nums[right]):
+                        left = m + 1
                     else:
-                        r = m
+                        right = m
             return -1
 
         return low_bound(nums, 0, len(nums)-1, target)
 ```
 
-#### [搜索旋转排序数组 II](https://leetcode-cn.com/problems/search-in-rotated-sorted-array-ii)
-注意 1.while 循环条件 l<=r 2.右边界取闭区间 3.与左端点比 4.如果等于左端点,l+=1
-与左端点(注意是nums[l])比,确定nums[m]在哪个区间,再确定target在哪个区间
+#### [81. 搜索旋转排序数组 II](https://leetcode-cn.com/problems/search-in-rotated-sorted-array-ii)
+有重复元素，寻找target，是[154. 寻找旋转排序数组中的最小值 II](https://leetcode-cn.com/problems/find-minimum-in-rotated-sorted-array-ii/)的拓展。
+1. 用len(nums)-1, left <= right 的写法
+2. 与当前中点nums[m]与右边界比较，确定中点处于前还是后一段上升数组
+3. 如果nums[m]==nums[right]，则无法确定中点在哪一段，则收缩右边界
+4. 中点与target确定如何收缩左右边界，注意target用大于（小于）等于
+
 ```python
 class Solution:
     def search(self, nums: List[int], target: int) -> bool:
-        """nums[m]与nums[l]比,所以相等的时候l+=1"""
-        def low_bound(nums, l, r, target):
-            while l <= r:
-                m = l + (r - l) // 2
-                if nums[m] == target:
+        def low_bound(nums, left, right, target):
+            while (left <= right):
+                m = left + (right - left) // 2
+                if (nums[m] == target):
                     return True
-                if nums[m] == nums[l]:
-                    l += 1
-                    continue
-                if nums[m] > nums[l]:
-                    if nums[l] <= target < nums[m]:
-                        r = m
+                if (nums[m] > nums[right]):
+                    if (nums[m] > target and target >= nums[left]):
+                        right = m
                     else:
-                        l = m + 1
+                        left = m + 1
+                elif (nums[m] < nums[right]):
+                    if (nums[m] < target and target <= nums[right]):
+                        left = m + 1
+                    else:
+                        right = m
                 else:
-                    if nums[m] < target <= nums[r]:
-                        l = m
-                    else:
-                        r = m - 1
+                    right -= 1
             return False
-        if len(nums) == 0: return False
+
         return low_bound(nums, 0, len(nums)-1, target)
+```
+```cpp
+class Solution {
+public:
+    bool search(vector<int>& nums, int target) {
+        return low_bound(nums, 0, nums.size()-1, target);
+    }
+    bool low_bound(vector<int>& nums, int left, int right, int target) {
+        while (left <= right) {
+            int m = left + (right - left) / 2;
+            if (nums[m] == target) return true;
+            if (nums[m] < nums[right]) {
+                if (nums[m] < target && target <= nums[right]) left = m + 1;
+                else right = m;
+            }
+            else if (nums[m] > nums[right]) {
+                if (nums[m] > target && target >= nums[left]) right = m;
+                else left = m + 1;
+            }
+            else --right;
+        }
+        return false;
+    }
+};
 ```
 
 #### [162. 寻找峰值](https://leetcode-cn.com/problems/find-peak-element/)
-二分查找极值点
+> 峰值元素是指其值大于左右相邻值的元素。
+给定一个输入数组 nums，其中 nums[i] ≠ nums[i+1]，找到峰值元素并返回其索引。
+数组可能包含多个峰值，在这种情况下，返回任何一个峰值所在位置即可。
+你可以假设 nums[-1] = nums[n] = -∞。
+
+注意：
+1. len(nums)-1取中点靠前，所以 nums[m] 与 nums[m+1] 比较
+2. 因为前后元素比较，所以要 left < right
 ```python
 class Solution:
     def findPeakElement(self, nums: List[int]) -> int:
@@ -3088,6 +3247,69 @@ class Solution:
                     r = m
             return l
         return get_peak(nums, 0, len(nums)-1)
+```
+```cpp
+class Solution {
+public:
+    int findPeakElement(vector<int>& nums) {
+        return helper(nums, 0, nums.size()-1);
+    }
+    int helper(vector<int>& nums, int left, int right) {
+        while (left < right) {
+            int m = left + (right - left) / 2;
+            if (nums[m] < nums[m+1]) left = m + 1;
+            else right = m;
+        }
+        return left;
+    }
+};
+```
+
+#### [1095. 山脉数组中查找目标值](https://leetcode-cn.com/problems/find-in-mountain-array/)
+> 给你一个 山脉数组 mountainArr，请你返回能够使得 mountainArr.get(index) 等于 target 最小 的下标 index 值。
+如果不存在这样的下标 index，就请返回 -1。
+输入：array = [1,2,3,4,5,3,1], target = 3
+输出：2
+
+山脉数组先增后减，前后段分别是有序的：
+1. 二分找极点（最大值）
+2. 在前半段有序数组二分搜索
+3. 在后半段逆序的有序数组二分搜索 （可以用-转为正序，复用代码）
+
+```python
+#class MountainArray:
+#    def get(self, index: int) -> int:
+#    def length(self) -> int:
+
+class Solution:
+    def findInMountainArray(self, target: int, mountain_arr: 'MountainArray') -> int:
+        def get_peak(nums, left, right, target):
+            while left < right:
+                m = left + (right - left) // 2
+                if nums.get(m) < nums.get(m+1):
+                    left = m + 1
+                else:
+                    right = m
+            return left
+
+        def low_bound(nums, left, right, target, key=lambda x:x):
+            target = key(target)
+            while left < right:
+                m = left + (right - left) // 2
+                if key(nums.get(m)) < target:
+                    left = m + 1
+                else:
+                    right = m
+            return left
+
+        peak_idx = get_peak(mountain_arr, 0, mountain_arr.length()-1, target)
+        index = low_bound(mountain_arr, 0, peak_idx+1, target)
+        if index < mountain_arr.length() and mountain_arr.get(index) == target:
+            return index
+        index = low_bound(mountain_arr, peak_idx, mountain_arr.length(), target, key=lambda x:-x)
+        if index < mountain_arr.length() and mountain_arr.get(index) == target:
+            return index
+        return -1
 ```
 
 #### [374. 猜数字大小](https://leetcode-cn.com/problems/guess-number-higher-or-lower/)
@@ -3168,6 +3390,7 @@ class Solution:
                     dp[i] = max(dp[i],dp[j]+1)
         return max(dp)
 ```
+
 ```python
 class Solution:
     def maxEnvelopes(self, envelopes: List[List[int]]) -> int:
@@ -3199,7 +3422,7 @@ class Solution:
 ```
 
 #### [315. 计算右侧小于当前元素的个数](https://leetcode-cn.com/problems/count-of-smaller-numbers-after-self/)
-归并
+归并（求每个元素的逆序对个数）
 ```python
 class Solution:
     def countSmaller(self, nums: List[int]) -> List[int]:
@@ -3857,89 +4080,149 @@ class Solution:
 
 
 #### [39. 组合总和](https://leetcode-cn.com/problems/combination-sum/)
+巧用index避免重复项，注意边界条件子递归从index开始不用+1
 ```python
 class Solution:
     def combinationSum(self, candidates: List[int], target: int) -> List[List[int]]:
-        # result = []
-        # def helper(target, res):
-        #     # 1. 如果越界，剪枝
-        #     if target < 0:
-        #         return
-        #     # 2. 如果满足条件，添加. 到了结果才剪枝太慢！
-        #     if target == 0:
-        #         res.sort()
-        #         if res not in result:
-        #             result.append(res)
-        #         return
-        #     # 3. 递归
-        #     for num in candidates:
-        #         helper(target-num, res+[num])
-
-        # helper(target, [])
-        # return result
-
-        result = []
-        candidates.sort()
         n = len(candidates)
-        def helper(target, i, res):
+        candidates.sort()
+        result = []
+        def helper(index, res, target):
             if target == 0:
                 result.append(res)
                 return
-            for j in range(i, n):
-                rest = target-candidates[j]
-                if rest < 0: break
-                helper(rest, j, res+[candidates[j]])
+            for i in range(index, n):
+                if target - candidates[i] < 0:
+                    break
+                helper(i, res+[candidates[i]], target-candidates[i])
 
-        helper(target, 0, [])
+        helper(0, [], target)
         return result
+```
+```cpp
+class Solution {
+public:
+    vector<vector<int>> result;
+    vector<int> res;
+    vector<vector<int>> combinationSum(vector<int>& candidates, int target) {
+        sort(candidates.begin(), candidates.end());
+        helper(candidates, 0, target);
+        return result;
+    }
+
+    void helper(vector<int> &nums, int index, int target) {
+        if (target == 0) {
+            result.push_back(res);
+            return;
+        }
+        for (int i = index; i < nums.size(); i++) {
+            if (target - nums[i] < 0) break;
+            res.push_back(nums[i]);
+            helper(nums, i, target-nums[i]);
+            res.pop_back();
+        }
+        return;
+    }
+};
 ```
 
 #### [40. 组合总和 II](https://leetcode-cn.com/problems/combination-sum-ii/)
+关键点：
+- 先sort然后通过candidates[i] != candidates[i-1]去重
+- i == index or candidates[i] != candidates[i-1] 该层递归首个元素可以和前一个元素一样，其他不可以
 ```python
 class Solution:
     def combinationSum2(self, candidates: List[int], target: int) -> List[List[int]]:
-        result = []
-        if not candidates: return result
         candidates.sort()
         n = len(candidates)
-        def helper(target, i, res):
-            # if target < 0:
-            #     return
+        result = []
+        def helper(index, res, target):
             if target == 0:
                 result.append(res)
                 return
-
-            for j in range(i, n):
-                # 多个逻辑语句打个括号，避免出bug
-                if (j==i or candidates[j] != candidates[j-1]):
-                    # 提前剪枝，会比进入递归再退出快
-                    rest = target-candidates[j]
-                    # 注意这里是break，不是continue，因为candidates sort过，当前节点rest<0,之后节点肯定也是
-                    if rest < 0: break
-                    helper(rest, j+1, res+[candidates[j]])
-
-        helper(target, 0, [])
+            for i in range(index, n):
+                if (i == index or candidates[i] != candidates[i-1]):
+                    temp = target - candidates[i]
+                    if temp < 0:
+                        break
+                    helper(i+1, res+[candidates[i]], temp)
+        helper(0, [], target)
         return result
+```
+```cpp
+class Solution {
+public:
+    vector<int> res = {};
+    vector<vector<int>> combinationSum2(vector<int>& candidates, int target) {
+        sort(candidates.begin(), candidates.end());
+        vector<vector<int>> result;
+        helper(candidates, 0, target, &result);
+        return result;
+    }
+
+    void helper(vector<int> &nums, int index, int target, vector<vector<int>> *result) {
+        if (target == 0) {
+            result->push_back(res);
+            return;
+        }
+        for (int i = index; i < nums.size(); i++) {
+            if (i == index || nums[i] != nums[i-1]){
+                if (target-nums[i] < 0) break;
+                res.push_back(nums[i]);
+                helper(nums, i+1, target-nums[i], result);
+                res.pop_back();
+            }
+        }
+        return;
+    }
+};
 ```
 
 #### [216. 组合总和 III](https://leetcode-cn.com/problems/combination-sum-iii/)
 ```python
 class Solution:
     def combinationSum3(self, k: int, n: int) -> List[List[int]]:
-        result = []
-        upper = 10 if n >= 10 else n+1
-        def helper(i, res):
-            if len(res) == k and sum(res) == n:
+        def helper(res, index, target):
+            if target == 0 and len(res) == k:
                 result.append(res)
                 return
-            # 剪枝上限  upper+1-(k-len(res))
-            for j in range(i,upper+1-(k-len(res))):
-                if len(res) > k-1: break
-                if sum(res)+j > n: break # 有时候剪枝，反而可能更慢
-                helper(j+1, res+[j])
+            if len(res) == k:
+                return
+            for i in range(index, 10):
+                if target-i < 0:
+                    break
+                helper(res+[i], i+1, target-i)
 
-        helper(1, [])
+        result = []
+        helper([], 1, n)
         return result
+```
+```cpp
+class Solution {
+public:
+    vector<vector<int>> result;
+    vector<int> res;
+    int len;
+    vector<vector<int>> combinationSum3(int k, int n) {
+        len = k;
+        helper(1, n);
+        return result;
+    }
+    void helper(int index, int target) {
+        if (res.size() == len and target == 0) {
+            result.push_back(res);
+            return;
+        }
+        if (res.size() == len) return;
+        for (int i = index; i < 10; i++) {
+            if (target - i < 0) break;
+            res.push_back(i);
+            helper(i+1, target-i);
+            res.pop_back();
+        }
+        return;
+    }
+};
 ```
 
 #### [377. 组合总和 Ⅳ](https://leetcode-cn.com/problems/combination-sum-iv/)
@@ -3949,7 +4232,6 @@ class Solution:
     def combinationSum4(self, nums: List[int], target: int) -> int:
         n = len(nums)
         nums.sort()
-        # dp = {}
         @functools.lru_cache(None)
         def helper(res):
             if res == target:
@@ -3959,50 +4241,34 @@ class Solution:
                 val = res + nums[i]
                 if val > target:
                     break
-                # if val in dp:
-                #     ans += dp[val]
-                #     continue
                 ans += helper(val)
-            # dp[res] = ans
             return ans
         return helper(0)
 ```
-
-#### [60. 第k个排列](https://leetcode-cn.com/problems/permutation-sequence/)
-```python
-class Solution:
-    def getPermutation(self, n: int, k: int) -> str:
-        """剪枝  和  continue 的运用，好好体会！ 用剪枝退出递归！"""
-        def get_factorial(n):
-            if n<2: return 1
-            result = 1
-            for i in range(2,n+1):
-                result *= i
-            return result
-
-        nums = ""
-        for i in range(n):
-            nums += str(i+1)
-
-        self.result = ""
-        self.find = False
-        def helper(res, k):
-            if len(res) == n:
-                self.result = res
-                self.find = True
-                return
-            value = get_factorial(n-len(res)-1)
-
-            for i, num in enumerate(nums):
-                if num in res: continue
-                if k > value:
-                    k -= value
-                    continue
-                if not self.find:
-                    helper(res+str(num), k)
-
-        helper("", k)
-        return self.result
+```cpp
+class Solution {
+public:
+    vector<int> res;
+    unordered_map<int, int> dp;
+    int cnt = 0;
+    int combinationSum4(vector<int>& nums, int target) {
+        return helper(nums, target);
+    }
+    int helper(vector<int> &nums, int target) {
+        if (target == 0) {
+            return 1;
+        }
+        if (dp.count(target) != 0) return dp[target];
+        int res = 0;
+        for (int i = 0; i < nums.size(); i++) {
+            if (target - nums[i] >= 0) {
+                res += helper(nums, target-nums[i]);
+            }
+        }
+        dp[target] = res;
+        return dp[target];
+    }
+};
 ```
 
 #### [139. 单词拆分](https://leetcode-cn.com/problems/word-break/)
@@ -4148,6 +4414,74 @@ class Solution:
         return False
 ```
 
+#### [二维矩阵的最短路径]()
+```
+题目：给出n*n矩阵，第二行指定起始,终止坐标，求最短路径，只用 # @ 是障碍物
+7
+0 0 0 3
+*5#++B+
+55.++++
+###$+++
+++$@$++
++++$$++
+A++++##
++++++#+
+```
+```python
+n = int(input())
+si, sj, ei, ej = list(map(int, input().split()))
+grid = []
+for i in range(n):
+    grid.append(input())
+
+oriens = [(1,0),(-1,0),(0,1),(0,-1)]
+vis = [[0] * n for i in range(n)]
+def dfs(i, j):
+    if i == ei and j == ej:
+        return 0
+    res = float("inf")
+    for orien in oriens:
+        nxt_i, nxt_j = i+orien[0], j+orien[1]
+        if nxt_i < 0 or nxt_i >= n or nxt_j < 0 or nxt_j >= n:
+            continue
+        if grid[nxt_i][nxt_j] == '#' or grid[nxt_i][nxt_j] == '@':
+            continue
+        if vis[nxt_i][nxt_j]:
+            continue
+        vis[nxt_i][nxt_j] = 1
+        ans = dfs(nxt_i, nxt_j) + 1
+        # 记得要用vis，退出时设为0
+        vis[nxt_i][nxt_j] = 0
+        res = min(res, ans)
+    return res
+
+from collections import deque
+vis = [[0] * n for i in range(n)]
+def bfs():
+    queue = deque([[si,sj,0]])
+    while queue:
+        i, j, step = queue.pop()
+        for orien in oriens:
+            nxt_i, nxt_j = i + orien[0], j + orien[1]
+            if nxt_i < 0 or nxt_i >= n or nxt_j < 0 or nxt_j >= n:
+                continue
+            if grid[nxt_i][nxt_j] == '#' or grid[nxt_i][nxt_j] == '@':
+                continue
+            if vis[nxt_i][nxt_j]:
+                continue
+            if nxt_i == ei and nxt_j == ej:
+                return step+1
+            vis[nxt_i][nxt_j] = 1
+            queue.appendleft((nxt_i, nxt_j, step+1))
+
+vis[si][sj] = 1
+ans = dfs(si, sj)
+print(ans)
+
+ans = bfs()
+print(ans)
+```
+
 #### [200. 岛屿数量](https://leetcode-cn.com/problems/number-of-islands/)
 ```python
 from collections import deque
@@ -4180,6 +4514,39 @@ class Solution:
                     bfs(i, j)
                     cnt += 1
         return cnt
+```
+```cpp
+class Solution {
+public:
+    int cnt = 0;
+    vector<vector<int>> oriens {{1,0},{-1,0},{0,1},{0,-1}};
+    int numIslands(vector<vector<char>>& grid) {
+        int n = grid.size();
+        if (n == 0) return cnt;
+        int m = grid[0].size();
+        if (m == 0) return cnt;
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                if (grid[i][j] == '1') {
+                    grid[i][j] = '0';
+                    dfs(grid, i, j);
+                    ++cnt;
+                }
+            }
+        }
+        return cnt;
+    }
+    void dfs(vector<vector<char>> &grid, int i, int j) {
+        for (auto &orien : oriens) {
+            int nxt_i = i + orien[0];
+            int nxt_j = j + orien[1];
+            if (nxt_i < 0 || nxt_i >= grid.size() || nxt_j < 0 || nxt_j >= grid[0].size()) continue;
+            if (grid[nxt_i][nxt_j] == '0') continue;
+            grid[nxt_i][nxt_j] = '0';
+            dfs(grid, nxt_i, nxt_j);
+        }
+    }
+};
 ```
 
 #### [1254. 统计封闭岛屿的数目](https://leetcode-cn.com/problems/number-of-closed-islands/)
@@ -4217,6 +4584,47 @@ class Solution:
                     if self.flag:
                         cnt += 1
         return cnt
+```
+```cpp
+class Solution {
+public:
+    int cnt = 0;
+    vector<pair<int, int>> oriens {{1,0},{-1,0},{0,1},{0,-1}};
+    int closedIsland(vector<vector<int>>& grid) {
+        if (grid.empty()) return cnt;
+        int n = grid.size();
+        int m = grid[0].size();
+        // 把边缘的陆地变为水域
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                if ((i == 0 || i == n-1 || j == 0 || j == m-1) && grid[i][j] == 0) {
+                    grid[i][j] = 1;
+                    dfs(grid, i, j);
+                }
+            }
+        }
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                if (grid[i][j] == 0) {
+                    grid[i][0] = 1;
+                    dfs(grid, i, j);
+                    ++cnt;
+                }
+            }
+        }
+        return cnt;
+    }
+    void dfs(vector<vector<int>> &grid, int i, int j) {
+        for (auto &orien : oriens) {
+            int nxt_i = i + orien.first;
+            int nxt_j = j + orien.second;
+            if (nxt_i < 0 || nxt_i >= grid.size() || nxt_j < 0 || nxt_j >= grid[0].size()) continue;
+            if (grid[nxt_i][nxt_j] == 1) continue;
+            grid[nxt_i][nxt_j] = 1;
+            dfs(grid, nxt_i, nxt_j);
+        }
+    }
+};
 ```
 
 #### [130. 被围绕的区域](https://leetcode-cn.com/problems/surrounded-regions/)
@@ -4264,6 +4672,51 @@ class Solution:
                         for item in result:
                             row, col = item
                             board[row][col] = "X"
+```
+
+#### [37. 解数独](https://leetcode-cn.com/problems/sudoku-solver/)
+```python
+class Solution:
+    def solveSudoku(self, board: List[List[str]]) -> None:
+        solver = {}
+        n = len(board)
+        m = len(board[0])
+        rowUsed = [[0] * m for i in range(n)]
+        colUsed = [[0] * m for i in range(n)]
+        boxUsed = [[0] * m for i in range(n)]
+        for i in range(n):
+            for j in range(m):
+                if board[i][j] != '.':
+                    num = int(board[i][j])
+                    rowUsed[i][num-1] = 1
+                    colUsed[j][num-1] = 1
+                    k = i // 3 * 3 + j // 3
+                    boxUsed[k][num-1] = 1
+
+        def helper(i, j):
+            if j == m:
+                return True
+            if i == n:
+                return helper(0, j+1)
+            if board[i][j] != '.':
+                return helper(i+1, j)
+            k = i // 3 * 3 + j // 3
+            for num in range(1, 10):
+                if rowUsed[i][num-1] == 1 or colUsed[j][num-1] == 1 or boxUsed[k][num-1] == 1:
+                    continue
+                rowUsed[i][num-1] = 1
+                colUsed[j][num-1] = 1
+                boxUsed[k][num-1] = 1
+                board[i][j] = str(num)
+                if helper(i+1, j):
+                    return True
+                rowUsed[i][num-1] = 0
+                colUsed[j][num-1] = 0
+                boxUsed[k][num-1] = 0
+                board[i][j] = '.'
+            return False
+
+        helper(0, 0)
 ```
 
 #### [127. 单词接龙](https://leetcode-cn.com/problems/word-ladder/)
@@ -5282,6 +5735,7 @@ def sort_linkedlist(head):
 	dummy.next = prev if prev else dummy1
 	return d_head
 ```
+
 #### [19. 删除链表的倒数第N个节点](https://leetcode-cn.com/problems/remove-nth-node-from-end-of-list/)
 ```python
 class Solution:
@@ -5919,6 +6373,20 @@ class Solution:
             return True
         return helper(root, -float("inf"), float("inf"))
 ```
+```cpp
+class Solution {
+public:
+    bool isValidBST(TreeNode* root) {
+        return helper(root, LONG_MAX, LONG_MIN);
+    }
+
+    bool helper(TreeNode* root, long long up, long long low){
+        if (root == nullptr) return true;
+        if (root->val <= low || root->val >= up) return false;
+        return helper(root->left, root->val, low) && helper(root->right, up, root->val);
+    }
+};
+```
 
 #### [100. 相同的树](https://leetcode-cn.com/problems/same-tree/)
 同时遍历两个节点，不相同return False 退出递归，相同return True,继续检查
@@ -6085,6 +6553,35 @@ class Solution:
                 helper(node.right, res+next_sign+str(node.right.val))
         helper(root, str(root.val))
         return paths
+```
+```cpp
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    vector<string> result;
+    vector<string> binaryTreePaths(TreeNode* root) {
+        if (root == nullptr) return result;
+        helper(root, "");
+        return result;
+    }
+
+    void helper(TreeNode *node, string s){
+        if (node->left == nullptr && node->right == nullptr){
+            result.push_back(s + to_string(node->val));
+            return;
+        }
+        if (node->left != nullptr) helper(node->left, s + to_string(node->val) + "->");
+        if (node->right != nullptr) helper(node->right, s + to_string(node->val) + "->");
+    }
+};
 ```
 
 #### [112. 路径总和](https://leetcode-cn.com/problems/path-sum/)
@@ -7106,6 +7603,59 @@ class Solution:
                 sift_down(heap, 1, k+1)
         return [item[0] for item in heap[1:]]
 ```
+```cpp
+class Solution {
+public:
+    void sift_up(vector<vector<int>> &heap, int chlid){
+        vector<int> val = heap[chlid];
+        while (chlid >> 1 > 0 && val[1] < heap[chlid>>1][1]){
+            heap[chlid] = heap[chlid>>1];
+            chlid >>= 1;
+        heap[chlid] = val;
+        }
+    }
+
+    void sift_down(vector<vector<int>> &heap, int root, int k){
+        vector<int> val = heap[root];
+        while (root << 1 < k){
+            int chlid = root << 1;
+            // 注意这里位运算优先级要加括号
+            if ((chlid|1) < k && heap[chlid|1][1] < heap[chlid][1]) chlid |= 1;
+            if (heap[chlid][1] < val[1]){
+                heap[root] = heap[chlid];
+                root = chlid;
+            }
+            else break;
+        }
+        heap[root] = val;
+    }
+
+    vector<int> topKFrequent(vector<int>& nums, int k) {
+        unordered_map<int, int> stat;
+        for (auto &num : nums) stat[num]++;
+        vector<vector<int>> vec_stat;
+        for (auto &item : stat) vec_stat.push_back({item.first, item.second});
+
+        vector<vector<int>> heap;
+        heap.push_back({0, 0});
+        for (int i = 0; i < k; i++){
+            heap.push_back(vec_stat[i]);
+            sift_up(heap, heap.size()-1);
+        }
+
+        for (int i = k; i < vec_stat.size(); i++){
+            if (vec_stat[i][1] > heap[1][1]){
+                heap[1] = vec_stat[i];
+                sift_down(heap, 1, k+1);
+            }
+        }
+
+        vector<int> result;
+        for (int i = 1; i < k+1; i++) result.push_back(heap[i][0]);
+        return result;
+    }
+};
+```
 
 ```python
 heapq 构造小顶堆, 若从大到小输出, heappush(-val)
@@ -7417,7 +7967,8 @@ class Solution:
                 max_step = max(max_step, nxt)
                 if max_step >= n-1:
                     return True
-        return False
+            else:
+              return False
 ```
 
 #### [45. 跳跃游戏 II](https://leetcode-cn.com/problems/jump-game-ii/)
@@ -7840,6 +8391,46 @@ class Solution:
                 root = root.right
         return result
 ```
+```cpp
+class Solution {
+public:
+    vector<int> inorderTraversal(TreeNode* root) {
+        vector<int> result;
+        helper(root, result);
+        return result;
+    }
+    void helper(TreeNode *node, vector<int> &result){
+        if (!node) return;
+        helper(node->left, result);
+        result.push_back(node->val);
+        helper(node->right, result);
+        return;
+    }
+};
+```
+```cpp
+class Solution {
+public:
+    vector<int> inorderTraversal(TreeNode* root) {
+        stack<TreeNode*> stk;
+        vector<int> result;
+        while (root || stk.size() > 0){
+            while (root){
+                stk.push(root);
+                root = root->left;
+            }
+            if (stk.size()){
+                root = stk.top();
+                result.push_back(root->val);
+                root = root->right;
+                stk.pop();
+            }
+        }
+        return result;
+    }
+};
+```
+
 
 #### [144. 二叉树的前序遍历](https://leetcode-cn.com/problems/binary-tree-preorder-traversal/)
 输出顺序：根 -> 左子节点 -> 右子节点. dfs
@@ -7877,9 +8468,48 @@ class Solution:
         return result
 ```
 
+```cpp
+class Solution {
+public:
+    vector<int> preorderTraversal(TreeNode* root) {
+        vector<int> result;
+        helper(root, result);
+        return result;
+    }
+    void helper(TreeNode *node, vector<int> &result){
+        if (!node) return;
+        result.push_back(node->val);
+        helper(node->left, result);
+        helper(node->right, result);
+        return;
+    }
+};
+```
+```cpp
+class Solution {
+public:
+    vector<int> preorderTraversal(TreeNode* root) {
+        stack<TreeNode*> stk;
+        vector<int> result;
+        while (root || stk.size()){
+            while (root){
+                result.push_back(root->val);
+                stk.push(root);
+                root = root->left;
+            }
+            if (stk.size() > 0){
+                root = stk.top();
+                root = root->right;
+                stk.pop();
+            }
+        }
+        return result;
+    }
+};
+```
+
 #### [145. 二叉树的后序遍历](https://leetcode-cn.com/problems/binary-tree-postorder-traversal/)
 输出顺序：左后 -> 右后 -> 根
-
 ```python
 class Solution:
     def postorderTraversal(self, root: TreeNode) -> List[int]:
@@ -7893,7 +8523,6 @@ class Solution:
         traversal(root, res)
         return res
 ```
-
 ```python
 class Solution:
     def postorderTraversal(self, root: TreeNode) -> List[int]:
@@ -7913,9 +8542,34 @@ class Solution:
                 result.append(stack.pop().val)
         return result
 ```
-
+```cpp
+class Solution {
+public:
+    vector<int> postorderTraversal(TreeNode* root) {
+        vector<int> result;
+        if (!root) return result;
+        stack<TreeNode*> stk;
+        stk.push(root);
+        while (stk.size()){
+            TreeNode *temp = stk.top();
+            stk.pop();
+            if (temp){
+                stk.push(temp);
+                stk.push(nullptr);
+                if (temp->right) stk.push(temp->right);
+                if (temp->left) stk.push(temp->left);
+            }
+            else{
+                result.push_back(stk.top()->val);
+                stk.pop();
+            }
+        }
+        return result;
+    }
+};
+```
 #### [102. 二叉树的层次遍历](https://leetcode-cn.com/problems/binary-tree-level-order-traversal/)
-输出顺序：按层级从左到右. bfs
+输出顺序：按层级从左到右. bfs。 层序遍历
 递归
 ```python
 class Solution:
@@ -7950,6 +8604,31 @@ class Solution:
                     queue.appendleft(top.right)
             level += 1
         return result
+```
+```cpp
+class Solution {
+public:
+    vector<vector<int>> levelOrder(TreeNode* root) {
+        vector<vector<int>> result;
+        if (!root) return result;
+        std::queue<TreeNode*> que;
+        que.push(root);
+        while (que.size()){
+            vector<int> res;
+            int size = que.size();
+            // 注意这里不能像python一样用for (len(que))
+            while (size--){
+                TreeNode *top = que.front();
+                res.push_back(top->val);
+                que.pop();
+                if (top->left) que.push(top->left);
+                if (top->right) que.push(top->right);
+            }
+            result.push_back(res);
+        }
+        return result;
+    }
+};
 ```
 
 #### [542. 01 矩阵](https://leetcode-cn.com/problems/01-matrix/)
@@ -9311,6 +9990,41 @@ class Solution:
                         return True
         return False
 ```
+```cpp
+class Solution {
+public:
+    int n, m;
+    vector<vector<int>> oriens {{1,0},{-1,0},{0,-1},{0,1}};
+    bool exist(vector<vector<char>>& board, string word) {
+        this->n = board.size();
+        this->m = board[0].size();
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                if (board[i][j] == word[0]) {
+                    board[i][j] = ' ';
+                    if (helper(board, word, 1, i, j)) return true;
+                    board[i][j] = word[0];
+                }
+            }
+        }
+        return false;
+    }
+    bool helper(vector<vector<char>> &board, string &word, int index, int i, int j) {
+        if (index == word.size()) return true;
+        for (auto &orien : oriens) {
+            int nxt_i = i + orien[0];
+            int nxt_j = j + orien[1];
+            if (nxt_i < 0 || nxt_i >= n) continue;
+            if (nxt_j < 0 || nxt_j >= m) continue;
+            if (word[index] != board[nxt_i][nxt_j]) continue;
+            board[nxt_i][nxt_j] = ' ';
+            if (helper(board, word, index+1, nxt_i, nxt_j)) return true;
+            board[nxt_i][nxt_j] = word[index];
+        }
+        return false;
+    }
+};
+```
 
 #### [212. 单词搜索 II](https://leetcode-cn.com/problems/word-search-ii/)
 这道题整体思路是 1. 构建words的字典树 trie  2. 在board上深度优先遍历
@@ -10575,6 +11289,38 @@ class Solution:
         else:
             return (helper(nums1, nums2, k1) + helper(nums1, nums2, k2)) / 2
 ```
+c++ 用 vector<>::iterator or vector<>::const_iterator
+```cpp
+class Solution {
+public:
+    double findMedianSortedArrays(vector<int>& nums1, vector<int>& nums2) {
+        int k1 = (nums1.size() + nums2.size() + 1) / 2;
+        int k2 = (nums1.size() + nums2.size() + 2) / 2;
+        if (k1 == k2) return helper(nums1, nums2, k1);
+        else return (helper(nums1, nums2, k1) + helper(nums1, nums2, k2)) / 2.0;
+    }
+
+    int helper(vector<int> &nums1, vector<int> &nums2, int k){
+        if (nums2.size() == 0) return nums1[k-1];
+        if (nums1.size() < nums2.size()) return helper(nums2, nums1, k);
+        if (k == 1) return min(nums1[0], nums2[0]);
+        // vector.size() 是 unsigned long 类型
+        int t = min(k/2, int(nums2.size()));
+        if (nums1[t-1] < nums2[t-1]){
+            vector<int>::const_iterator start = nums1.begin();
+            vector<int>::const_iterator end = nums1.end();
+            vector<int> cut_nums(start+t, end);
+            return helper(cut_nums, nums2, k-t);
+        }
+        else{
+            vector<int>::const_iterator start = nums2.begin();
+            vector<int>::const_iterator end = nums2.end();
+            vector<int> cut_nums(start+t, end);
+            return helper(nums1, cut_nums, k-t);
+        }
+    }
+};
+```
 
 #### [剑指 Offer 51. 数组中的逆序对](https://leetcode-cn.com/problems/shu-zu-zhong-de-ni-xu-dui-lcof/)
 ```python
@@ -11507,6 +12253,17 @@ public:
     }
 };
 ```
+#### [剑指 Offer 15. 二进制中1的个数](https://leetcode-cn.com/problems/er-jin-zhi-zhong-1de-ge-shu-lcof/)
+```python
+class Solution:
+    def hammingWeight(self, n: int) -> int:
+        res = 0
+        while n:
+            # 消除最右端的1
+            n = (n-1) & n
+            res += 1
+        return res
+```
 
 #### [剑指 Offer 16. 数值的整数次方](https://leetcode-cn.com/problems/shu-zhi-de-zheng-shu-ci-fang-lcof/)
 快速幂 O(log(n))
@@ -11538,6 +12295,25 @@ class Solution:
                 break
             dummy = dummy.next
         return d_head.next
+```
+
+```cpp
+class Solution {
+public:
+    ListNode* deleteNode(ListNode* head, int val) {
+        ListNode *dummy = new ListNode(-1);
+        ListNode *d_head = dummy;
+        dummy->next = head;
+        while (dummy->next){
+            if (dummy->next->val == val){
+                dummy->next = dummy->next->next;
+                break;
+            }
+            dummy = dummy->next;
+        }
+        return d_head->next;
+    }
+};
 ```
 
 #### [剑指 Offer 19. 正则表达式匹配](https://leetcode-cn.com/problems/zheng-ze-biao-da-shi-pi-pei-lcof/)
@@ -11637,6 +12413,38 @@ class Solution:
         dummy.next = l1 if l1 else l2
         return d_head.next
 ```
+```cpp
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode(int x) : val(x), next(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
+        // dummy 与 d_head 指向同一个内存地址对象
+        ListNode *dummy = new ListNode(-1);
+        ListNode *d_head = dummy;
+        // dummy不断向前移动，建立链表，d_head还停留在初始位置
+        while (l1 && l2){
+            if (l1->val < l2->val){
+                dummy->next = l1;
+                l1 = l1->next;
+            }
+            else{
+                dummy->next = l2;
+                l2 = l2->next;
+            }
+            dummy = dummy->next;
+        }
+        dummy->next = l1 != nullptr? l1 : l2;
+        return d_head->next;
+    }
+};
+```
 
 #### [剑指 Offer 26. 树的子结构](https://leetcode-cn.com/problems/shu-de-zi-jie-gou-lcof/)
 ```python
@@ -11668,6 +12476,39 @@ class Solution:
         return helper(A)
 ```
 
+```cpp
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    bool isSubStructure(TreeNode* A, TreeNode* B) {
+        if (!B) return false;
+        return helper(A, B);
+    }
+    bool helper(TreeNode *node, TreeNode *B) {
+        if (!node) return false;
+        if (node->val == B->val && isSub(node, B)) return true;
+        if (helper(node->left, B) || helper(node->right, B)) return true;
+        return false;
+    }
+
+    bool isSub(TreeNode *A, TreeNode *B) {
+        if (!B) return true;
+        if (!A) return false;
+        if (A->val != B->val) return false;
+        if (!isSub(A->left, B->left) || !isSub(A->right, B->right)) return false;
+        return true;
+    }
+};
+```
+
 #### [剑指 Offer 27. 二叉树的镜像](https://leetcode-cn.com/problems/er-cha-shu-de-jing-xiang-lcof/)
 ```python
 class Solution:
@@ -11690,6 +12531,21 @@ class Solution:
                 stack.append(node.right)
         return root
 ```
+```cpp
+class Solution {
+public:
+    TreeNode* mirrorTree(TreeNode* root) {
+        helper(root);
+        return root;
+    }
+    void helper(TreeNode *root) {
+        if (!root) return;
+        helper(root->left);
+        helper(root->right);
+        swap(root->left, root->right);
+    }
+};
+```
 
 #### [剑指 Offer 28. 对称的二叉树](https://leetcode-cn.com/problems/dui-cheng-de-er-cha-shu-lcof/)
 ```python
@@ -11709,6 +12565,48 @@ class Solution:
             return True
 
         return helper(root, root)
+```
+```cpp
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
+
+class Solution {
+public:
+    TreeNode* mirrorTree(TreeNode* root) {
+        if (!root) return nullptr;
+        stack<TreeNode*> stk;
+        stk.push(root);
+        while (stk.size() > 0) {
+            TreeNode *temp = stk.top();
+            stk.pop();
+            if (temp) {
+                stk.push(temp);
+                stk.push(nullptr);
+                if (temp->right) stk.push(temp->right);
+                if (temp->left) stk.push(temp->left);
+            }
+            else {
+                TreeNode *top = stk.top();
+                stk.pop();
+                swap(top->left, top->right);
+            }
+        }
+        return root;
+    }
+    void helper(TreeNode *root) {
+        if (!root) return;
+        helper(root->left);
+        helper(root->right);
+        swap(root->left, root->right);
+    }
+};
 ```
 
 #### [剑指 Offer 29. 顺时针打印矩阵](https://leetcode-cn.com/problems/shun-shi-zhen-da-yin-ju-zhen-lcof/)
@@ -11740,15 +12638,47 @@ class Solution:
             if l == r: break
         return result
 ```
+```cpp
+class Solution {
+public:
+    vector<int> spiralOrder(vector<vector<int>>& matrix) {
+        vector<int> result;
+        int n = matrix.size();
+        if (n == 0) return result;
+        int m = matrix[0].size();
+        if (m == 0) return result;
+        int l, r, t, b;
+        l = 0, r = m, t = 0, b = n;
+        result = vector<int> (m*n, 0);
+        int cnt = 0;
+        while (cnt < m*n) {
+            for (int j = l; j < r; j++) {
+                result[cnt++] = matrix[t][j];
+            }
+            if (++t == b) break;
+            for (int i = t; i < b; i++) {
+                result[cnt++] = matrix[i][r-1];
+            }
+            if (--r == l) break;
+            for (int j = r-1; j >= l; j--) {
+                result[cnt++] = matrix[b-1][j];
+            }
+            if (--b == t) break;
+            for (int i = b-1; i >= t; i--) {
+                result[cnt++] = matrix[i][l];
+            }
+            if (++l == r) break;
+        }
+        return result;
+    }
+};
+```
 
 #### [剑指 Offer 30. 包含min函数的栈](https://leetcode-cn.com/problems/bao-han-minhan-shu-de-zhan-lcof/)
 使用一个非递增的辅助栈,x小于栈顶入栈,pop元素为辅助栈顶元素时,辅助栈也pop()
 ```python
 class MinStack:
     def __init__(self):
-        """
-        initialize your data structure here.
-        """
         self.stack = []
         self.helper = []
 
@@ -11766,6 +12696,28 @@ class MinStack:
 
     def min(self) -> int:
         return self.helper[-1]
+```
+```cpp
+class MinStack {
+public:
+    stack<int> stk1, stk2;
+    MinStack() {}
+    void push(int x) {
+        stk1.push(x);
+        if (stk2.size() == 0 || x <= stk2.top()) stk2.push(x);
+    }
+    void pop() {
+        int top = stk1.top();
+        stk1.pop();
+        if (top == stk2.top()) stk2.pop();
+    }
+    int top() {
+        return stk1.top();
+    }
+    int min() {
+        return stk2.top();
+    }
+};
 ```
 
 #### [剑指 Offer 59 - II. 队列的最大值](https://leetcode-cn.com/problems/dui-lie-de-zui-da-zhi-lcof/)
@@ -11806,10 +12758,27 @@ class Solution:
                 p += 1
         return True if p == len(popped) else False
 ```
+```cpp
+class Solution {
+public:
+    bool validateStackSequences(vector<int>& pushed, vector<int>& popped) {
+        stack<int> stk;
+        int p = 0;
+        for (int i = 0; i < pushed.size(); i++) {
+            stk.emplace(pushed[i]);
+            while (stk.size() > 0 && p < popped.size() && stk.top() == popped[p]) {
+                stk.pop();
+                p++;
+            }
+        }
+        return stk.size() == 0;
+    }
+};
+```
 
 #### [剑指 Offer 33. 二叉搜索树的后序遍历序列](https://leetcode-cn.com/problems/er-cha-sou-suo-shu-de-hou-xu-bian-li-xu-lie-lcof/)
-```输入一个整数数组，判断该数组是不是某二叉搜索树的后序遍历结果
-```
+输入一个整数数组，判断该数组是不是某二叉搜索树的后序遍历结果
+
 ```python
 class Solution:
     def verifyPostorder(self, postorder: List[int]) -> bool:
@@ -11836,6 +12805,24 @@ class Solution:
         #         root = stack.pop()
         #     stack.append(postorder[i])
         # return True
+```
+一定要注意边界！后续遍历根节点是right，左子树[left,m-1]，右子树[m,right-1]
+```cpp
+class Solution {
+public:
+    bool verifyPostorder(vector<int>& postorder) {
+        return helper(postorder, 0, postorder.size()-1);
+    }
+    bool helper(vector<int> &postorder, int left, int right) {
+        if (left >= right) return true;
+        int p = left;
+        while (postorder[p] < postorder[right]) p++;
+        int m = p;
+        while (postorder[p] > postorder[right]) p++;
+        if (p == right) return helper(postorder, left, m-1) && helper(postorder, m, right-1);
+        else return false;
+    }
+};
 ```
 二叉搜索树的前序遍历序列
 ```python
@@ -11877,6 +12864,30 @@ class Solution:
         helper(root, [], 0)
         return result
 ```
+```cpp
+class Solution {
+public:
+    vector<int> path;
+    vector<vector<int>> pathSum(TreeNode* root, int sum) {
+        vector<vector<int>> result;
+        helper(root, sum, &result);
+        return result;
+    }
+
+    void helper(TreeNode *root, int sum, vector<vector<int>> *result){
+        if (!root) return;
+        path.emplace_back(root->val);
+        if (sum - root->val == 0 && !root->left && !root->right) {
+            result->emplace_back(path);
+            path.pop_back();
+            return;
+        }
+        helper(root->left, sum - root->val, result);
+        helper(root->right, sum - root->val, result);
+        path.pop_back();
+    }
+};
+```
 
 #### [剑指 Offer 35. 复杂链表的复制](https://leetcode-cn.com/problems/fu-za-lian-biao-de-fu-zhi-lcof/)
 链表复制,有随机指针
@@ -11904,6 +12915,39 @@ class Solution:
             return copy
         return dfs(head)
 ```
+```cpp
+/*
+// Definition for a Node.
+class Node {
+public:
+    int val;
+    Node* next;
+    Node* random;
+
+    Node(int _val) {
+        val = _val;
+        next = NULL;
+        random = NULL;
+    }
+};
+*/
+class Solution {
+public:
+    unordered_map<Node*, Node*> vis;
+    Node* copyRandomList(Node* head) {
+        return helper(head);
+    }
+    Node* helper(Node *node){
+        if (!node) return nullptr;
+        if (vis.count(node)) return vis[node];
+        auto *copy = new Node(node->val);
+        vis[node] = copy;
+        copy->next = helper(node->next);
+        copy->random = helper(node->random);
+        return copy;
+    }
+};
+```
 
 字节面试题 [133. 克隆图](https://leetcode-cn.com/problems/clone-graph/)
 ```python
@@ -11922,7 +12966,7 @@ def clone_graph(node):
         return copy
     return dfs(node)
 ```
-字节面试题 空间O(1) 数组长度<n, 数组中每个数字0<=ai<n, 统计每个数字出现的次数
+字节面试题 空间O(1) 数组长度小于n, 数组中每个数字ai属于[0,n), 统计每个数字出现的次数
 ```python
 def cnt_num(nums):
 	p = 0
@@ -11944,6 +12988,7 @@ def cnt_num(nums):
 			p += 1
 	print(nums)
 ```
+
 #### [剑指 Offer 36. 二叉搜索树与双向链表](https://leetcode-cn.com/problems/er-cha-sou-suo-shu-yu-shuang-xiang-lian-biao-lcof/)
 ```python
 class Solution:
@@ -11964,6 +13009,31 @@ class Solution:
         helper(root)
         self.head.left, self.prev.right = self.prev, self.head
         return self.head
+```
+```cpp
+class Solution {
+public:
+    Node *prev = nullptr;
+    Node *head = nullptr;
+    Node* treeToDoublyList(Node* root) {
+        if (!root) return root;
+        helper(root);
+        head->left = prev;
+        prev->right = head;
+        return head;
+    }
+    void helper(Node *root) {
+        if (!root) return;
+        helper(root->left);
+        if (!head) head = root;
+        if (prev) {
+            root->left = prev;
+            prev->right = root;
+        }
+        prev = root;
+        helper(root->right);
+    }
+};
 ```
 
 #### [剑指 Offer 38. 字符串的排列](https://leetcode-cn.com/problems/zi-fu-chuan-de-pai-lie-lcof/)
@@ -12061,7 +13131,8 @@ class Solution:
 ```
 
 #### [剑指 Offer 49. 丑数](https://leetcode-cn.com/problems/chou-shu-lcof/)
-```只包含质因子 2、3 和 5 的数称作丑数（Ugly Number）。求按从小到大的顺序的第 n 个丑数。
+```
+只包含质因子 2、3 和 5 的数称作丑数（Ugly Number）。求按从小到大的顺序的第 n 个丑数。
 ```
 ```python
 class Solution:
@@ -12332,7 +13403,7 @@ def knuth_shuffle(list):
 ```
 
 
-### C++ 输入输出
+### C++输入输出
 cin, scanf 会忽略空格，回车等间隔符。
 字符串使用cin， cout。
 #### [读取多行数字](https://ac.nowcoder.com/acm/contest/5649/G)
@@ -12378,6 +13449,25 @@ int main(){
         }
         cout << s_list[n-1] << endl;
         s_list.clear();
+    }
+    return 0;
+}
+```
+#### [读取二维str](https://www.nowcoder.com/questionTerminal/e3fc4f8094964a589735d640424b6a47?f=discussion)
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+char matrix[110][110];
+int main() {
+    int n, m;
+    scanf("%d %d", &m, &n);
+    printf("%d %d\n", m, n);
+    for (int i = 0; i<m; i++) scanf("%s", matrix[i]);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            cout << matrix[i][j];
+        }
+        cout << '\n';
     }
     return 0;
 }
