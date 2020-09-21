@@ -739,6 +739,36 @@ class Solution:
         helper([], count)
         return results
 ```
+```cpp
+class Solution {
+public:
+    unordered_map<int, int> stat;
+    vector<vector<int>> result;
+    vector<int> res;
+    vector<vector<int>> permuteUnique(vector<int>& nums) {
+        for (auto &item : nums) stat[item] += 1;
+        sort(nums.begin(), nums.end());
+        helper(nums);
+        return result;
+    }
+    void helper(vector<int> &nums) {
+        if (res.size() == nums.size()) {
+            result.emplace_back(res);
+            return;
+        }
+        for (int i = 0; i < nums.size(); ++i) {
+            if (stat[nums[i]] == 0) continue;
+            if (i > 0 && nums[i] == nums[i-1]) continue;
+            --stat[nums[i]];
+            res.emplace_back(nums[i]);
+            helper(nums);
+            res.pop_back();
+            ++stat[nums[i]];
+        }
+        return;
+    }
+};
+```
 
 #### [60. 第k个排列](https://leetcode-cn.com/problems/permutation-sequence/)
 直接去找第k个排列，剪枝。提前计算好剩余数字对应排列数，然后有剩余就都跳过。
@@ -1934,6 +1964,51 @@ class Solution:
                 res = max(res, idx + 1 - state[cur])
         return res
 ```
+#### [724. 寻找数组的中心索引](https://leetcode-cn.com/problems/find-pivot-index/)
+巧用前缀和求中心索引
+```cpp
+class Solution {
+public:
+    int pivotIndex(vector<int>& nums) {
+        int n = nums.size();
+        int prefix[n+1];
+        memset(prefix, 0, sizeof(prefix));
+        for (int i = 0; i < n; ++i) {
+            prefix[i+1] = prefix[i] + nums[i];
+        }
+        int sum = prefix[n];
+        for (int i = 0; i < n; ++i) {
+            int right_sum = sum - prefix[i+1];
+            int left_sum = prefix[i];
+            if (right_sum == left_sum) return i;
+        }
+        return -1;
+    }
+};
+```
+#### [554. 砖墙](https://leetcode-cn.com/problems/brick-wall/)
+转化为前缀和后去统计
+```cpp
+class Solution {
+public:
+    int leastBricks(vector<vector<int>>& wall) {
+        unordered_map<int, int> stat;
+        for (int i = 0; i < wall.size(); ++i) {
+            for (int j = 0; j < wall[i].size()-1; ++j) {
+                if (j > 0) wall[i][j] += wall[i][j-1];
+                stat[wall[i][j]] += 1;
+            }
+        }
+        int cnt = 0;
+        for (auto iter = stat.begin(); iter != stat.end(); ++iter) {
+            if (iter->second > cnt) {
+                cnt = iter->second;
+            }
+        }
+        return wall.size() - cnt;
+    }
+};
+```
 
 ### 树
 #### 建树
@@ -2837,7 +2912,7 @@ class Solution:
                     cnt = 1
         return ans
 ```
-#### [164. 最大间距](https://leetcode-cn.com/problems/maximum-gap/)
+
 #### [330. 按要求补齐数组](https://leetcode-cn.com/problems/patching-array/)
 贪心，题解很巧妙
 https://leetcode-cn.com/problems/patching-array/solution/an-yao-qiu-bu-qi-shu-zu-by-leetcode/
@@ -5753,6 +5828,26 @@ class Solution:
         slow.next = slow.next.next
         return d_head.next
 ```
+```cpp
+class Solution {
+public:
+    ListNode* removeNthFromEnd(ListNode* head, int n) {
+        ListNode *curr = head;
+        while (n--) {
+            curr = curr->next;
+        }
+        ListNode *prev = new ListNode(-1);
+        ListNode *d_head = prev;
+        prev->next = head;
+        while (curr) {
+            curr = curr->next;
+            prev = prev->next;
+        }
+        prev->next = prev->next->next;
+        return d_head->next;
+    }
+};
+```
 
 #### [83. 删除排序链表中的重复元素](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list/)
 删除排序链表中重复的节点,保留第一次出现的
@@ -6354,6 +6449,27 @@ class Solution:
         # bfs(root)
         dfs(root, level=0)
         return result
+```
+#### [404. 左叶子之和](https://leetcode-cn.com/problems/sum-of-left-leaves/)
+```cpp
+class Solution {
+public:
+    int sum = 0;
+    int sumOfLeftLeaves(TreeNode* root) {
+        if (!root) return sum;
+        helper(root, false);
+        return sum;
+    }
+    void helper(TreeNode *root, bool is_left) {
+        if (!root->left && !root->right && is_left) {
+            sum += root->val;
+            return;
+        }
+        if (root->left) helper(root->left, true);
+        if (root->right) helper(root->right, false);
+        return;
+    }
+};
 ```
 
 #### [98. 验证二叉搜索树](https://leetcode-cn.com/problems/validate-binary-search-tree/)
@@ -8631,6 +8747,60 @@ public:
 };
 ```
 
+#### [498. 对角线遍历](https://leetcode-cn.com/problems/diagonal-traverse/)
+```cpp
+class Solution {
+public:
+    vector<int> findDiagonalOrder(vector<vector<int>>& matrix) {
+        int flag = -1;
+        vector<int> result;
+        if (matrix.size() == 0 || matrix[0].size() == 0) return result;
+        queue<vector<int>> que;
+        vector<int> top (2, 0);
+        vector<vector<int>> vis(matrix.size(), vector<int> (matrix[0].size(), 0));
+        vis[0][0] = 1;
+        que.push(top);
+        int i, j, l_nxt_i, l_nxt_j, r_nxt_i, r_nxt_j;
+        while (que.size() > 0) {
+            int size = que.size();
+            vector<int> res;
+            while (size--) {
+                top = que.front();
+                i = top[0], j = top[1];
+                que.pop();
+                res.emplace_back(matrix[i][j]);
+                l_nxt_i = i, l_nxt_j = j + 1;
+                r_nxt_i = i + 1, r_nxt_j = j;
+                if (l_nxt_i >= 0 && l_nxt_i < matrix.size() && l_nxt_j >= 0 && l_nxt_j < matrix[0].size()) {
+                    if (!vis[l_nxt_i][l_nxt_j]) {
+                        vis[l_nxt_i][l_nxt_j] = 1;
+                        que.push({l_nxt_i, l_nxt_j});
+                    }
+                }
+                if (r_nxt_i >= 0 && r_nxt_i < matrix.size() && r_nxt_j >= 0 && r_nxt_j < matrix[0].size()) {
+                    if (!vis[r_nxt_i][r_nxt_j]) {
+                        vis[r_nxt_i][r_nxt_j] = 1;
+                        que.push({r_nxt_i, r_nxt_j});
+                    }
+                }
+            }
+            if (flag == 1) {
+                for (int k = 0; k < res.size(); ++k) {
+                    result.emplace_back(res[k]);
+                }
+            }
+            else {
+                for (int k = res.size() - 1; k >= 0; --k) {
+                    result.emplace_back(res[k]);
+                }
+            }
+            flag *= -1;
+        }
+        return result;
+    }
+};
+```
+
 #### [542. 01 矩阵](https://leetcode-cn.com/problems/01-matrix/)
 ```python
 from collections import deque
@@ -9148,6 +9318,57 @@ class Solution:
         return unionfind.cnt == 1
 ```
 
+#### [743. 网络延迟时间](https://leetcode-cn.com/problems/network-delay-time/)
+有权边的单源最短路径问题 用 dijkstra. 配合小顶锥 时间复杂度 O(ElogE), 使用斐波那契堆可进一步下降为 O(VlogV)
+```python
+from collections import defaultdict
+import heapq
+class Solution:
+    def networkDelayTime(self, times: List[List[int]], N: int, K: int) -> int:
+        """dijkstra -> 有权边的bfs, 该实现 O(ElogE). E 为单个节点的最大边数"""
+        adjacency = defaultdict(list)
+        for u, v, w in times:
+            adjacency[u].append((v, w))
+        heap = [(0, K)]
+        dist = [float("inf")] * N
+        while heap:
+            d0, curr = heapq.heappop(heap)
+            if dist[curr-1] != float("inf"):
+                continue
+            dist[curr-1] = d0
+            for nxt, d1 in adjacency[curr]:
+                if dist[nxt-1] != float("inf"):
+                    continue
+                heapq.heappush(heap, (d0+d1, nxt))
+        ans = max(dist)
+        return ans if ans != float("inf") else -1
+```
+也可以用Floyd-多源最短路径算法
+4行动态规划核心代码，可求解任意两点间的最短路径
+考虑示例路径: 1-2-3-4-5 如果是1到5的最短路径，则 1-2-3 必然是1到3的最短路径
+如果一条最短路必须要经过点k，那么i->k的最短路加上k->j的最短路一定是i->j 经过k的最短路，因此，最优子结构可以保证。
+Floyd算法的本质是DP，而k是DP的阶段，因此要写最外面。
+```python
+class Solution:
+    def networkDelayTime(self, times: List[List[int]], N: int, K: int) -> int:
+        dp = [[float("inf")] * N for i in range(N)]
+        for i in range(N):
+            dp[i][i] = 0
+        for u, v, t in times:
+            dp[u-1][v-1] = t
+        for k in range(N):
+            for i in range(N):
+                for j in range(N):
+                    dp[i][j] = min(dp[i][j], dp[i][k]+dp[k][j])
+        # print(dp)
+        res = 0
+        for item in dp[K-1]:
+            if item == float("inf"):
+                return -1
+            res = max(res, item)
+        return res
+```
+
 #### [1042. 不邻接植花](https://leetcode-cn.com/problems/flower-planting-with-no-adjacent)
 ```python
 class Solution:
@@ -9370,7 +9591,7 @@ O(nlog(n)), 最坏 O(n^2)
 一般常用的方法是，对每一个数列都取一次中位数(O(n))，这样总体的快排时间复杂度仍为O(nlogn)。
 更为简化的方法是，取头、中、尾的中位数(O(1))作为pivot
 ```
-1. 通过partition操作,使得pivot左边数均<pivot,右边>=pivot
+1. 通过partition操作,使得pivot左边数均 < pivot, 右边 >= pivot
 2. 递归的对pivot左边,右边分别partition
 3. 递归退出条件是l>=r
 ```python
@@ -9648,7 +9869,7 @@ class Solution:
             loc = (num - min_num) // gap
             bucket[loc][0] = min(num, bucket[loc][0])
             bucket[loc][1] = max(num, bucket[loc][1])
-        # 遍历整个桶
+        # 遍历所有桶
         pre_min = min_num
         res = -float("inf")
         for l, r in bucket:
@@ -9658,6 +9879,27 @@ class Solution:
             pre_min = r
         res = max(res, max_num - pre_min)
         return res
+```
+和上一题一样，巧用桶排序。保证桶的大小是t+1(首尾差不大于t)，遍历所有元素，对于当前元素，将要放入的桶，如果已经有数字了，return True，检测两侧桶，如果元素插值<=t，return True。而index的差值不大于k如何保证呢？如果当前元素index超过k了，则将index为i-k的元素删除。用字典实现桶的维护，特殊的是，单个桶内最多只有一个元素。
+#### [220. 存在重复元素 III](https://leetcode-cn.com/problems/contains-duplicate-iii/)
+```python
+class Solution:
+    def containsNearbyAlmostDuplicate(self, nums: List[int], k: int, t: int) -> bool:
+        n = len(nums)
+        buckets = {}
+        size = t + 1
+        for i in range(n):
+            index = nums[i] // size
+            if index in buckets:
+                return True
+            buckets[index] = nums[i]
+            if index-1 in buckets and abs(buckets[index-1] - nums[i]) <= t:
+                return True
+            if index+1 in buckets and abs(buckets[index+1] - nums[i]) <= t:
+                return True
+            if i - k >= 0:
+                buckets.pop(nums[i-k]//size)
+        return False
 ```
 
 ## 二分查找
@@ -13265,7 +13507,20 @@ class Solution:
 ```
 
 #### [剑指 Offer 65. 不用加减乘除做加法](https://leetcode-cn.com/problems/bu-yong-jia-jian-cheng-chu-zuo-jia-fa-lcof/)
-不考虑进位求和的话，可以直接采用异或运算。而计算进位的话，直接用位与和左移一位就行了
+位运算实现加法/减法
+自己写一下二进制加法操作可发现，a + b = 非进位 + 进位 = (a^b) + (a&b)<<1, 当进位b==0，结束位运算。
+```cpp
+int bitAdd(int a, int b) {
+    while (b != 0) {
+        int carry = (a & b) << 1;
+        a ^= b;
+        b = carry;
+    }
+    return a;
+}
+```
+python 要考虑负数的补码存储格式
+0xffffffff 是 32位的1，0x80000000 是 第32位是1，后面是0
 ```python
 class Solution:
     def add(self, a: int, b: int) -> int:
@@ -13276,6 +13531,83 @@ class Solution:
             a ^= b
             b = carry
         return a if a < 0x80000000 else ~(a^0xffffffff)
+```
+
+**位运算实现加减乘除**
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int bitAdd(int a, int b) {
+    // a+b = 非进位+进位 = (a^b)+(a&b)<<1, 当进位b==0结束位运算
+    while (b != 0) {
+        int carry = (a & b) << 1;
+        a ^= b;
+        b = carry;
+    }
+    return a;
+}
+
+int bitPosMul(int a, int b) {
+    // a依次左移 b依次右移 b&1时把a加到res
+    int res = 0;
+    while (b != 0) {
+        if (b & 1) {
+            res = bitAdd(a, res);
+        }
+        a <<= 1;
+        b >>= 1;
+    }
+    return res;
+}
+
+bool isNeg(int n) {
+    return (n >> 31) != 0;
+}
+
+int neg(int n) {
+    return bitAdd(~n, 1);
+}
+
+int ABS(int a) {
+    return isNeg(a) ? neg(a) : a;
+}
+
+int bitMul(int a, int b) {
+    int sign = isNeg(a) ^ isNeg(b);
+    int res = bitPosMul(ABS(a), ABS(b));
+    res = sign ? neg(res) : res;
+    return res;
+}
+
+int bitPosDiv(int a, int b) {
+    int ans = 0;
+    for (int i = 31; i >= 0; --i) {
+        if ((a >> i) >= b) {
+            ans = bitAdd(ans, (1 << i));
+            a = bitAdd(a, neg(b << i));
+        }
+    }
+    return ans;
+}
+
+int bitDiv(int a, int b) {
+    int sign = isNeg(a) ^ isNeg(b);
+    int res = bitPosDiv(ABS(a), ABS(b));
+    res = sign ? neg(res) : res;
+    return res;
+}
+
+int main() {
+    int a, b;
+    scanf("%d %d", &a, &b);
+    int c = bitAdd(a, b);
+    int d = bitAdd(a, neg(b));
+    int e = bitMul(a, b);
+    int f = bitDiv(a, b);
+    printf("add: %d sub: %d mul: %d div: %d", c, d, e, f);
+    return 0;
+}
 ```
 
 #### [剑指 Offer 66. 构建乘积数组](https://leetcode-cn.com/problems/gou-jian-cheng-ji-shu-zu-lcof/)
