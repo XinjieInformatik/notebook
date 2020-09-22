@@ -5083,28 +5083,30 @@ class Solution:
         return results
 ```
 ### 背包
-TODO: 用dp再写一遍
 #### [416. 分割等和子集](https://leetcode-cn.com/problems/partition-equal-subset-sum/)
 ```python
-import functools
 class Solution:
     def canPartition(self, nums: List[int]) -> bool:
-        target, res = divmod(sum(nums), 2)
-        if res != 0: return False
+        sum_val = sum(nums)
+        if sum_val & 1:
+            return False
+        target = sum_val // 2
         n = len(nums)
-        # nums = sorted(nums, reverse=True)
-        @functools.lru_cache(None)
-        def helper(index, curr):
-            if curr == target:
+        dp = [-1] * (target+1)
+        def helper(index, res):
+            if res == target:
                 return True
-            if curr > target:
+            if index == n:
                 return False
-            if index >= n:
-                return False
-            pick = helper(index+1, curr+nums[index])
-            if pick: return True
-            not_pick = helper(index+1, curr)
-            if not_pick: return True
+            if dp[res] != -1:
+                return dp[res]
+            if res + nums[index] <= target:
+                if helper(index+1, res+nums[index]):
+                    return True
+            if res <= target:
+                if helper(index+1, res):
+                    return True
+            dp[res] = 0
             return False
         return helper(0, 0)
 ```
@@ -13281,29 +13283,29 @@ public:
 #### [剑指 Offer 38. 字符串的排列](https://leetcode-cn.com/problems/zi-fu-chuan-de-pai-lie-lcof/)
 同 [47. 全排列 II](https://leetcode-cn.com/problems/permutations-ii/)
 ```python
-from collections import Counter
+from collections import defaultdict
 class Solution:
-    def permuteUnique(self, nums: List[int]) -> List[List[int]]:
-        nums.sort()
-        n = len(nums)
-        count = Counter(nums)
-        results = []
-        def helper(res, count):
+    def permutation(self, s: str) -> List[str]:
+        n = len(s)
+        stat = defaultdict(int)
+        for char in s:
+            stat[char] += 1
+        s = sorted(s) # 必须要sort 才能s[i] s[i-1]重复判断
+        result = []
+        def helper(res):
             if len(res) == n:
-                results.append(res)
+                result.append(res)
                 return
             for i in range(n):
-                # 跳过重复数字
-                if i != 0 and nums[i] == nums[i-1]:
+                if i > 0 and s[i] == s[i-1]:
                     continue
-                # 跳过用尽数字
-                if count[nums[i]] == 0:
+                if stat[s[i]] == 0:
                     continue
-                count[nums[i]] -= 1
-                helper(res+[nums[i]], count)
-                count[nums[i]] += 1
-        helper([], count)
-        return results
+                stat[s[i]] -= 1
+                helper(res+s[i])
+                stat[s[i]] += 1
+        helper("")
+        return result
 ```
 
 
