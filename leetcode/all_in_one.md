@@ -7110,6 +7110,33 @@ class Solution:
             stack.append(node)
         return stack[0]
 ```
+#### [617. 合并二叉树](https://leetcode-cn.com/problems/merge-two-binary-trees/)
+```cpp 
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    TreeNode* mergeTrees(TreeNode* t1, TreeNode* t2) {
+        return helper(t1, t2);
+    }
+    // 新建一个合并后的二叉树
+    TreeNode* helper(TreeNode* t1, TreeNode* t2) {
+        if (!t1) return t2;
+        if (!t2) return t1;
+        auto *newTree = new TreeNode(t1->val + t2->val);
+        newTree->left = helper(t1->left, t2->left);
+        newTree->right = helper(t1->right, t2->right);
+        return newTree;
+    }
+};
+```
 
 #### [面试题07. 重建二叉树](https://leetcode-cn.com/problems/zhong-jian-er-cha-shu-lcof/)
 从中序与前序遍历序列构造二叉树
@@ -8186,6 +8213,30 @@ class Solution:
             max_profit_in_this_node = max(steal_this_node, not_steal_this_node)
             return max_profit_in_this_node, not_steal_this_node
         return helper(root)[0]
+```
+
+#### [968. 监控二叉树](https://leetcode-cn.com/problems/binary-tree-cameras/)
+对于每个节点root ，维护三种类型的状态：
+- 状态 a：root 必须放置摄像头的情况下，覆盖整棵树需要的摄像头数目。
+- 状态 b：覆盖整棵树需要的最小摄像头数目，无论 root 是否放置摄像头。
+- 状态 c：覆盖两棵子树需要的最小摄像头数目，无论节点 root 本身是否被监控到。
+
+```python
+class Solution:
+    def minCameraCover(self, root: TreeNode) -> int:
+        def dfs(root):
+            if not root:
+                return [float("inf"), 0, 0]
+
+            la, lb, lc = dfs(root.left)
+            ra, rb, rc = dfs(root.right)
+            a = lc + rc + 1
+            b = min(a, la + rb, ra + lb)
+            c = min(a, lb + rb)
+            return [a, b, c]
+
+        a, b, c = dfs(root)
+        return b
 ```
 
 #### [152. 乘积最大子序列](https://leetcode-cn.com/problems/maximum-product-subarray/)
@@ -13806,3 +13857,6 @@ int main() {
     return 0;
 }
 ```
+#### [华为8.26笔试]
+[华为8.26笔试参考](https://www.nowcoder.com/discuss/489973?type=post&order=time&pos=&page=1&channel=1009&source_id=search_post)
+第三题，维护a，b 数组，位置字符正确，
