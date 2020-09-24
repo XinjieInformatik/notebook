@@ -2234,6 +2234,32 @@ class Solution:
                 return "".join(map(str, res[i:]))
         return "0"
 ```
+```cpp
+class Solution {
+public:
+    string multiply(string num1, string num2) {
+        int n1 = num1.size();
+        int n2 = num2.size();
+        vector<int> res(n1+n2, 0);
+        for (int i = n1-1; i >= 0; --i) {
+            for (int j = n2-1; j >= 0; --j) {
+                int val = res[i+j+1] + (num1[i]-'0') * (num2[j]-'0');
+                res[i+j] += val / 10;
+                res[i+j+1] = val % 10;
+            }
+        }
+        stringstream ss;
+        int p = 0;
+        while (p < n1+n2 && res[p] == 0) ++p;
+        while (p < n1+n2) {
+            ss << res[p];
+            ++p;
+        }
+        string ans = ss.str();
+        return ans.size() == 0 ? "0" : ans;
+    }
+};
+```
 
 ### 线段树
 #### [307. 区域和检索 - 数组可修改](https://leetcode-cn.com/problems/range-sum-query-mutable/)
@@ -7111,7 +7137,7 @@ class Solution:
         return stack[0]
 ```
 #### [617. 合并二叉树](https://leetcode-cn.com/problems/merge-two-binary-trees/)
-```cpp 
+```cpp
 /**
  * Definition for a binary tree node.
  * struct TreeNode {
@@ -7251,6 +7277,57 @@ class Codec:
             node.right = helper()
             return node
         return helper()
+```
+```cpp
+class Codec {
+public:
+    // Encodes a tree to a single string.
+    string serialize(TreeNode* root) {
+        string encode;
+        helper(root, encode);
+        encode.pop_back();
+        return encode;
+    }
+
+    void helper(TreeNode* root, string& encode) {
+        if (!root) {
+            encode.push_back('X');
+            encode.push_back(',');
+            return;
+        }
+        encode += to_string(root->val);
+        encode.push_back(',');
+        helper(root->left, encode);
+        helper(root->right, encode);
+    }
+
+    // Decodes your encoded data to tree.
+    TreeNode* deserialize(string data) {
+        queue<string> que;
+        string val;
+        for (int i = 0; i < data.size(); ++i) {
+            if (data[i] == ',') {
+                que.push(val);
+                val.clear();
+                continue;
+            }
+            val += data[i];
+        }
+        if (val.size() > 0) que.push(val);
+        return construct(que);
+    }
+
+    TreeNode* construct(queue<string>& que) {
+        string top = que.front();
+        que.pop();
+        if (top == "X") return nullptr;
+        int val = stoi(top);
+        auto *node = new TreeNode(val);
+        node->left = construct(que);
+        node->right = construct(que);
+        return node;
+    }
+};
 ```
 
 #### [116. 填充每个节点的下一个右侧节点指针](https://leetcode-cn.com/problems/populating-next-right-pointers-in-each-node/)
@@ -7609,6 +7686,55 @@ class Solution:
         return build_Trees(1,n)
 ```
 
+#### [501. 二叉搜索树中的众数](https://leetcode-cn.com/problems/find-mode-in-binary-search-tree/)
+1.注意退出helper后还要再检查。 2.维护的是max_freq而不是prev_freq.
+```cpp
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    int cnt = 1;
+    int prev_val = INT_MAX;
+    int max_frep = 0;
+    vector<int> res;
+    vector<int> findMode(TreeNode* root) {
+        if (!root) return res;
+        helper(root);
+        if (cnt > max_frep) {
+            while (res.size() > 0) res.pop_back();
+            res.emplace_back(prev_val);
+        }
+        else if (cnt == max_frep) res.emplace_back(prev_val);
+        return res;
+    }
+    void helper(TreeNode* root) {
+        if (!root) return;
+        helper(root->left);
+        if (root->val == prev_val) {
+            cnt++;
+        }
+        else if (prev_val != INT_MAX) {
+            if (cnt > max_frep) {
+                while (res.size() > 0) res.pop_back();
+                res.emplace_back(prev_val);
+                max_frep = cnt;
+            }
+            else if (cnt == max_frep) res.emplace_back(prev_val);
+            cnt = 1;
+        }
+        prev_val = root->val;
+        helper(root->right);
+    }
+};
+```
+
 ## 栈
 #### [20. 有效的括号](https://leetcode-cn.com/problems/valid-parentheses/)
 符号匹配用单个栈
@@ -7913,7 +8039,55 @@ class Solution:
 
         return max_heap
 ```
+```cpp
+class Solution {
+public:
+    vector<int> getLeastNumbers(vector<int>& arr, int k) {
+        if (k == 0) return {};
+        vector<int> heap;
+        heap.emplace_back(0);
+        int p = 0;
+        while (k--) {
+            heap.emplace_back(arr[p++]);
+            sift_up(heap, heap.size()-1);
+        }
+        for (int i = p; p < arr.size(); ++p) {
+            if (arr[p] < heap[1]) {
+                heap[1] = arr[p];
+                sift_down(heap, 1);
+            }
+        }
+        vector<int> result(heap.begin()+1, heap.end());
+        return result;
+    }
+    void sift_up(vector<int>& heap, int chlid) {
+        int chlid_val = heap[chlid];
+        while ((chlid>>1) > 0 && heap[chlid>>1] < chlid_val) {
+            heap[chlid] = heap[chlid>>1];
+            chlid >>= 1;
+        }
+        heap[chlid] = chlid_val;
+    }
 
+    void sift_down(vector<int>& heap, int root) {
+        int chlid;
+        int root_val = heap[root];
+        while ((root << 1) < heap.size()) {
+            chlid = root << 1;
+            if ((chlid | 1) < heap.size() and heap[chlid] < heap[chlid|1]) {
+                chlid |= 1;
+            }
+            if (heap[chlid] > root_val) {
+                heap[root] = heap[chlid];
+                root = chlid;
+            }
+            else break;
+        }
+        heap[root] = root_val;
+    }
+};
+```
+.
 #### [295. 数据流的中位数](https://leetcode-cn.com/problems/find-median-from-data-stream/)
 新数据来了,先加入大顶堆,再将大顶堆堆顶pop()加入小顶堆,如果大顶堆元素小于小顶堆,再把小顶堆堆顶pop()加入大顶堆. 然后大顶堆堆顶(奇数),大顶堆小顶堆均值(偶数),就是中位数.
 ```python
@@ -10435,6 +10609,23 @@ class Solution:
                 pointer += 1
         return len(chars)
 ```
+
+#### [6. Z 字形变换](https://leetcode-cn.com/problems/zigzag-conversion/)
+```python
+class Solution:
+    def convert(self, s: str, numRows: int) -> str:
+        if numRows == 1: return s
+        res = ["" for i in range(numRows)]
+        flag = -1
+        p = 0
+        for c in s:
+            res[p] += c
+            if p == numRows-1 or p == 0:
+                flag *= -1
+            p += flag
+        return "".join(res)
+```
+
 #### [541. 反转字符串 II](https://leetcode-cn.com/problems/reverse-string-ii/)
 python字符串修改及其麻烦，转换成list，最后再通过''.join()转成str
 ```python
@@ -10450,18 +10641,25 @@ class Solution:
             pointer += 2 * k
         s = ''.join(s)
         return s
-
-class Solution:
-    def reverseStr(self, s: str, k: int) -> str:
-        s_list = list(s)
-        for i in range(len(s_list)):
-            if i % (2*k) == 0:
-                try:
-                    s_list[i:i+k] = s_list[i:i+k][::-1]
-                except:
-                    s_list[i:] = s_list[i:][::-1]
-        s_reverse = ''.join(s_list)
-        return s_reverse
+```
+```cpp
+class Solution {
+public:
+    void swapStr(string& s, int left, int right) {
+        while (left < right) {
+            swap(s[left++], s[right--]);
+        }
+    }
+    string reverseStr(string s, int k) {
+        int p = 0;
+        while (p < s.size()) {
+            if (p + k < s.size()) swapStr(s, p, p+k-1);
+            else swapStr(s, p, s.size()-1);
+            p += 2 * k;
+        }
+        return s;
+    }
+};
 ```
 
 #### [696. 计数二进制子串](https://leetcode-cn.com/problems/count-binary-substrings/)
@@ -13860,3 +14058,39 @@ int main() {
 #### [华为8.26笔试]
 [华为8.26笔试参考](https://www.nowcoder.com/discuss/489973?type=post&order=time&pos=&page=1&channel=1009&source_id=search_post)
 第三题，维护a，b 数组，位置字符正确，
+
+#### [相连的1](华为9.23面试2题)
+> 二进制字符串，如果所有的1不相连，则直接返回该字符串。
+> 如果有相连的1，则返回大于该字符串的最小的二进制的值，并且返回的值没有相连的1
+> 101010 -> 101010, 11011 -> 100000, 100011 -> 100100, 101100 -> 1000000
+
+这题还挺难的，思路：
+1. 字符串在python中是不可变变量，先转换成可变变量list
+2. 先从前往后检查是否有两个连续的1，如果有两个连续的1，将当前与之后所有元素置0，并将i-1元素置1，然后`依次回退2位`检查i-1的修改，是否造成了之前元素出现连续1。
+3. 当不再造成之前元素出现连续1， break输出s
+```python
+def calStr(s):
+    n = len(s)
+    i = 0
+    flag = False
+    while i < n-1:
+        if s[i] == '1' and s[i+1] == '1':
+            s[i:] = ['0'] * (n - i)
+            if i == 0:
+                s.insert(0, '1')
+            else:
+                s[i-1] = '1'
+            i -= 3
+            flag = True
+        else:
+            if flag:
+                break
+        i += 1
+    return s
+
+if __name__ == "__main__":
+    s = "10101001"
+    s_list = list(s)
+    new_s = calStr(s_list)
+    print("".join(new_s))
+```
