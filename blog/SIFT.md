@@ -1,5 +1,5 @@
 # SIFT
-做了那么久图像,怎么能不整理下SIFT
+整理下 Scale Invariant Feature Transform (SIFT)
 论文: https://www.cs.ubc.ca/~lowe/papers/ijcv04.pdf
 ## SIFT 算法流程
 1. 尺度空间极值检测

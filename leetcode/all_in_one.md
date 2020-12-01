@@ -560,15 +560,6 @@ public:
 ```python
 class Solution:
     def PredictTheWinner(self, nums: List[int]) -> bool:
-        def helper(index, l, r):
-            if l > r:
-                return 0
-            sign = -1 if (index & 1) else 1
-            l_score = helper(index+1, l+1, r) + sign * nums[l]
-            r_score = helper(index+1, l, r-1) + sign * nums[r]
-            # sign妙了，s2也想让自己利益最大化
-            return max(l_score*sign, r_score*sign) * sign
-
         """动态规划"""
         n = len(nums)
         dp = [[0] * n for i in range(n)]
@@ -577,6 +568,7 @@ class Solution:
                 return 0
             if dp[l][r] != 0:
                 return dp[l][r]
+            # sign妙了，s2也想让自己利益最大化
             l_score = dp_helper(-sign, l+1, r) + sign * nums[l]
             r_score = dp_helper(-sign, l, r-1) + sign * nums[r]
             dp[l][r] = max(l_score*sign, r_score*sign) * sign
@@ -975,6 +967,8 @@ class Solution:
 ```
 
 #### [求最长公共子串的长度和该子串](https://www.nowcoder.com/questionTerminal/02e7cc263f8a49e8b1e1dc9c116f7602)
+dp[i][j] 表示子串1中到下标为i的子串 和 子串2中到下标为j的子串，这两个子串的公共子串长度. 在整个过程中对dp[i][j]取max,即为最长公共子串长度.
+对于求解子串，前向传播的过程就可以求解。因为子串是连续的，记录最后一个最大长度对应下标，向前截取dp[i][j]长度即可。
 ```python
 class LongestSubstring:
     def findLongest(self, A, n, B, m):
@@ -988,6 +982,26 @@ class LongestSubstring:
                 else:
                     dp[i][j] = 0
         return ans
+```
+```python
+def sameStr(A, B):
+    n = len(A)
+    m = len(B)
+    dp = [[0]*(m+1) for _ in range(n+1)]
+    ans = 0
+    res = ""
+    for i in range(1, n+1):
+        for j in range(1, m+1):
+            if A[i-1] == B[j-1]:
+                dp[i][j] = dp[i-1][j-1] + 1
+                if dp[i][j] >= ans:
+                    ans = dp[i][j]
+                    print(i, j, ans)
+                    res = A[i-ans:i+1]
+            else:
+                dp[i][j] = 0
+    print(res)
+    return ans
 ```
 
 #### [72. 编辑距离](https://leetcode-cn.com/problems/edit-distance/)
@@ -1723,30 +1737,28 @@ class Solution:
 ```
 
 #### [31. 下一个排列](https://leetcode-cn.com/problems/next-permutation/)
-与上一题唯一不同就是原地修改
 ```python
 class Solution:
-    def upper_bound(self, arr, left, right, target):
-        while left < right:
-            mid = left + (right-left) // 2
-            if arr[mid] <= target:
-                left = mid + 1
-            else:
-                right = mid
-        return left
-
     def nextPermutation(self, nums: List[int]) -> None:
-        inv_index = None
-        for i in range(len(nums)-1,0,-1):
+        """
+        1. 从后往前，找到第一个非逆序的index
+        2. 从后往前，找到第一个大于nums[idx]的元素，交换
+        3. 反转原来逆序的数组为正序
+        """
+        n = len(nums)
+        idx = -1
+        for i in range(n-1, 0, -1):
             if nums[i] > nums[i-1]:
-                inv_index = i
+                idx = i - 1
                 break
-        if inv_index != None:
-            nums[inv_index:] = sorted(nums[inv_index:])
-            swap_index = self.upper_bound(nums, inv_index, len(nums), nums[inv_index-1])
-            nums[inv_index-1], nums[swap_index] = nums[swap_index], nums[inv_index-1]
+        if idx == -1:
+            nums[:] = nums[::-1]
         else:
-            nums.sort()
+            for i in range(n-1, idx, -1):
+                if nums[i] > nums[idx]:
+                    nums[i], nums[idx] = nums[idx], nums[i]
+                    break
+            nums[idx+1:] = nums[idx+1:][::-1]
 ```
 
 #### [901. 股票价格跨度](https://leetcode-cn.com/problems/online-stock-span/)
@@ -2215,6 +2227,30 @@ class Solution:
             res = str(val) + res
             p += 1
         return res
+```
+```cpp
+class Solution {
+public:
+    string addStrings(string num1, string num2) {
+        int p1 = num1.size() - 1;
+        int p2 = num2.size() - 1;
+        int carry = 0;
+        int val, val1, val2;
+        string res;
+        while (p1 >= 0 || p2 >= 0 || carry) {
+            val1 = p1 >= 0 ? num1[p1]-'0' : 0;
+            val2 = p2 >= 0 ? num2[p2]-'0' : 0;
+            val = val1 + val2 + carry;
+            carry = val / 10;
+            char c = (val % 10 + '0');
+            res.push_back(c);
+            --p1;
+            --p2;
+        }
+        reverse(res.begin(), res.end());
+        return res;
+    }
+};
 ```
 
 #### [43. 字符串相乘](https://leetcode-cn.com/problems/multiply-strings/)
@@ -3953,6 +3989,31 @@ class Solution:
                     return False
         return True
 ```
+```cpp
+class Solution {
+public:
+    bool isPalindrome(string s) {
+        int left = 0;
+        int right = s.size() - 1;
+        while (left < right) {
+            if (!(isdigit(s[left]) || isalpha(s[left]))) {
+                ++left;
+                continue;
+            }
+            if (!(isdigit(s[right]) || isalpha(s[right]))) {
+                --right;
+                continue;
+            }
+            if (tolower(s[left]) != tolower(s[right])) {
+                return false;
+            }
+            ++left;
+            --right;
+        }
+        return true;
+    }
+};
+```
 
 #### [214. 最短回文串](https://leetcode-cn.com/problems/shortest-palindrome/)
 暴力法。 TODO： KMP
@@ -4729,7 +4790,6 @@ public:
 ```
 
 #### [130. 被围绕的区域](https://leetcode-cn.com/problems/surrounded-regions/)
-TODO: 并查集
 ```python
 class Solution:
     def solve(self, board: List[List[str]]) -> None:
@@ -4773,6 +4833,58 @@ class Solution:
                         for item in result:
                             row, col = item
                             board[row][col] = "X"
+```
+
+#### [417. 太平洋大西洋水流问题](https://xinjieinformatik.github.io/2020/09/13/matrix-dfs/)
+逆向思维，从边界出发，记录访问的点坐标，求太平洋和大西洋交集。
+```python
+class Solution:
+    def pacificAtlantic(self, matrix: List[List[int]]) -> List[List[int]]:
+        oriens = [(1,0),(-1,0),(0,1),(0,-1)]
+        result = []
+        n = len(matrix)
+        if n == 0:
+            return result
+        m = len(matrix[0])
+
+        def dfs(i, j, visited):
+            for orien in oriens:
+                nxt_i = i + orien[0]
+                nxt_j = j + orien[1]
+                if nxt_i < 0 or nxt_i >= n or nxt_j < 0 or nxt_j >= m:
+                    continue
+                if visited[nxt_i][nxt_j] == 1:
+                    continue
+                if matrix[nxt_i][nxt_j] < matrix[i][j]:
+                    continue
+                visited[nxt_i][nxt_j] = 1
+                dfs(nxt_i, nxt_j, visited)
+
+        taiPing = [[0]*m for i in range(n)]
+        for i in range(n):
+            taiPing[i][0] = 1
+            dfs(i, 0, taiPing)
+
+        for j in range(m):
+            taiPing[0][j] = 1
+            dfs(0, j, taiPing)
+
+        daXi = [[0]*m for i in range(n)]
+        for i in range(n):
+            daXi[i][m-1] = 1
+            dfs(i, m-1, daXi)
+
+        for j in range(m):
+            daXi[n-1][j] = 1
+            dfs(n-1, j, daXi)
+
+        result = []
+        for i in range(n):
+            for j in range(m):
+                if taiPing[i][j] == 1 and daXi[i][j] == 1:
+                    result.append([i, j])
+
+        return result
 ```
 
 #### [37. 解数独](https://leetcode-cn.com/problems/sudoku-solver/)
@@ -5135,6 +5247,32 @@ class Solution:
             dp[res] = 0
             return False
         return helper(0, 0)
+```
+```cpp
+class Solution {
+public:
+    unordered_map<int, bool> dp;
+    bool canPartition(vector<int>& nums) {
+        int target, sum;
+        sum = accumulate(nums.begin(), nums.end(), 0);
+        if (sum & 1) return false;
+        target = sum / 2;
+        return helper(nums, 0, 0, target);
+    }
+
+    bool helper(vector<int> &nums, int index, int res, int target) {
+        if (res == target) return true;
+        if (res > target || index == nums.size()) {
+            dp[res] = false;
+            return false;
+        }
+        if (dp.count(res)) return dp[res];
+        if (helper(nums, index+1, res+nums[index], target)) return true;
+        if (helper(nums, index+1, res, target)) return true;
+        dp[res] = false;
+        return false;
+    }
+};
 ```
 ```python
 二维dp
@@ -5722,7 +5860,7 @@ class Solution:
 
 class Solution:
     def hasCycle(self, head: ListNode) -> bool:
-        """双指针 or hashmap"""
+        """双指针"""
         fast, slow = head, head
         while fast and fast.next:
             fast = fast.next.next
@@ -5730,7 +5868,7 @@ class Solution:
             if fast == slow:
                 return True
         return False
-
+        """hashmap"""
         lookup = set()
         node = head
         while node:
@@ -5741,6 +5879,21 @@ class Solution:
             else:
                 return True
         return False
+```
+```cpp
+class Solution {
+public:
+    bool hasCycle(ListNode *head) {
+        auto *fast = head;
+        auto *slow = head;
+        while (fast && fast->next) {
+            slow = slow->next;
+            fast = fast->next->next;
+            if (fast == slow) return true;
+        }
+        return false;
+    }
+};
 ```
 
 #### [142. 环形链表 II](https://leetcode-cn.com/problems/linked-list-cycle-ii/)
@@ -5762,6 +5915,31 @@ class Solution:
             slow = slow.next
         return fast
 ```
+```cpp
+class Solution {
+public:
+    ListNode *detectCycle(ListNode *head) {
+        auto *fast = head;
+        auto *slow = head;
+        bool is_cycle = false;
+        while (fast && fast->next) {
+            fast = fast->next->next;
+            slow = slow->next;
+            if (slow == fast) {
+                is_cycle = true;
+                break;
+            }
+        }
+        if (!is_cycle) return nullptr;
+        fast = head;
+        while (slow != fast) {
+            slow = slow->next;
+            fast = fast->next;
+        }
+        return slow;
+    }
+};
+```
 
 #### [24. 两两交换链表中的节点](https://leetcode-cn.com/problems/swap-nodes-in-pairs/)
 ```python
@@ -5769,6 +5947,10 @@ class Solution:
     def swapPairs(self, head: ListNode) -> ListNode:
         """ d -> 1 -> 2 -> 3 -> 4 -> None
             d   prev curr nxt
+            d -> 2 -> 1 -> 3 -> 4 -> None
+                      d   prev curr  nxt
+            d -> 2 -> 1 -> 4 -> 3 -> None
+                                d
         """
         dummy = d_head = ListNode(-1)
         dummy.next = head
@@ -5781,6 +5963,26 @@ class Solution:
             prev.next = nxt
             dummy = prev # 注意反转后是到prev
         return d_head.next
+```
+```cpp
+class Solution {
+public:
+    ListNode* swapPairs(ListNode* head) {
+        auto dummy = new ListNode(-1);
+        auto d_head = dummy;
+        dummy->next = head;
+        while (dummy->next && dummy->next->next) {
+            auto prev = dummy->next;
+            auto curr = prev->next;
+            auto nxt = curr->next;
+            dummy->next = curr;
+            curr->next = prev;
+            prev->next = nxt;
+            dummy = prev;
+        }
+        return d_head->next;
+    }
+};
 ```
 
 #### [328. 奇偶链表](https://leetcode-cn.com/problems/odd-even-linked-list/)
@@ -6084,6 +6286,28 @@ class Solution:
             l2 = l2.next if l2 else None
             dummy = dummy.next
         return head.next
+```
+```cpp
+class Solution {
+public:
+    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
+        auto *dummy = new ListNode(-1);
+        auto head = dummy;
+        int carry = 0;
+        int val1, val2, val;
+        while (l1 || l2 || carry) {
+            val1 = l1? l1->val : 0;
+            val2 = l2? l2->val : 0;
+            val = (val1 + val2 + carry);
+            carry = val / 10;
+            dummy->next = new ListNode(val % 10);
+            dummy = dummy->next;
+            if (l1) l1 = l1->next;
+            if (l2) l2 = l2->next;
+        }
+        return head->next;
+    }
+};
 ```
 
 #### [160. 相交链表](https://leetcode-cn.com/problems/intersection-of-two-linked-lists/)
@@ -6768,6 +6992,32 @@ class Solution:
         helper(root, [])
         return paths
 ```
+```cpp
+class Solution {
+public:
+    vector<vector<int>> result;
+    vector<int> path;
+    vector<vector<int>> pathSum(TreeNode* root, int sum) {
+        if (!root) return result;
+        helper(root, 0, sum);
+        return result;
+    }
+
+    void helper(TreeNode* root, int res, int sum) {
+        if (!root->left && !root->right) {
+            if (res + root->val == sum) {
+                path.emplace_back(root->val);
+                result.emplace_back(path);
+                path.pop_back();
+            }
+        }
+        path.emplace_back(root->val);
+        if (root->left) helper(root->left, res+root->val, sum);
+        if (root->right) helper(root->right, res+root->val, sum);
+        path.pop_back();
+    }
+};
+```
 
 #### [437. 路径总和 III](https://leetcode-cn.com/problems/path-sum-iii/)
 难点:不是总从根节点出发,巧用前缀和和回溯
@@ -6797,18 +7047,20 @@ class Solution:
 ```python
 class Solution:
     def sumNumbers(self, root: TreeNode) -> int:
-        results = []
-        def helper(node, s):
-            if not node.left and not node.right:
-                s += str(node.val)
-                results.append(int(s))
-            if node.left:
-                helper(node.left, s+str(node.val))
-            if node.right:
-                helper(node.right, s+str(node.val))
-        if not root: return 0
-        helper(root, "")
-        return sum(results)
+        if not root:
+            return 0
+        result = []
+        def helper(root, res):
+            if not root.left and not root.right:
+                result.append(res*10+root.val)
+                return
+            if root.left:
+                helper(root.left, res*10+root.val)
+            if root.right:
+                helper(root.right, res*10+root.val)
+            return
+        helper(root, 0)
+        return sum(result)
 ```
 
 #### [111. 二叉树的最小深度](https://leetcode-cn.com/problems/minimum-depth-of-binary-tree/)
@@ -7014,8 +7266,6 @@ class Solution:
         return True
 ```
 
-
-
 #### [107. 二叉树的层次遍历 II](https://leetcode-cn.com/problems/binary-tree-level-order-traversal-ii/)
 ```python
 from collections import deque
@@ -7063,6 +7313,23 @@ class Solution:
 
         return helper(root)
 ```
+```cpp
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        int minval = min(p->val, q->val);
+        int maxval = max(p->val, q->val);
+        return helper(root, minval, maxval);
+    }
+    TreeNode* helper(TreeNode* root, int minval, int maxval) {
+        if (!root) return nullptr;
+        if (root->val < minval) return helper(root->right, minval, maxval);
+        else if (root->val > maxval) return helper(root->left, minval, maxval);
+        return root;
+    }
+};
+```
+
 #### [236. 二叉树的最近公共祖先](https://leetcode-cn.com/problems/lowest-common-ancestor-of-a-binary-tree/)
 最近公共祖先 = 最近分叉节点 or 父子相连节点。
 若 node 是 p, q 的 最近公共祖先 ，则只可能为以下情况之一：
@@ -7072,7 +7339,7 @@ class Solution:
 
 ![20200509_224853_75](assets/20200509_224853_75.png)
 
-因此用后续遍历，
+因此用后序遍历，
 1. node == None, return None
 2. left == None and right == None, return None
 2. only left == None, return right
@@ -7100,6 +7367,24 @@ class Solution:
             return node
 
         return helper(root)
+```
+```cpp
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        return helper(root, p, q);
+    }
+    TreeNode* helper(TreeNode* root, TreeNode* p, TreeNode* q) {
+        if (!root) return nullptr;
+        if (root == p || root == q) return root;
+        auto left = helper(root->left, p, q);
+        auto right = helper(root->right, p, q);
+        if (left && right) return root;
+        else if (left) return left;
+        else if (right) return right;
+        return nullptr;
+    }
+};
 ```
 
 #### [1028. 从先序遍历还原二叉树](https://leetcode-cn.com/problems/recover-a-tree-from-preorder-traversal/)
@@ -7330,30 +7615,69 @@ public:
 };
 ```
 
-#### [116. 填充每个节点的下一个右侧节点指针](https://leetcode-cn.com/problems/populating-next-right-pointers-in-each-node/)
-```python
-class Node:
-    def __init__(self, val: int = 0, left: 'Node' = None, right: 'Node' = None, next: 'Node' = None):
-        self.val = val
-        self.left = left
-        self.right = right
-        self.next = next
-from collections import deque
-class Solution:
-    def connect(self, root: 'Node') -> 'Node':
-        if not root: return root
-        queue = deque([root])
-        while queue:
-            rs = None
-            for i in range(len(queue)):
-                top = queue.pop()
-                top.next = rs
-                rs = top
-                if top.right:
-                    queue.appendleft(top.right)
-                if top.left:
-                    queue.appendleft(top.left)
-        return root
+#### [117. 填充每个节点的下一个右侧节点指针 II](https://leetcode-cn.com/problems/populating-next-right-pointers-in-each-node-ii/)
+同 [116. 填充每个节点的下一个右侧节点指针](https://leetcode-cn.com/problems/populating-next-right-pointers-in-each-node/)
+```cpp
+/*
+// Definition for a Node.
+class Node {
+public:
+    int val;
+    Node* left;
+    Node* right;
+    Node* next;
+    Node() : val(0), left(NULL), right(NULL), next(NULL) {}
+    Node(int _val) : val(_val), left(NULL), right(NULL), next(NULL) {}
+    Node(int _val, Node* _left, Node* _right, Node* _next)
+        : val(_val), left(_left), right(_right), next(_next) {}
+};
+*/
+
+class Solution {
+public:
+    Node* connect(Node* root) {
+        if (!root) return root;
+        queue<Node*> que;
+        que.push(root);
+        while (que.size()) {
+            int size = que.size();
+            while (size--) {
+                Node* top = que.front();
+                que.pop();
+                if (size > 0) top->next = que.front();
+                else top->next = nullptr;
+                if (top->left) que.push(top->left);
+                if (top->right) que.push(top->right);
+            }
+        }
+        return root;
+    }
+};
+```
+空间O(1)的做法，用当前层建立下一层的next指针。
+```cpp
+class Solution {
+public:
+    Node* connect(Node* root) {
+        if (!root) return root;
+        Node *start = root;
+        while (start) {
+            Node *prev = nullptr, *nxtStart = nullptr;
+            for (Node *p = start; p != nullptr; p = p->next) {
+                if (p->left) handle(prev, p->left, nxtStart);
+                if (p->right) handle(prev, p->right, nxtStart);
+            }
+            start = nxtStart;
+        }
+        return root;
+    }
+
+    void handle(Node* &prev, Node* &p, Node* &nxtStart) {
+        if (prev) prev->next = p;
+        if (!nxtStart) nxtStart = p;
+        prev = p;
+    }
+};
 ```
 
 #### [109. 有序链表转换二叉搜索树](https://leetcode-cn.com/problems/convert-sorted-list-to-binary-search-tree/)
@@ -7431,6 +7755,28 @@ class Solution:
                 node.left = helper(node.left)
             return node
         return helper(root)
+```
+```cpp
+class Solution {
+public:
+    TreeNode* insertIntoBST(TreeNode* root, int val) {
+        return helper(root, val);
+    }
+
+    TreeNode* helper(TreeNode *root, int val) {
+        if (!root) {
+            auto *node = new TreeNode(val);
+            return node;
+        }
+        if (root->val > val) {
+            root->left = helper(root->left, val);
+        }
+        else {
+            root->right = helper(root->right, val);
+        }
+        return root;
+    }
+};
 ```
 
 #### [450. 删除二叉搜索树中的节点](https://leetcode-cn.com/problems/delete-node-in-a-bst/)
@@ -7635,6 +7981,28 @@ class Solution:
                     return root.val
                 root = root.right
         return -1
+```
+
+#### [530. 二叉搜索树的最小绝对差](https://leetcode-cn.com/problems/minimum-absolute-difference-in-bst/)
+```cpp
+class Solution {
+public:
+    int min_diff = INT_MAX;
+    int prev_val = -1;
+    int getMinimumDifference(TreeNode* root) {
+        helper(root);
+        return min_diff;
+    }
+    void helper(TreeNode* root) {
+        if (!root) return;
+        helper(root->left);
+        if (prev_val != -1){
+            min_diff = min(min_diff, root->val - prev_val);
+        }
+        prev_val = root->val;
+        helper(root->right);
+    }
+};
 ```
 
 #### [96. 不同的二叉搜索树](https://leetcode-cn.com/problems/unique-binary-search-trees/)
@@ -8893,17 +9261,17 @@ public:
         if (!root) return result;
         stack<TreeNode*> stk;
         stk.push(root);
-        while (stk.size()){
+        while (stk.size() > 0) {
             TreeNode *temp = stk.top();
-            stk.pop();
-            if (temp){
-                stk.push(temp);
+            if (temp) {
                 stk.push(nullptr);
                 if (temp->right) stk.push(temp->right);
                 if (temp->left) stk.push(temp->left);
             }
-            else{
-                result.push_back(stk.top()->val);
+            else {
+                stk.pop();
+                TreeNode* top = stk.top();
+                result.emplace_back(top->val);
                 stk.pop();
             }
         }
@@ -10785,6 +11153,24 @@ class Solution:
         return result
 ```
 
+#### [977. 有序数组的平方](https://leetcode-cn.com/problems/squares-of-a-sorted-array/)
+```python
+class Solution:
+    def sortedSquares(self, A: List[int]) -> List[int]:
+        n = len(A)
+        ans = [0] * n
+        left, right = 0, n-1
+        p = n-1
+        while (p >= 0):
+            if abs(A[left]) > abs(A[right]):
+                ans[p] = A[left] ** 2
+                left += 1
+            else:
+                ans[p] = A[right] ** 2
+                right -= 1
+            p -= 1
+        return ans
+```
 
 ## 递归算法复杂度分析 -- 主定理
 T(问题规模) = 子问题数 * T(子问题规模) + 额外计算
@@ -11277,7 +11663,8 @@ public:
 };
 ```
 
-#### [面试题29. 顺时针打印矩阵](https://leetcode-cn.com/problems/shun-shi-zhen-da-yin-ju-zhen-lcof/)
+#### [54. 螺旋矩阵](https://leetcode-cn.com/problems/spiral-matrix/)
+同 [面试题29. 顺时针打印矩阵](https://leetcode-cn.com/problems/shun-shi-zhen-da-yin-ju-zhen-lcof/)
 模拟题， 收缩四个边界， 在边界范围内打印。
 ```python
 class Solution:
@@ -11307,6 +11694,84 @@ class Solution:
             if r == l: break
 
         return results
+```
+```cpp
+class Solution {
+public:
+    vector<int> spiralOrder(vector<vector<int>>& matrix) {
+        vector<int> res;
+        if (matrix.size() == 0 || matrix[0].size() == 0) return res;
+        int n = matrix.size();
+        int m = matrix[0].size();
+        int l = 0;
+        int r = m-1;
+        int t = 0;
+        int b = n-1;
+        while (true) {
+            for (int j = l; j <= r; ++j) res.emplace_back(matrix[t][j]);
+            ++t;
+            if (t > b) break;
+            for (int i = t; i <= b; ++i) res.emplace_back(matrix[i][r]);
+            --r;
+            if (r < l) break;
+            for (int j = r; j >= l; --j) res.emplace_back(matrix[b][j]);
+            --b;
+            if (b < t) break;
+            for (int i = b; i >= t; --i) res.emplace_back(matrix[i][l]);
+            ++l;
+            if (l > r) break;
+        }
+        return res;
+    }
+};
+```
+
+#### [59. 螺旋矩阵 II](https://leetcode-cn.com/problems/spiral-matrix-ii/)
+```cpp
+class Solution {
+public:
+    vector<vector<int>> generateMatrix(int n) {
+        vector<vector<int>> matrix(n, vector<int> (n, 0));
+        int l = 0;
+        int r = n-1;
+        int t = 0;
+        int b = n-1;
+        int val = 0;
+        while (n--) {
+            for (int j = l; j <= r; ++j) matrix[t][j] = ++val;
+            ++t;
+            for (int i = t; i <= b; ++i) matrix[i][r] = ++val;
+            --r;
+            for (int j = r; j >= l; --j) matrix[b][j] = ++val;
+            --b;
+            for (int i = b; i >= t; --i) matrix[i][l] = ++val;
+            ++l;
+        }
+        return matrix;
+    }
+};
+```
+
+#### [885. 螺旋矩阵 III](https://leetcode-cn.com/problems/spiral-matrix-iii/)
+```python
+class Solution:
+    def spiralMatrixIII(self, R: int, C: int, r0: int, c0: int) -> List[List[int]]:
+        oriens = [(0,1),(1,0),(0,-1),(-1,0)]
+        step = 1
+        result = [[r0,c0]]
+        switch = 0
+        row, col = r0, c0
+        while len(result) < R*C:
+            orien = oriens[switch % 4]
+            for i in range(1, step+1):
+                row += orien[0]
+                col += orien[1]
+                if (row >= 0 and row < R and col >= 0 and col < C):
+                    result.append([row, col])
+            switch += 1
+            if switch & 1 == 0:
+                step += 1
+        return result
 ```
 
 #### [448. 找到所有数组中消失的数字](https://leetcode-cn.com/problems/find-all-numbers-disappeared-in-an-array/)
@@ -12389,6 +12854,147 @@ class Solution:
         return -1 if index == None else index
 ```
 
+#### [LCP 19. 秋叶收藏集](https://leetcode-cn.com/problems/UlBDOe/)
+动态规划，[参考官方题解](https://leetcode-cn.com/problems/UlBDOe/solution/qiu-xie-shou-cang-ji-by-leetcode-solution/)
+```cpp
+class Solution {
+public:
+    int minimumOperations(string leaves) {
+        int n = leaves.size();
+        vector<vector<int>> f(n, vector<int>(3));
+        f[0][0] = (leaves[0] == 'y');
+        f[0][1] = f[0][2] = f[1][2] = INT_MAX;
+        for (int i = 1; i < n; ++i) {
+            int isRed = (leaves[i] == 'r');
+            int isYellow = (leaves[i] == 'y');
+            f[i][0] = f[i - 1][0] + isYellow;
+            f[i][1] = min(f[i - 1][0], f[i - 1][1]) + isRed;
+            if (i >= 2) {
+                f[i][2] = min(f[i - 1][1], f[i - 1][2]) + isYellow;
+            }
+        }
+        return f[n - 1][2];
+    }
+};
+```
+
+#### [763. 划分字母区间](https://leetcode-cn.com/problems/partition-labels/)
+```python
+from collections import Counter
+class Solution:
+    def partitionLabels(self, S: str) -> List[int]:
+        last = [0] * 26
+        n = len(S)
+        for i in range(n):
+            char = S[i]
+            last[ord(char)-ord('a')] = i
+        start = 0
+        end = 0
+        result = []
+        for i in range(n):
+            char = S[i]
+            end = max(end, last[ord(char)-ord('a')])
+            if i == end:
+                result.append(i-start+1)
+                start = i + 1
+        return result
+```
+
+#### [845. 数组中的最长山脉](https://leetcode-cn.com/problems/longest-mountain-in-array/)
+三次遍历，
+第一次构建left数组存储当前节点左侧上升元素个数，
+第二次构建right数组存储当前节点右侧下降元素个数，
+第三次当前节点i展开的山脉为left[i]+right[i]+1,注意对left[i].right[i]为0的时候的判断。
+```python
+class Solution:
+    def longestMountain(self, A: List[int]) -> int:
+        n = len(A)
+        if n < 3:
+            return 0
+        left = [0] * n
+        right = [0] * n
+        for i in range(1, n):
+            if A[i-1] < A[i]:
+                left[i] = left[i-1] + 1
+            else:
+                left[i] = 0
+        for i in range(n-2, -1, -1):
+            if A[i] > A[i+1]:
+                right[i] = right[i+1] + 1
+            else:
+                right[i] = 0
+        val = 0
+        for i in range(n):
+            if not left[i] or not right[i]:
+                continue
+            lenth = left[i] + right[i] + 1
+            val = max(val, lenth)
+        return val
+```
+一次遍历
+```python
+class Solution:
+    def longestMountain(self, A: List[int]) -> int:
+        start = -1
+        ans = 0
+        n = len(A)
+        for i in range(1, n):
+            # 寻找山脉左侧
+            if A[i-1] < A[i]:
+                if (i == 1 or A[i-2] >= A[i-1]):
+                    start = i - 1
+            # 山脉右侧
+            elif A[i-1] > A[i]:
+                if (start != -1):
+                    ans = max(ans, i - start + 1)
+            else:
+                start = -1
+        return ans
+```
+
+#### [1365. 有多少小于当前数字的数字](https://leetcode-cn.com/problems/how-many-numbers-are-smaller-than-the-current-number/)
+在有序数组上二分查找原数组元素的low_bound
+```python
+class Solution:
+    def smallerNumbersThanCurrent(self, nums: List[int]) -> List[int]:
+        def low_bound(nums, left, right, target):
+            while left < right:
+                mid = left + (right-left) // 2
+                if nums[mid] < target:
+                    left = mid + 1
+                else:
+                    right = mid
+            return left
+
+        sortedNums = sorted(nums)
+        n = len(nums)
+        result = []
+        for i in range(n):
+            index = low_bound(sortedNums, 0, n, nums[i])
+            result.append(index)
+        return result
+```
+
+计算排序，构建 stat 前缀和用于查询nums[i]-1，注意对nums[i]==0的处理
+```python
+class Solution:
+    def smallerNumbersThanCurrent(self, nums: List[int]) -> List[int]:
+        size = 101
+        stat = [0] * size
+        n = len(nums)
+        for i in range(n):
+            stat[nums[i]] += 1
+        cnt = 0
+        # 构建 stat 前缀和用于查询
+        for i in range(1, size):
+            stat[i] += stat[i-1]
+        result = []
+        for i in range(n):
+            val = stat[nums[i]-1] if nums[i] != 0 else 0
+            result.append(val)
+        return result
+```
+
 ## 递归复杂度分析
 递归时间复杂度分析
 假设递归深度, 递归调用数量为h, 递归内每次计算量O(s), 时间复杂度 O(hs)
@@ -13299,7 +13905,7 @@ class Solution:
         #     stack.append(postorder[i])
         # return True
 ```
-一定要注意边界！后续遍历根节点是right，左子树[left,m-1]，右子树[m,right-1]
+一定要注意边界！后序遍历根节点是right，左子树[left,m-1]，右子树[m,right-1]
 ```cpp
 class Solution {
 public:
@@ -13527,6 +14133,47 @@ public:
         helper(root->right);
     }
 };
+```
+
+#### [430. 扁平化多级双向链表](https://leetcode-cn.com/problems/flatten-a-multilevel-doubly-linked-list/)
+```python
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val, prev, next, child):
+        self.val = val
+        self.prev = prev
+        self.next = next
+        self.child = child
+"""
+
+class Solution:
+    def flatten(self, head: 'Node') -> 'Node':
+        def dfs(node):
+            if not node:
+                return node
+            if node.child:
+                lastNode = dfs(node.child)
+
+            LNode = dfs(node.next)
+            if LNode == None:
+                LNode = node
+
+            if node.child:
+                nxtNode = node.next
+                childNode = node.child
+                node.child = None
+                node.next = childNode
+                childNode.prev = node
+                if nxtNode:
+                    lastNode.next = nxtNode
+                    nxtNode.prev = lastNode
+            return LNode
+
+        if not head:
+            return head
+        dfs(head)
+        return head
 ```
 
 #### [剑指 Offer 38. 字符串的排列](https://leetcode-cn.com/problems/zi-fu-chuan-de-pai-lie-lcof/)
@@ -13876,6 +14523,44 @@ class Solution:
 ```
 
 ## 面试金典系列
+
+#### [面试题 01.01. 判定字符是否唯一](https://leetcode-cn.com/problems/is-unique-lcci/)
+注意到一共26个字母，只有26中可能，因此可以使用位运算。
+```python
+class Solution:
+    def isUnique(self, astr: str) -> bool:
+        mask = 0
+        for char in astr:
+            dist = ord(char) - ord('a')
+            temp = (1 << dist)
+            if (mask & temp) != 0:
+                return False
+            mask |= temp
+        return True
+```
+
+#### [面试题 01.05. 一次编辑](https://leetcode-cn.com/problems/one-away-lcci/)
+```python
+class Solution:
+    def oneEditAway(self, first: str, second: str) -> bool:
+        """编辑距离的特殊情况 O(n)讨论即可"""
+        n1 = len(first)
+        n2 = len(second)
+        if n1 == 0 or n2 == 0:
+            return abs(n1-n2) <= 1
+        # 保证n1>n2，后面的讨论会方便，注意要return
+        if n1 < n2:
+            return self.oneEditAway(second, first)
+        if n1 - n2 > 1:
+            return False
+        for i in range(n2):
+            if first[i] != second[i]:
+                # 如果n1==n2，修改字符；如果n1>n2，删除字符
+                p = i+1 if n1 == n2 else i
+                return first[i+1:] == second[p:]
+        return True
+```
+
 #### [面试题 08.06. 汉诺塔问题](https://leetcode-cn.com/problems/hanota-lcci/)
 ```python
 class Solution:
@@ -14093,4 +14778,14 @@ if __name__ == "__main__":
     s_list = list(s)
     new_s = calStr(s_list)
     print("".join(new_s))
+```
+
+#### [排列组合数计算]
+```python
+def combinatorial(n, i):
+    times = min(i, n-i)
+    result = 1
+    for j in range(0, times):
+        result = result * (n-j) / (times-j)
+    return int(result)
 ```
