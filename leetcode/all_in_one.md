@@ -905,6 +905,33 @@ class Solution:
                             res = (i, j)
         return s[res[0]: res[1]+1]
 ```
+```cpp
+class Solution {
+public:
+    string longestPalindrome(string s) {
+        int n = s.size();
+        vector<vector<int>> dp(n, vector<int> (n, 0));
+        for (int i = 0; i < n; ++i) {
+            dp[i][i] = 1;
+        }
+        int max_len = 0;
+        int left = 0, right = 0;
+        for (int j = 0; j < n; ++j) {
+            for (int i = 0; i <= j; ++i) {
+                if (s[i] == s[j] && (j-i < 3 || dp[i+1][j-1])) {
+                    dp[i][j] = 1;
+                    if (j-i+1 > max_len) {
+                        max_len = j-i+1;
+                        left = i;
+                        right = j;
+                    }
+                }
+            }
+        }
+        return s.substr(left, max_len);
+    }
+};
+```
 
 #### [516. 最长回文子序列](https://leetcode-cn.com/problems/longest-palindromic-subsequence/)
 ```
@@ -2066,6 +2093,33 @@ class Solution:
                 window.add(s[r])
         return max_len
 ```
+```cpp
+class Solution {
+public:
+    int lengthOfLongestSubstring(string s) {
+        int left = 0;
+        unordered_set <char> visited;
+        int max_len = 0;
+        for (int right = 0; right < s.size(); ++right) {
+            if (!visited.count(s[right])) {
+                visited.emplace(s[right]);
+                max_len = max(max_len, right-left+1);
+            }
+            else {
+                int len = right - left;
+                max_len = max(len, max_len);
+                while (s[left] != s[right]) {
+                    visited.erase(s[left]);
+                    ++left;
+                }
+                ++left;
+            }
+        }
+        return max_len;
+    }
+};
+```
+
 #### [30.串联所有单词的子串](https://leetcode-cn.com/problems/substring-with-concatenation-of-all-words/)
 TODO
 ```python
@@ -6184,7 +6238,7 @@ class Solution {
 public:
     vector<int> twoSum(vector<int>& nums, int target) {
         vector<int> ans;
-        unordered_map<int,int> hashmap;
+        unordered_map<int, int> hashmap;
         for (int i=0; i < nums.size(); i++){
             if (hashmap.count(target-nums[i])){
                 ans.push_back(i);
@@ -9027,25 +9081,29 @@ class Solution:
 
 #### [621. 任务调度器](https://leetcode-cn.com/problems/task-scheduler/)
 ```python
-import collections
-
+from collections import Counter
 class Solution:
     def leastInterval(self, tasks: List[str], n: int) -> int:
-        dict_task = collections.Counter(tasks)
-        time = 0
-        while (max(dict_task.values()) > 0):
-            count = 0
-            for key in dict_task.most_common():
-                if count < n+1:
-                    if dict_task[key[0]] > 0:
-                        dict_task[key[0]] -= 1
-                        time += 1
-                        count += 1
-                else:
-                    break
-            if count < n + 1 and max(dict_task.values()) > 0:
-                time += n + 1 - count
-        return time
+        freq = Counter(tasks)
+        m = len(freq)
+        nxtValidTime = [1] * m
+        restTask = list(freq.values())
+        totalTime = 0
+        for i in range(len(tasks)):
+            # 贪心模拟,取最小的可执行时间,最大的任务剩余数量作为当前要消除的任务
+            minTime = min([nxtValidTime[i] for i in range(m) if restTask[i] > 0])
+            totalTime = max(minTime, totalTime+1)
+            minIndex = -1
+            res = -1
+            for k in range(m):
+                # 注意minTime对应的不一定是minIndex,因为totalTime处取了max
+                if nxtValidTime[k] <= totalTime and restTask[k] > res:
+                    minIndex = k
+                    res = restTask[k]
+            restTask[minIndex] -= 1
+            nxtValidTime[minIndex] = totalTime + n + 1
+
+        return totalTime
 ```
 
 ## 树
@@ -10982,16 +11040,18 @@ class Solution:
 ```python
 class Solution:
     def convert(self, s: str, numRows: int) -> str:
-        if numRows == 1: return s
-        res = ["" for i in range(numRows)]
-        flag = -1
-        p = 0
+        if numRows == 1:
+            return s
+        result = ["" for _ in range(numRows)]
+        revFalg = -1
+        i = 0
         for c in s:
-            res[p] += c
-            if p == numRows-1 or p == 0:
-                flag *= -1
-            p += flag
-        return "".join(res)
+            result[i] += c
+            if i == 0 or i == numRows-1:
+                revFalg *= -1
+            i += revFalg
+
+        return ''.join(result)
 ```
 
 #### [541. 反转字符串 II](https://leetcode-cn.com/problems/reverse-string-ii/)
@@ -12223,6 +12283,7 @@ public:
 ```
 
 #### [4. 寻找两个正序数组的中位数](https://leetcode-cn.com/problems/median-of-two-sorted-arrays/)
+log(n+m)
 ```python
 class Solution:
     def findMedianSortedArrays(self, nums1: List[int], nums2: List[int]) -> float:
@@ -12276,6 +12337,37 @@ public:
             vector<int> cut_nums(start+t, end);
             return helper(nums1, cut_nums, k-t);
         }
+    }
+};
+```
+O(n+m) 的解法，用left和right，避免对奇偶和边界麻烦的讨论
+```cpp
+class Solution {
+public:
+    double findMedianSortedArrays(vector<int>& nums1, vector<int>& nums2) {
+        int n1 = nums1.size();
+        int n2 = nums2.size();
+        bool isOdd = (n1 + n2) & 1;
+        int t = (n1 + n2) / 2;
+        int t1 = 0, t2 = 0;
+        int left = 0, right = 0;
+        double res;
+        for (int i = 0; i <= t; ++i) {
+            left = right;
+            if (t2 == n2 || (t1 < n1 && nums1[t1] < nums2[t2])) {
+                right = nums1[t1++];
+            }
+            else {
+                right = nums2[t2++];
+            }
+        }
+        if (isOdd) {
+            return right;
+        }
+        else {
+            return (left + right) / 2.0;
+        }
+
     }
 };
 ```
@@ -12994,6 +13086,35 @@ class Solution:
             result.append(val)
         return result
 ```
+
+#### [204. 计数质数](https://leetcode-cn.com/problems/count-primes/)
+埃氏筛选
+维护isPrime数组，遍历的同时，统计素数的个数。对于当前数i，从i*i到n，每隔i个将其元素置为合数。
+时间复杂度 O(n loglogn)，其中n是遍历的时间，loglogn 是置为合数的时间。
+```cpp
+class Solution {
+public:
+    int countPrimes(int n) {
+        vector<int> isPrime(n, 1);
+        int cnt = 0;
+        for (int i = 2; i < n; ++i) {
+            if (isPrime[i]) {
+                cnt++;
+                if ((long long) i * i < n) {
+                    for (int j = i*i; j < n; j+=i) {
+                        isPrime[j] = 0;
+                    }
+                }
+            }
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+
 
 ## 递归复杂度分析
 递归时间复杂度分析
@@ -14788,4 +14909,26 @@ def combinatorial(n, i):
     for j in range(0, times):
         result = result * (n-j) / (times-j)
     return int(result)
+```
+
+#### [659. 分割数组为连续子序列](https://leetcode-cn.com/problems/split-array-into-consecutive-subsequences/)
+对于当前数x 检查x-1的长度，x-1可能有多个长度序列，在x-1最小序列的基础上长度+1。
+时间复杂度O(nlogn)
+```python
+class Solution:
+    def isPossible(self, nums: List[int]) -> bool:
+        mp = collections.defaultdict(list)
+        for x in nums:
+            # mp[x]通过小顶堆维护
+            # 当前mp[x]长度为mp[x-1] 最小长度+1
+            if mp[x-1]:
+                prevLength = heapq.heappop(mp[x-1])
+                heapq.heappush(mp[x], prevLength + 1)
+            else:
+                heapq.heappush(mp[x], 1)
+
+        for key in mp:
+            if mp[key] and mp[key][0] < 3:
+                return False
+        return True
 ```
