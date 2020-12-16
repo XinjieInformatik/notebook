@@ -46,19 +46,19 @@ https://www.kaggle.com/c/lish-moa/overview
 - simple is good. 研究public kernel的时候，尝试简化他们的方案看看能不能取得同样的效果，再在这个基础上改进，改进太贪心，不要一味增加模型复杂度.
 
 ## 其他选手的有效方案
-
+总结下来，online augmentation，不同的思路之后做blending，是主要的涨分点。
 ### 分析test set 与 train set 目标分布的差异
 很有价值，推测test与train目标分布的差异，一来可以指导我们做CV,二来告诉我们CV有多可靠，三来可以用来post process 模型的输出
 https://www.kaggle.com/cdeotte/moa-post-process-lb-1777
 
 ### lesson learn
-- 模型之间的差异性很重要，一开始应该尝试更不同的方式即使单一模型的准确率不高，然后blending
-- 低分的模型，在blending中仍然是有价值的
+- 模型之间的差异性很重要，一开始应该尝试更不同的方式，然后blending。即使单一模型的准确率不高，仍有价值
 - 尽量保持模型简单，没有足够的收益，没必要一味增加seed，增加复杂度
 - norm 既可以 col-wise 也可以 row-wise，也可以用神经网络去做[layer norm](https://www.kaggle.com/c/lish-moa/discussion/201051)
 - 仔细阅读比赛的评分指标，包括loss计算时上下界的设定，建立更准确的local CV
 - sklearn.decomposition 中，PCA, FactorAnalysis结果较为接近，FastICA与他们不同
-- sklearn.preprocessing 中，不同的标准化 https://www.jianshu.com/p/580688e4a069. QuantileTransformer 受离群值影响小，但是特征间距离失真。注意norm用于行缩放到单位范数，standardization 用于列。
+- sklearn.preprocessing 中，不同的标准化 https://www.jianshu.com/p/580688e4a069. QuantileTransformer 受离群值影响小，但是特征间距离失真。注意norm用于行缩放到单位范数，standardization 用于列
+-
 
 ### feature engineering 思路
 - 生成 多项式特征
