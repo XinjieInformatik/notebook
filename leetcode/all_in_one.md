@@ -1337,6 +1337,65 @@ class Solution:
                 down[i] = down[i-1]
         return max(up[-1], down[-1])
 ```
+贪心数波峰波谷，但是要前处理一下，避免波峰波谷处有平原（重复数字）
+```python
+class Solution:
+    def wiggleMaxLength(self, nums: List[int]) -> int:
+        # pre-process
+        left, right = 0, 0
+        n = len(nums)
+        while right < n:
+            curr = nums[right]
+            while right < n-1 and nums[right] == nums[right+1]:
+                right += 1
+            nums[left] = curr
+            left += 1
+            right += 1
+        nums = nums[:left]
+
+        # 贪心
+        n = len(nums)
+        if n <= 2:
+            return n
+        lenth = 1
+        for i in range(1, n-1):
+            if (nums[i] > nums[i-1] and nums[i] > nums[i+1]) or (nums[i] < nums[i-1] and nums[i] < nums[i+1]):
+                lenth += 1
+        return lenth+1
+```
+```python
+class Solution:
+    def wiggleMaxLength(self, nums: List[int]) -> int:
+        n = len(nums)
+        if n < 2:
+            return n
+
+        prevdiff = nums[1] - nums[0]
+        ret = (2 if prevdiff != 0 else 1)
+        for i in range(2, n):
+            diff = nums[i] - nums[i - 1]
+            if (diff > 0 and prevdiff <= 0) or (diff < 0 and prevdiff >= 0):
+                ret += 1
+                prevdiff = diff
+
+        return ret
+```
+
+动态规划
+```python
+class Solution:
+    def wiggleMaxLength(self, nums: List[int]) -> int:
+        down = 1
+        up = 1
+        n = len(nums)
+        for i in range(1, n):
+            if nums[i] > nums[i-1]:
+                up = down + 1
+            elif nums[i] < nums[i-1]:
+                down = up + 1
+        return 0 if n == 0 else max(down, up)
+```
+
 
 #### [121. 买卖股票的最佳时机](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock/)
 ```
@@ -2899,6 +2958,29 @@ class Solution:
             triangle.append(row)
 
         return triangle
+```
+```cpp
+class Solution {
+public:
+    vector<vector<int>> generate(int numRows) {
+        vector<vector<int>> result;
+        for (int i = 0; i < numRows; ++i) {
+            vector<int> line;
+            line.emplace_back(1);
+            if (i == 0) {
+                result.emplace_back(line);
+                continue;
+            }
+            int n = result.size();
+            for (int k = 0; k < i-1; ++k) {
+                line.emplace_back(result[n-1][k] + result[n-1][k+1]);
+            }
+            line.emplace_back(1);
+            result.emplace_back(line);
+        }
+        return result;
+    }
+};
 ```
 
 ##### [119. 杨辉三角 II](https://leetcode-cn.com/problems/pascals-triangle-ii/)
@@ -14930,5 +15012,29 @@ class Solution:
         for key in mp:
             if mp[key] and mp[key][0] < 3:
                 return False
+        return True
+```
+
+#### [290. 单词规律](https://leetcode-cn.com/problems/word-pattern/)
+```python
+class Solution:
+    def wordPattern(self, pattern: str, s: str) -> bool:
+        str_list = s.split()
+        n1 = len(pattern)
+        n2 = len(str_list)
+        if n1 != n2:
+            return False
+        n = n1
+        mapping = {}
+        for i in range(n):
+            c = pattern[i]
+            word = str_list[i]
+            if c in mapping:
+                if mapping[c] != word:
+                    return False
+            else:
+                if word in mapping.values():
+                    return False
+                mapping[c] = word
         return True
 ```

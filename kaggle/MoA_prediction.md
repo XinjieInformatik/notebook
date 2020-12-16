@@ -1,5 +1,5 @@
 # Mechanisms of Action (MoA) Prediction
-2020.12.01
+2020.12.01  public 47 / private 150
 https://www.kaggle.com/c/lish-moa/overview
 - 特征：一个实验下，800+维度的gene特征与100维度cell特征
 - 目标：输出206个MoA（药理作用）的置信度 - 预测当前药物该实验下，基因与细胞表现下是否有该药理作用 - 多任务分类问题
@@ -31,13 +31,19 @@ https://www.kaggle.com/c/lish-moa/overview
 
 ### 模型融合
 
-| index | 策略                           | CV       | public  | private |
-| ----- | ------------------------------ | -------- | ------- | ------- |
-| 1     | 加权融合 2-1 2-3               | 0.015516 | 0.01615 | 0.01823 |
-| 2     | 2-1 2-3 206-target中选取最小CV | 0.015476 | 0.01619 | 0.01825 |
-|       |                                |          |         |         |
+| index | strategy                                 | CV       | public  | private |
+| ----- | ---------------------------------------- | -------- | ------- | ------- |
+| 3-1   | avg. blend 2-1 2-3                       | 0.015516 | 0.01823 | 0.01615 |
+| 3-2   | 2-1 2-3 target-wise lowest CV            | 0.015476 | 0.01825 | 0.01619 |
+| 3-3   | target-wise weight blend 1-1 1-3 1-4 1-5 | 0.014219 | 0.01818 | 0.01613 |
+| 3-4   | merge 3-2 3-3 weight blend               | 0.015353 | 0.01818 | 0.01612 |
+
 
 ### lesson learn
+- 建立更合理的CV很重要 [drug CV split](https://www.kaggle.com/c/lish-moa/discussion/195195)
+- train, public, private 的分布很重要[example](https://www.kaggle.com/c/lish-moa/discussion/200832)。比赛初期做target分析，留意举办方对split方式的申明，如果大概率是随机split的，可以相信CV，public test 当作另外一个fold做参考。[MoA](https://www.kaggle.com/c/lish-moa/overview)这个比赛有点特殊，public test 是人工划分出来的，让人不知道private test的划分方式，因此最后有些结论是相反的。
+- 尝试过的方法，一开始无效的方法，甚至有效的方法要有记录，最后阶段要再试试[label smooth](https://www.kaggle.com/c/lish-moa/discussion/201729)。
+- simple is good. 研究public kernel的时候，尝试简化他们的方案看看能不能取得同样的效果，再在这个基础上改进，改进太贪心，不要一味增加模型复杂度.
 
 ## 其他选手的有效方案
 
@@ -47,8 +53,12 @@ https://www.kaggle.com/cdeotte/moa-post-process-lb-1777
 
 ### lesson learn
 - 模型之间的差异性很重要，一开始应该尝试更不同的方式即使单一模型的准确率不高，然后blending
-- 低分的模型，在blending中仍然是有价值的，必要一味降低其权重
+- 低分的模型，在blending中仍然是有价值的
 - 尽量保持模型简单，没有足够的收益，没必要一味增加seed，增加复杂度
+- norm 既可以 col-wise 也可以 row-wise，也可以用神经网络去做[layer norm](https://www.kaggle.com/c/lish-moa/discussion/201051)
+- 仔细阅读比赛的评分指标，包括loss计算时上下界的设定，建立更准确的local CV
+- sklearn.decomposition 中，PCA, FactorAnalysis结果较为接近，FastICA与他们不同
+- sklearn.preprocessing 中，不同的标准化 https://www.jianshu.com/p/580688e4a069. QuantileTransformer 受离群值影响小，但是特征间距离失真。注意norm用于行缩放到单位范数，standardization 用于列。
 
 ### feature engineering 思路
 - 生成 多项式特征
@@ -58,11 +68,23 @@ https://www.kaggle.com/cdeotte/moa-post-process-lb-1777
 - PCA for cell and gene differently
 - SVD for cell and gene differently
 
-### pesudo label, stacking, stacking+features
+### online augmentation
+mixup, swap, ctl增强等，人为引入噪声，引入更多数据量
+
+
+### pseudo labeling
+使用 pseudo labeling 要小心，如果 public test 与 private test 差异较大，那 pseudo labeling可能会把自己坑了。如果 test 上预测的准确率不高，也没啥用。
+https://www.kaggle.com/cdeotte/pseudo-labeling-qda-0-969
+1. 在train上训练一个模型，预测test的label
+2. 将train，test纵向拼接，作为新的数据集
+3. 在拓展的新数据集上，重新训练一个模型，或者fine tuning 原来模型
 
 ### stacking
-stacking 出来的features+原始features再训练模型，然后stacking出来的模型可以再和原始模型融合
+基模型出来的preds+原始features再训练模型，然后stacking出来的模型可以再和原始模型融合
 
+### tabular to image
+[1d-cnn](https://www.kaggle.com/c/lish-moa/discussion/202256)
+[]()
 
 ### multilabel to multiclass
 把multitask转化为multilabel的问题，再融合这两个方式下训练出来的模型
@@ -79,6 +101,10 @@ https://www.kaggle.com/c/lish-moa/discussion/201051
 ### SVM/XGB
 https://www.kaggle.com/c/lish-moa/discussion/200656
 
+### mixup in tabular data
+https://www.kaggle.com/c/lish-moa/discussion/200702
+
+
 ### post-processing
 - 以drug在train上做聚类，同时在test上做聚类，对于有高置信度的样本，赋予和相应drug同样的MoA
 - 建立模型去预测drug，然后test上drug赋予相同的MoA
@@ -88,8 +114,9 @@ reference：
 https://www.kaggle.com/c/lish-moa/discussion/200596
 https://www.kaggle.com/c/lish-moa/discussion/200609
 
-### mixup in tabular data
-https://www.kaggle.com/c/lish-moa/discussion/200702
+
+
+
 
 ### misc
 - pretrain 再 finetune
