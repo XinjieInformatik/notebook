@@ -81,10 +81,11 @@ https://www.kaggle.com/cdeotte/pseudo-labeling-qda-0-969
 
 ### stacking
 基模型出来的preds+原始features再训练模型，然后stacking出来的模型可以再和原始模型融合
-
+[不同stacking间还可以融合](https://www.kaggle.com/c/lish-moa/discussion/204685)
+[介绍stacking](https://mlwave.com/kaggle-ensembling-guide/)
 ### tabular to image
 [1d-cnn](https://www.kaggle.com/c/lish-moa/discussion/202256)
-[]()
+[t-SNE to image](https://www.kaggle.com/c/lish-moa/discussion/195378)
 
 ### multilabel to multiclass
 把multitask转化为multilabel的问题，再融合这两个方式下训练出来的模型
@@ -104,7 +105,6 @@ https://www.kaggle.com/c/lish-moa/discussion/200656
 ### mixup in tabular data
 https://www.kaggle.com/c/lish-moa/discussion/200702
 
-
 ### post-processing
 - 以drug在train上做聚类，同时在test上做聚类，对于有高置信度的样本，赋予和相应drug同样的MoA
 - 建立模型去预测drug，然后test上drug赋予相同的MoA
@@ -113,9 +113,6 @@ post-processing 很危险，除非有足够的准确率和收益,最后private�
 reference：
 https://www.kaggle.com/c/lish-moa/discussion/200596
 https://www.kaggle.com/c/lish-moa/discussion/200609
-
-
-
 
 
 ### misc

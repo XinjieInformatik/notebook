@@ -1,3 +1,0 @@
-# DenseFusion: 6D Object Pose Estimation by Iterative Dense Fusion
-
-归回3D物体一定要基于2D框么，如果直接在对应grid上进行3D检测，3D NMS 呢？

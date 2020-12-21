@@ -15038,3 +15038,44 @@ class Solution:
                 mapping[c] = word
         return True
 ```
+
+#### [316. 去除重复字母](https://leetcode-cn.com/problems/remove-duplicate-letters/)
+维护seen，seen代表stack中是否有当前字母，做到O(1)的查询，
+如果当前字母在seen中，stat-1，跳过。
+如果不在seen中，如果当前字母小于stack[-1]并且stat[stack[-1]]>0，就pop stack。
+```python
+from collections import Counter
+class Solution:
+    def removeDuplicateLetters(self, s: str) -> str:
+        stack = []
+        seen = set()
+        stat = Counter(s)
+        for c in s:
+            if c not in seen:
+                seen.add(c)
+                while stack and c < stack[-1] and stat[stack[-1]] > 0:
+                    seen.remove(stack[-1])
+                    stack.pop()
+                stack.append(c)
+            stat[c] -= 1
+        return ''.join(stack)
+```
+
+#### [746. 使用最小花费爬楼梯](https://leetcode-cn.com/problems/min-cost-climbing-stairs/)
+```python
+class Solution:
+    def minCostClimbingStairs(self, cost: List[int]) -> int:
+        n = len(cost)
+        res = 0
+
+        prev = cost[0]
+        curr = cost[1]
+        for i in range(2, n):
+            curr0 = curr
+            curr = cost[i] + min(prev, curr)
+            if i == n-2:
+                res = curr
+            prev = curr0
+
+        return min(curr, res)
+```
