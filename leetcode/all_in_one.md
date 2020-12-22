@@ -6198,12 +6198,12 @@ class Solution:
 class Solution {
 public:
     ListNode* removeNthFromEnd(ListNode* head, int n) {
-        ListNode *curr = head;
+        ListNode* curr = head;
         while (n--) {
             curr = curr->next;
         }
-        ListNode *prev = new ListNode(-1);
-        ListNode *d_head = prev;
+        ListNode* prev = new ListNode(-1);
+        ListNode* d_head = prev;
         prev->next = head;
         while (curr) {
             curr = curr->next;
@@ -6427,7 +6427,7 @@ class Solution:
 class Solution {
 public:
     ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
-        auto *dummy = new ListNode(-1);
+        auto* dummy = new ListNode(-1);
         auto head = dummy;
         int carry = 0;
         int val1, val2, val;
@@ -6848,7 +6848,7 @@ public:
         helper(root, false);
         return sum;
     }
-    void helper(TreeNode *root, bool is_left) {
+    void helper(TreeNode* root, bool is_left) {
         if (!root->left && !root->right && is_left) {
             sum += root->val;
             return;
@@ -7077,7 +7077,7 @@ public:
         return result;
     }
 
-    void helper(TreeNode *node, string s){
+    void helper(TreeNode* node, string s){
         if (node->left == nullptr && node->right == nullptr){
             result.push_back(s + to_string(node->val));
             return;
@@ -7577,7 +7577,7 @@ public:
     TreeNode* helper(TreeNode* t1, TreeNode* t2) {
         if (!t1) return t2;
         if (!t2) return t1;
-        auto *newTree = new TreeNode(t1->val + t2->val);
+        auto* newTree = new TreeNode(t1->val + t2->val);
         newTree->left = helper(t1->left, t2->left);
         newTree->right = helper(t1->right, t2->right);
         return newTree;
@@ -7743,7 +7743,7 @@ public:
         que.pop();
         if (top == "X") return nullptr;
         int val = stoi(top);
-        auto *node = new TreeNode(val);
+        auto* node = new TreeNode(val);
         node->left = construct(que);
         node->right = construct(que);
         return node;
@@ -7796,7 +7796,7 @@ class Solution {
 public:
     Node* connect(Node* root) {
         if (!root) return root;
-        Node *start = root;
+        Node* start = root;
         while (start) {
             Node *prev = nullptr, *nxtStart = nullptr;
             for (Node *p = start; p != nullptr; p = p->next) {
@@ -7899,9 +7899,9 @@ public:
         return helper(root, val);
     }
 
-    TreeNode* helper(TreeNode *root, int val) {
+    TreeNode* helper(TreeNode* root, int val) {
         if (!root) {
-            auto *node = new TreeNode(val);
+            auto* node = new TreeNode(val);
             return node;
         }
         if (root->val > val) {
@@ -9469,7 +9469,7 @@ public:
             int size = que.size();
             // 注意这里不能像python一样用for (len(que))
             while (size--){
-                TreeNode *top = que.front();
+                TreeNode* top = que.front();
                 res.push_back(top->val);
                 que.pop();
                 if (top->left) que.push(top->left);
@@ -13728,8 +13728,8 @@ class Solution {
 public:
     ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
         // dummy 与 d_head 指向同一个内存地址对象
-        ListNode *dummy = new ListNode(-1);
-        ListNode *d_head = dummy;
+        ListNode* dummy = new ListNode(-1);
+        ListNode* d_head = dummy;
         // dummy不断向前移动，建立链表，d_head还停留在初始位置
         while (l1 && l2){
             if (l1->val < l2->val){
@@ -13794,7 +13794,7 @@ public:
         if (!B) return false;
         return helper(A, B);
     }
-    bool helper(TreeNode *node, TreeNode *B) {
+    bool helper(TreeNode* node, TreeNode* B) {
         if (!node) return false;
         if (node->val == B->val && isSub(node, B)) return true;
         if (helper(node->left, B) || helper(node->right, B)) return true;
@@ -13840,7 +13840,7 @@ public:
         helper(root);
         return root;
     }
-    void helper(TreeNode *root) {
+    void helper(TreeNode* root) {
         if (!root) return;
         helper(root->left);
         helper(root->right);
@@ -13886,7 +13886,7 @@ public:
         stack<TreeNode*> stk;
         stk.push(root);
         while (stk.size() > 0) {
-            TreeNode *temp = stk.top();
+            TreeNode* temp = stk.top();
             stk.pop();
             if (temp) {
                 stk.push(temp);
@@ -13895,7 +13895,7 @@ public:
                 if (temp->left) stk.push(temp->left);
             }
             else {
-                TreeNode *top = stk.top();
+                TreeNode* top = stk.top();
                 stk.pop();
                 swap(top->left, top->right);
             }
@@ -14176,7 +14176,7 @@ public:
         return result;
     }
 
-    void helper(TreeNode *root, int sum, vector<vector<int>> *result){
+    void helper(TreeNode* root, int sum, vector<vector<int>>* result){
         if (!root) return;
         path.emplace_back(root->val);
         if (sum - root->val == 0 && !root->left && !root->right) {
@@ -14239,10 +14239,10 @@ public:
     Node* copyRandomList(Node* head) {
         return helper(head);
     }
-    Node* helper(Node *node){
+    Node* helper(Node* node){
         if (!node) return nullptr;
         if (vis.count(node)) return vis[node];
-        auto *copy = new Node(node->val);
+        auto* copy = new Node(node->val);
         vis[node] = copy;
         copy->next = helper(node->next);
         copy->random = helper(node->random);
@@ -14315,8 +14315,8 @@ class Solution:
 ```cpp
 class Solution {
 public:
-    Node *prev = nullptr;
-    Node *head = nullptr;
+    Node* prev = nullptr;
+    Node* head = nullptr;
     Node* treeToDoublyList(Node* root) {
         if (!root) return root;
         helper(root);
@@ -14324,7 +14324,7 @@ public:
         prev->right = head;
         return head;
     }
-    void helper(Node *root) {
+    void helper(Node* root) {
         if (!root) return;
         helper(root->left);
         if (!head) head = root;
@@ -15078,4 +15078,81 @@ class Solution:
             prev = curr0
 
         return min(curr, res)
+```
+
+#### [103. 二叉树的锯齿形层序遍历](https://leetcode-cn.com/problems/binary-tree-zigzag-level-order-traversal/)
+两个stack实现遍历顺序转化
+```python
+class Solution:
+    def zigzagLevelOrder(self, root: TreeNode) -> List[List[int]]:
+        if not root: return []
+        stack, stack_inv = [root], []
+        result = []
+        while True:
+            line = []
+            while stack:
+                top = stack.pop()
+                line.append(top.val)
+                if top.left:
+                    stack_inv.append(top.left)
+                if top.right:
+                    stack_inv.append(top.right)
+            if line:
+                result.append(line)
+            else:
+                break
+            line = []
+            while stack_inv:
+                top = stack_inv.pop()
+                line.append(top.val)
+                if top.right:
+                    stack.append(top.right)
+                if top.left:
+                    stack.append(top.left)
+            if line:
+                result.append(line)
+            else:
+                break
+        return result
+```
+```cpp
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    vector<vector<int>> zigzagLevelOrder(TreeNode* root) {
+        vector<vector<int>> res;
+        if (!root) return res;
+        stack<TreeNode*> stk1, stk2;
+        stk1.push(root);
+        while (stk1.size() || stk2.size()) {
+            vector<int> line;
+            while (stk1.size() > 0) {
+                root = stk1.top();
+                stk1.pop();
+                if (root->left) stk2.push(root->left);
+                if (root->right) stk2.push(root->right);
+                line.push_back(root->val);
+            }
+            res.push_back(line);
+            line.clear();
+            while (stk2.size() > 0) {
+                root = stk2.top();
+                stk2.pop();
+                if (root->right) stk1.push(root->right);
+                if (root->left) stk1.push(root->left);
+                line.push_back(root->val);
+            }
+            if (line.size() > 0) res.push_back(line);
+        }
+        return res;
+    }
+};
 ```
