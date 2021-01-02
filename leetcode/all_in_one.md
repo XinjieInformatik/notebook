@@ -1724,6 +1724,42 @@ class Solution:
                 stack.append(j)
         return max_area
 ```
+```cpp
+class Solution {
+public:
+    int maximalRectangle(vector<vector<char>>& matrix) {
+        int res = 0;
+        int n = matrix.size();
+        if (n == 0) return res;
+        int m = matrix[0].size();
+        vector<int> heights(m+2, 0);
+        int area = 0;
+        int curr_h = 0;
+        for (int i = 0; i < n; ++i) {
+            stack<int> stk;
+            for (int j = 0; j < m+2; ++j) {
+                if (j > 0 && j < m+1) {
+                    if (matrix[i][j-1] == '1') {
+                        ++heights[j];
+                    }
+                    else {
+                        heights[j] = 0;
+                    }
+                }
+                while (stk.size() > 0 && heights[j] < heights[stk.top()]) {
+                    int idx = stk.top();
+                    stk.pop();
+                    curr_h = heights[idx];
+                    area = curr_h * (j - stk.top() - 1);
+                    res = max(res, area);
+                }
+                stk.push(j);
+            }
+        }
+        return res;
+    }
+};
+```
 
 #### [739. 每日温度](https://leetcode-cn.com/problems/daily-temperatures/)
 ```
@@ -2708,17 +2744,17 @@ using namespace std;
 
 struct ListNode {
     int val;
-    ListNode *next;
+    ListNode* next;
     ListNode(int x): val(x), next(nullptr) {}
 };
 
 class Solution {
 public:
     ListNode* reverseList(ListNode *head) {
-        ListNode *prev = nullptr;
-        ListNode *curr = head;
+        ListNode* prev = nullptr;
+        ListNode* curr = head;
         while (curr) {
-            ListNode *nxt = curr->next;
+            ListNode* nxt = curr->next;
             curr->next = prev;
             prev = curr;
             curr = nxt;
@@ -2729,8 +2765,8 @@ public:
 
 int main() {
     vector<int> nums{1,2,3,4,5};
-    auto *dummy = new ListNode(-1);
-    ListNode *d_head = dummy;
+    auto* dummy = new ListNode(-1);
+    ListNode* d_head = dummy;
     for (auto num : nums) {
         dummy->next = new ListNode(num);
         dummy = dummy->next;
@@ -2738,7 +2774,7 @@ int main() {
     dummy->next = nullptr;
 
     auto solver = Solution();
-    ListNode *rev_head = solver.reverseList(d_head->next);
+    ListNode* rev_head = solver.reverseList(d_head->next);
     while (rev_head) {
         printf("\033[0:1:31m%d ", rev_head->val);
         rev_head = rev_head->next;
@@ -3636,6 +3672,47 @@ class Solution:
         else:
             return [-1, -1]
 ```
+```cpp
+class Solution {
+public:
+    vector<int> searchRange(vector<int>& nums, int target) {
+        int n = nums.size();
+        if (n == 0) return {-1, -1};
+        int first, last;
+        first = low_bound(nums, 0, n, target);
+        last = upper_bound(nums, 0, n, target);
+        if (first == last) return {-1, -1};
+        return {first, last-1};
+    }
+
+    int low_bound(vector<int>& nums, int left, int right, int target) {
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            if (nums[mid] < target) {
+                left = mid + 1;
+            }
+            else {
+                right = mid;
+            }
+        }
+        return left;
+    }
+
+    int upper_bound(vector<int>& nums, int left, int right, int target) {
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            if (nums[mid] <= target) {
+                left = mid + 1;
+            }
+            else {
+                right = mid;
+            }
+        }
+        return left;
+    }
+};
+```
+
 
 #### [349. 两个数组的交集](https://leetcode-cn.com/problems/intersection-of-two-arrays/)
 复习一下Counter用法
@@ -3994,6 +4071,25 @@ class Solution:
                 return False
             p += 1
         return True
+```
+```cpp
+class Solution {
+public:
+    bool isIsomorphic(string s, string t) {
+        unordered_map<char, int> map1, map2;
+        int n1 = s.size(), n2 = t.size();
+        if (n1 != n2) return false;
+        // 建立双向映射
+        for (int i = 0; i < n1; ++i) {
+            if ((map1.count(s[i]) && map1[s[i]] != t[i]) || (map2.count(t[i]) && map2[t[i]] != s[i])) {
+                return false;
+            }
+            map1[s[i]] = t[i];
+            map2[t[i]] = s[i];
+        }
+        return true;
+    }
+};
 ```
 
 #### [49. 字母异位词分组](https://leetcode-cn.com/problems/group-anagrams/)
@@ -15155,4 +15251,87 @@ public:
         return res;
     }
 };
+```
+
+#### [649. Dota2 参议院](https://leetcode-cn.com/problems/dota2-senate/)
+```cpp
+class Solution {
+public:
+    string predictPartyVictory(string senate) {
+        queue<int> Rq, Dq;
+        string Rstr="Radiant", Dstr="Dire";
+        int n = senate.size();
+        for (int i = 0; i < n; ++i) {
+            if (senate[i] == 'R') Rq.push(i);
+            if (senate[i] == 'D') Dq.push(i);
+        }
+        if (Rq.size() == 0) return Dstr;
+        if (Dq.size() == 0) return Rstr;
+        pair<int, char> R, D;
+        for (int i = 0; i < n; ++i) {
+            // cout << Rq.front() << ' ' << Dq.front() << endl;
+            if (Rq.front() < Dq.front()) {
+                Dq.pop();
+                Rq.pop();
+                Rq.push(n+i);
+            }
+            else {
+                Rq.pop();
+                Dq.pop();
+                Dq.push(n+i);
+            }
+            if (Rq.size() == 0) return Dstr;
+            if (Dq.size() == 0) return Rstr;
+        }
+        return "";
+    }
+};
+```
+
+#### [1046. 最后一块石头的重量](https://leetcode-cn.com/problems/last-stone-weight/)
+```python
+import heapq
+class Solution:
+    def lastStoneWeight(self, stones: List[int]) -> int:
+        if len(stones) == 1:
+            return stones[0]
+        heapq.heapify(stones)
+        heap = []
+        for item in stones:
+            heapq.heappush(heap, -item)
+        while (heap):
+            stone1 = -heapq.heappop(heap)
+            stone2 = -heapq.heappop(heap)
+            diff = stone1 - stone2
+            if diff > 0:
+                heapq.heappush(heap, -diff)
+            if len(heap) == 1:
+                return -heap[0]
+            if len(heap) == 0:
+                return 0
+        return -1
+```
+
+#### [605. 种花问题](https://leetcode-cn.com/problems/can-place-flowers/)
+```python
+class Solution:
+    def canPlaceFlowers(self, flowerbed: List[int], n: int) -> bool:
+        flowerbed = [1] + flowerbed + [1]
+        lastone = 0
+        cnt = 0
+        for i in range(len(flowerbed)):
+            if flowerbed[i] == 1:
+                interval = i - lastone - 3
+                if interval >= -1:
+                    if lastone == 0 and i == len(flowerbed)-1:
+                        cnt += (interval+3) // 2
+                    elif lastone == 0 or i == len(flowerbed)-1:
+                        cnt += (interval+2) // 2
+                    else:
+                        cnt += (interval+1) // 2
+                lastone = i
+                if cnt >= n:
+                    return True
+        # print(cnt)
+        return False
 ```

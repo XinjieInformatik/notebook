@@ -178,3 +178,12 @@ composed = transforms.Compose([Rescale(256),
 ```
 
 ## 进阶
+### 加速pytorch训练
+pytorch lighting
+https://towardsdatascience.com/7-tips-for-squeezing-maximum-performance-from-pytorch-ca4a40951259
+mix precision
+https://pytorch.org/blog/accelerating-training-on-nvidia-gpus-with-pytorch-automatic-mixed-precision/
+some tips
+https://nvlabs.github.io/eccv2020-mixed-precision-tutorial/files/szymon_migacz-pytorch-performance-tuning-guide.pdf
+some tips
+https://zhuanlan.zhihu.com/p/147723652

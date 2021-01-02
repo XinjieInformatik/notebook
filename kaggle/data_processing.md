@@ -46,3 +46,6 @@ df.skew(): skewness, 偏度，描述数据的不对称度
 reference:
 https://support.minitab.com/zh-cn/minitab/18/help-and-how-to/statistics/basic-statistics/supporting-topics/data-concepts/how-skewness-and-kurtosis-affect-your-distribution/
 https://www.cnblogs.com/wyy1480/p/10474046.html
+
+### read data faster
+[Tutorial on reading large datasets](https://www.kaggle.com/rohanrao/tutorial-on-reading-large-datasets)
