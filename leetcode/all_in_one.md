@@ -2359,6 +2359,29 @@ class Solution:
                 result.append(nums[queue[0]])
         return result
 ```
+```cpp
+class Solution {
+public:
+    vector<int> maxSlidingWindow(vector<int>& nums, int k) {
+        deque<int> deq;
+        vector<int> res;
+        int n = nums.size();
+        for (int i = 0; i < n; ++i) {
+            while (deq.size() > 0 && nums[i] >= nums[deq.back()]) {
+                deq.pop_back();
+            }
+            deq.push_back(i);
+            if (deq.front() <= i-k) {
+                deq.pop_front();
+            }
+            if (i > k-2) {
+                res.push_back(nums[deq.front()]);
+            }
+        }
+        return res;
+    }
+};
+```
 
 #### [415. 字符串相加](https://leetcode-cn.com/problems/add-strings/)
 ```python
