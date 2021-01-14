@@ -11,6 +11,11 @@ pd.get_dummies(df, columns=['col1', 'col2'])
 
 ```
 
+### 理论
+#### z-score
+
+$$ z = \frac{x-u}{\sigma} $$
+
 ### 计算数据分布参数
 ```python
 def calc_stats(df, g_feats, c_feats):

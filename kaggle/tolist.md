@@ -6,3 +6,4 @@
 4. read lgbm and xgboost source code
 5. leetcode
 6. tensorflow
+7. python，c++ 高级特性

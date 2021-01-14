@@ -43,10 +43,10 @@ https://www.kaggle.com/c/lish-moa/overview
 - 建立更合理的CV很重要 [drug CV split](https://www.kaggle.com/c/lish-moa/discussion/195195)
 - train, public, private 的分布很重要[example](https://www.kaggle.com/c/lish-moa/discussion/200832)。比赛初期做target分析，留意举办方对split方式的申明，如果大概率是随机split的，可以相信CV，public test 当作另外一个fold做参考。[MoA](https://www.kaggle.com/c/lish-moa/overview)这个比赛有点特殊，public test 是人工划分出来的，让人不知道private test的划分方式，因此最后有些结论是相反的。
 - 尝试过的方法，一开始无效的方法，甚至有效的方法要有记录，最后阶段要再试试[label smooth](https://www.kaggle.com/c/lish-moa/discussion/201729)。
-- simple is good. 研究public kernel的时候，尝试简化他们的方案看看能不能取得同样的效果，再在这个基础上改进，改进太贪心，不要一味增加模型复杂度.
+- simple is good. 研究public kernel的时候，尝试简化他们的方案看看能不能取得同样的效果，再在这个基础上改进，改进不要太贪心，不要一味增加模型复杂度.
 
 ## 其他选手的有效方案
-总结下来，online augmentation，不同的思路之后做blending，是主要的涨分点。
+总结下来，online augmentation，不同结构的模型之后做blending，是主要的涨分点。
 ### 分析test set 与 train set 目标分布的差异
 很有价值，推测test与train目标分布的差异，一来可以指导我们做CV,二来告诉我们CV有多可靠，三来可以用来post process 模型的输出
 https://www.kaggle.com/cdeotte/moa-post-process-lb-1777
@@ -70,7 +70,8 @@ https://www.kaggle.com/cdeotte/moa-post-process-lb-1777
 
 ### online augmentation
 mixup, swap, ctl增强等，人为引入噪声，引入更多数据量
-
+train1[genes+cells].values + ctl1[genes+cells].values - ctl2[genes+cells].values
+no_ctl_samples+ctl_sample1-ctl_sample2 to augment.( ctl_sample1/2 are randomly choosed from all ctl samples).
 
 ### pseudo labeling
 使用 pseudo labeling 要小心，如果 public test 与 private test 差异较大，那 pseudo labeling可能会把自己坑了。如果 test 上预测的准确率不高，也没啥用。
@@ -83,6 +84,7 @@ https://www.kaggle.com/cdeotte/pseudo-labeling-qda-0-969
 基模型出来的preds+原始features再训练模型，然后stacking出来的模型可以再和原始模型融合
 [不同stacking间还可以融合](https://www.kaggle.com/c/lish-moa/discussion/204685)
 [介绍stacking](https://mlwave.com/kaggle-ensembling-guide/)
+
 ### tabular to image
 [1d-cnn](https://www.kaggle.com/c/lish-moa/discussion/202256)
 [t-SNE to image](https://www.kaggle.com/c/lish-moa/discussion/195378)

@@ -13,13 +13,15 @@ conda install -c conda-forge jupyterlab
 然后安装nodejs，为了后续安装与管理插件。使用 conda-forge 获得更高版本nodejs
 ```sh
 conda install -c conda-forge nodejs
+conda upgrade nodejs
 ```
 
-然后打开Jupyter - Settings - Advanced Settings Editor，在 User Preferences 中 打 "enabled": true，保存退出，然后就可以在左侧搜索插件安装了。
+然后打开Jupyter - Settings - Advanced Settings Editor，在 Extension Manager - User Preferences 中 打 "enabled": true，保存退出，然后就可以在左侧搜索插件安装了。
 
 推荐插件：
 - jupyterlab-manager
 - @jupyterlab/toc
+- @jupyterlab/git
 - @krassowski/jupyterlab_go_to_definition
 - jupyter-matplotlib
 - jupyterlab-drawio
@@ -53,7 +55,7 @@ qgrid — DataFrame 交互
 https://github.com/quantopian/qgrid
 ```python
 import qgrid  
-qgrid_widget = qgrid.show_grid (df, show_toolbar=True)
+qgrid_widget = qgrid.show_grid(df, show_toolbar=True)
 qgrid_widget
 ```
 
@@ -74,4 +76,4 @@ conda clean --all
 ```
 
 reference:
-- [数据挖掘：工具篇（一）—— Jupyter Lab 配置环境](https://liketea.xyz/%E6%95%B0%E6%8D%AE%E6%8C%96%E6%8E%98/%E6%95%B0%E6%8D%AE%E6%8C%96%E6%8E%98/%E6%95%B0%E6%8D%AE%E6%8C%96%E6%8E%98%EF%BC%9A%E5%B7%A5%E5%85%B7%E7%AF%87%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E2%80%94%20Jupyter%20Lab%20%E9%85%8D%E7%BD%AE%E7%8E%AF%E5%A2%83/)
+- [数据挖掘：工具篇（一）—— Jupyter Lab 配置环境](https://liketea.xyz/数据科学/数据科学/数据科学：工具使用（一）—— Jupyter Lab 配置环境/)

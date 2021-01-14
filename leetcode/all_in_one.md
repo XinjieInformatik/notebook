@@ -1305,6 +1305,29 @@ class Solution:
             p = j
         return cnt
 ```
+```cpp
+class Solution {
+public:
+    int eraseOverlapIntervals(vector<vector<int>>& intervals) {
+        // 以最早结束为准
+        sort(intervals.begin(), intervals.end(), [](const auto& u, const auto& v) {
+            return u[1] < v[1];
+        });
+        int left = 0;
+        int n = intervals.size();
+        int cnt = 0;
+        while (left < n) {
+            int right = left + 1;
+            while (right < n && intervals[right][0] < intervals[left][1]) {
+                ++cnt;
+                ++right;
+            }
+            left = right;
+        }
+        return cnt;
+    }
+};
+```
 
 #### [376. 摆动序列](https://leetcode-cn.com/problems/wiggle-subsequence/)
 ```
@@ -2598,6 +2621,7 @@ class Solution:
                     unionfind.union(i, j)
         return unionfind.cnt
 ```
+
 #### [785. 判断二分图](https://leetcode-cn.com/problems/is-graph-bipartite/)
 查并集,用于无向图
 ```python
@@ -2657,6 +2681,82 @@ class Solution:
                     queue.appendleft(node)
                     visited[node] = -visited[top]
         return True
+```
+
+#### [684. 冗余连接](https://leetcode-cn.com/problems/redundant-connection/)
+```python
+class UnionFindSet:
+    def __init__(self, n):
+        self.parent = [i for i in range(n)]
+        self.rank = [0] * n
+    def find(self, x):
+        if x != self.parent[x]:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+    def union(self, x, y):
+        px = self.find(x)
+        py = self.find(y)
+        if self.rank[px] < self.rank[py]:
+            self.parent[px] = py
+        elif self.rank[px] > self.rank[py]:
+            self.parent[py] = px
+        else:
+            self.parent[px] = py
+            self.rank[py] += 1
+    def connect(self, x, y):
+        return self.find(x) == self.find(y)
+
+class Solution:
+    def findRedundantConnection(self, edges: List[List[int]]) -> List[int]:
+        unionset = UnionFindSet(len(edges)+1)
+        for a, b in edges:
+            if not unionset.connect(a, b):
+                unionset.union(a, b)
+            else:
+                return [a, b]
+        return []
+```
+
+#### [1202. 交换字符串中的元素](https://leetcode-cn.com/problems/smallest-string-with-swaps/)
+```python
+class Unionfindset:
+    def __init__(self, n):
+        self.parent = [i for i in range(n)]
+        self.rank = [0] * n
+    def find(self, x):
+        if x != self.parent[x]:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+    def union(self, x, y):
+        px = self.find(x)
+        py = self.find(y)
+        if self.rank[px] < self.rank[py]:
+            self.parent[px] = py
+        elif self.rank[px] > self.rank[py]:
+            self.parent[py] = px
+        else:
+            self.parent[px] = py
+            self.rank[py] += 1
+    def connect(self, x, y):
+        return self.find(x) == self.find(y)
+
+from collections import defaultdict
+class Solution:
+    def smallestStringWithSwaps(self, s: str, pairs: List[List[int]]) -> str:
+        unionset = Unionfindset(len(s))
+        for pair in pairs:
+            unionset.union(pair[0], pair[1])
+        connect = defaultdict(list)
+        for i, c in enumerate(s):
+            connect[unionset.find(i)].append(c)
+        for key in connect:
+            connect[key].sort(reverse=True)
+        # print(connect)
+        ans = []
+        for i, c in enumerate(s):
+            pi = unionset.find(i)
+            ans.append(connect[pi].pop())
+        return "".join(ans)
 ```
 
 ### 拓扑排序
@@ -2908,6 +3008,29 @@ class Solution:
         n = len(nums)
         k = k % n
         nums[:] = nums[n-k:] + nums[:n-k]
+```
+```cpp
+class Solution {
+public:
+    void rotate(vector<int>& nums, int k) {
+        // 1 2 3 4 5 6 7
+        // 7 6 5 4 3 2 1
+        // 5 6 7 1 2 3 4
+        k %= nums.size();
+        reverse(nums, 0, nums.size());
+        reverse(nums, 0, k);
+        reverse(nums, k, nums.size());
+    }
+
+    void reverse(vector<int>& nums, int p1, int p2) {
+        --p2;
+        while (p1 < p2) {
+            swap(nums[p1], nums[p2]);
+            ++p1;
+            --p2;
+        }
+    }
+};
 ```
 
 ##### [41. 缺失的第一个正数](https://leetcode-cn.com/problems/first-missing-positive/)
@@ -4954,7 +5077,7 @@ public:
         return cnt;
     }
     void dfs(vector<vector<char>> &grid, int i, int j) {
-        for (auto &orien : oriens) {
+        for (auto& orien : oriens) {
             int nxt_i = i + orien[0];
             int nxt_j = j + orien[1];
             if (nxt_i < 0 || nxt_i >= grid.size() || nxt_j < 0 || nxt_j >= grid[0].size()) continue;
@@ -6735,6 +6858,39 @@ class Solution:
         dummy_before.next = after_head.next
         dummy_after.next = None # important, end the linkedlist
         return before_head.next
+```
+```cpp
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode(int x) : val(x), next(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* partition(ListNode* head, int x) {
+        auto before_head = new ListNode(-1);
+        auto before_dummy = before_head;
+        auto after_head = new ListNode(-1);
+        auto after_dummy = after_head;
+        while (head) {
+            if (head->val < x) {
+                before_dummy->next = head;
+                before_dummy = before_dummy->next;
+            }
+            else {
+                after_dummy->next = head;
+                after_dummy = after_dummy->next;
+            }
+            head = head->next;
+        }
+        after_dummy->next = nullptr;
+        before_dummy->next = after_head->next;
+        return before_head->next;
+    }
+};
 ```
 
 #### [23. 合并K个排序链表](https://mail.ipa.fraunhofer.de/OWA/?bO=1#path=/mail)
@@ -9947,18 +10103,18 @@ from collections import defaultdict, deque
 
 class Solution:
     def bfs(self, query, graph):
-            top, bottom = query
-            visited = set([top])
-            queue = deque([[top, 1]]) # careful
-            while queue:
-                top, value = queue.pop()
-                if top == bottom:
-                    return value
-                for item in graph[top]:
-                    if item not in visited:
-                        visited.add(item)
-                        queue.appendleft([item, value * graph[top][item]])
-            return -1
+        top, bottom = query
+        visited = set([top])
+        queue = deque([[top, 1]]) # careful
+        while queue:
+            top, value = queue.pop()
+            if top == bottom:
+                return value
+            for item in graph[top]:
+                if item not in visited:
+                    visited.add(item)
+                    queue.appendleft([item, value * graph[top][item]])
+        return -1
 
     def dfs(self, query, graph):
         top, bottom = query
@@ -9988,6 +10144,50 @@ class Solution:
             value = -1 if query[0] not in chars and query[1] not in chars else self.dfs(query, graph)
             result.append(value)
         return result
+```
+```cpp
+class Solution {
+public:
+    vector<double> calcEquation(vector<vector<string>>& equations, vector<double>& values, vector<vector<string>>& queries) {
+        unordered_map<string, unordered_map<string, double>> graph;
+        int n = values.size();
+        string top, bottom;
+        for (int i = 0; i < n; ++i) {
+            top = equations[i][0];
+            bottom = equations[i][1];
+            graph[top][bottom] = values[i];
+            graph[bottom][top] = 1 / values[i];
+        }
+        vector<double> res;
+        for (auto& query : queries) {
+            string top = query[0], bottom = query[1];
+            double value = 1;
+            unordered_set<string> vis;
+            if (!graph.count(top) || !graph.count(bottom)) { value = -1; }
+            else {
+                vis.insert(top);
+                bool t = dfs(graph, top, bottom, value, vis);
+                if (!t) { value = -1; }
+            }
+            res.push_back(value);
+        }
+        return res;
+    }
+
+
+    bool dfs(unordered_map<string, unordered_map<string, double>>& graph, string top, string bottom, double& value, unordered_set<string>& vis) {
+        if (top == bottom) { return true; }
+        for (auto& item : graph[top]) {
+            string nxt = item.first;
+            if (vis.count(nxt)) { continue; }
+            vis.insert(nxt);
+            value *= graph[top][nxt];
+            if (dfs(graph, nxt, bottom, value, vis)) { return true; }
+            value /= graph[top][nxt];
+        }
+        return false;
+    }
+};
 ```
 
 #### [473. 火柴拼正方形](https://leetcode-cn.com/problems/matchsticks-to-square/)
@@ -15357,4 +15557,83 @@ class Solution:
                     return True
         # print(cnt)
         return False
+```
+
+#### [36. 有效的数独](https://leetcode-cn.com/problems/valid-sudoku/)
+```cpp
+class Solution {
+public:
+    bool isValidSudoku(vector<vector<char>>& board) {
+        int n = board.size(), m = board[0].size();
+        // 空间换时间
+        vector<vector<int>> row_vis (n, vector<int>(m, 0));
+        vector<vector<int>> col_vis (m, vector<int>(n, 0));
+        vector<vector<int>> box_vis (9, vector<int>(9, 0));
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                if (board[i][j] == '.') continue;
+                int val = board[i][j] - '1';
+                int box_idx = i/3*3 + j/3;
+                if (row_vis[i][val]==0 && col_vis[j][val]==0 && box_vis[box_idx][val]==0) {
+                    row_vis[i][val] = 1;
+                    col_vis[j][val] = 1;
+                    box_vis[box_idx][val] = 1;
+                }
+                else {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+};
+```
+
+#### [830. 较大分组的位置](https://leetcode-cn.com/problems/positions-of-large-groups/)
+双指针
+```cpp
+class Solution {
+public:
+    vector<vector<int>> largeGroupPositions(string s) {
+        int left = 0;
+        int right = 0;
+        int n = s.size();
+        vector<vector<int>> res;
+        while (left < n) {
+            right = left+1;
+            char c = s[left];
+            int cnt = 1;
+            while (right < n && s[right] == c) {
+                ++cnt;
+                ++right;
+            }
+            if (cnt >= 3) {
+                res.push_back({left, right-1});
+            }
+            left = right;
+        }    
+        return res;
+    }
+};
+```
+
+#### [228. 汇总区间](https://leetcode-cn.com/problems/summary-ranges/)
+```python
+class Solution:
+    def summaryRanges(self, nums: List[int]) -> List[str]:
+        arrow = "{}->{}"
+        n = len(nums)
+        p = 0
+        res = []
+        while (p < n):
+            start = p + 1
+            while (start < n and nums[start] == nums[start-1]+1):
+                start += 1
+            if (start != p+1):
+                res.append(arrow.format(nums[p], nums[start-1]))
+                p = start
+            else:
+                res.append(str(nums[p]))
+                p += 1
+        return res
 ```
