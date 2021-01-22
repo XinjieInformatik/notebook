@@ -2759,6 +2759,196 @@ class Solution:
         return "".join(ans)
 ```
 
+#### [947. 移除最多的同行或同列石头](https://leetcode-cn.com/problems/most-stones-removed-with-same-row-or-column/)
+```python
+class UnionFindSet:
+    def __init__(self):
+        self.parent = {}
+        self.count = 0
+
+    def find(self, x):
+        if x not in self.parent:
+            self.parent[x] = x
+            self.count += 1
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+
+    def union(self, x, y):
+        px = self.find(x)
+        py = self.find(y)
+        if px == py:
+            return
+        self.parent[px] = py
+        self.count -= 1
+
+
+class Solution:
+    def removeStones(self, stones: List[List[int]]) -> int:
+        unionset = UnionFindSet()
+        for x, y in stones:
+            unionset.union(x, y+10001)
+        return len(stones) - unionset.count
+```
+
+#### [803. 打砖块](https://leetcode-cn.com/problems/bricks-falling-when-hit/)
+```python
+import copy
+
+class UnionFindSet:
+    def __init__(self, n):
+        self.parent = [i for i in range(n)]
+        self.size = [1] * n
+        self.rank = [0] * n
+    def find(self, x):
+        if x != self.parent[x]:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+    def union(self, x, y):
+        px = self.find(x)
+        py = self.find(y)
+        if px == py:
+            return
+        if self.rank[px] < self.rank[py]:
+            self.parent[px] = py
+            self.size[py] += self.size[px]
+        elif self.rank[px] > self.rank[py]:
+            self.parent[py] = px
+            self.size[px] += self.size[py]
+        else:
+            self.parent[px] = py
+            self.rank[py] += 1
+            self.size[py] += self.size[px]
+    def get_size(self, x):
+        px = self.find(x)
+        return self.size[px]
+
+class Solution:
+    def hitBricks(self, grid: List[List[int]], hits: List[List[int]]) -> List[int]:
+        grid_c = copy.deepcopy(grid)
+        for x, y in hits:
+            grid_c[x][y] = 0
+
+        n = len(grid)
+        m = len(grid[0])
+        unionset = UnionFindSet(n*m+1)
+        # 把第一行都和屋顶相连
+        for j in range(m):
+            if grid_c[0][j] == 1:
+                unionset.union(n*m, j)
+        # 基于打碎的grid建图
+        for i in range(1, n):
+            for j in range(m):
+                # 如果当前cell为1，且上或左为1，union
+                if grid_c[i][j] == 1:
+                    if grid_c[i-1][j] == 1:
+                        unionset.union(i*m+j, (i-1)*m+j)
+                    if j > 0 and grid_c[i][j-1] == 1:
+                        unionset.union(i*m+j, i*m+j-1)
+        ds = [(1,0),(-1,0),(0,1),(0,-1)]
+        res = [0] * len(hits)
+        # 逆序补回
+        for i in range(len(hits)-1, -1, -1):
+            x, y = hits[i]
+            if grid[x][y] == 0:
+                continue
+            before = unionset.get_size(n*m)
+            if x == 0:
+                unionset.union(y, n*m)
+            for d in ds:
+                x_n = x + d[0]
+                y_n = y + d[1]
+                if x_n < 0 or x_n >= n:
+                    continue
+                if y_n < 0 or y_n >= m:
+                    continue
+                if grid_c[x_n][y_n] == 1:
+                    unionset.union(x*m+y, x_n*m+y_n)
+            after = unionset.get_size(n*m)
+            res[i] = max(0, after-before-1)
+            grid_c[x][y] = 1
+
+        return res
+```
+#### [1584. 连接所有点的最小费用](https://leetcode-cn.com/problems/min-cost-to-connect-all-points/)
+如果n-1个边都没有成环，则是一颗满足要求的树，因为从小到大贪心，所以是最小生成树
+```cpp
+class UnionFindSet {
+private:
+    vector<int> parent, rank;
+    int n;
+public:
+    UnionFindSet(int _n) {
+        n = _n;
+        rank.resize(n, 0);
+        parent.resize(n, 0);
+        for (int i = 0; i < n; ++i) { parent[i] = i; }
+    }
+    int find(int x) {
+        if (x != parent[x]) {
+            parent[x] = find(parent[x]);
+        }
+        return parent[x];
+    }
+    bool merge(int x, int y) {
+        int px = find(x);
+        int py = find(y);
+        if (px == py) { return false; }
+        if (rank[px] < rank[py]) { parent[px] = py; }
+        else if (rank[px] > rank[py]) { parent[py] = px; }
+        else {
+            parent[px] = py;
+            ++rank[py];
+        }
+        return true;
+    }
+    bool is_connect(int x, int y) {
+        return find(x) == find(y);
+    }
+};
+
+struct Edge {
+    int len, x, y;
+    Edge(int len, int x, int y): len(len), x(x), y(y) {}
+};
+
+class Solution {
+public:
+    int minCostConnectPoints(vector<vector<int>>& points) {
+        if (points.size() <= 1) { return 0; }
+        int n = points.size();
+        // 计算所有边长，并从小到大排序
+        vector<Edge> edges;
+        for (int i = 0; i < n; ++i) {
+            for (int j = i+1; j < n; ++j) {
+                vector<int> p1 = points[i], p2 = points[j];
+                Edge edge(dist(p1, p2), i, j);
+                edges.push_back(edge);
+            }
+        }
+        sort(edges.begin(), edges.end(), [](const auto a, const auto b) {
+            return a.len < b.len;
+        });
+        // 从小到大遍历边，贪心，没有成环就连接，直到使用的边的个数为n-1
+        UnionFindSet unionset(n);
+        int cnt = 0, cost = 0;
+        for (auto edge : edges) {
+            int len = edge.len, x = edge.x, y = edge.y;
+            if (unionset.merge(x, y)) {
+                ++cnt;
+                cost += len;
+                if (cnt == n-1) { break; }
+            }
+        }
+        return cost;
+    }
+
+    int dist(vector<int>& p1, vector<int>& p2) {
+        return abs(p1[0]-p2[0]) + abs(p1[1]-p2[1]);
+    }
+};
+```
+
 ### 拓扑排序
 #### 同时完成项目的最短时间
 参考: https://www.youtube.com/watch?v=x3mm5a_CwRM
@@ -7254,6 +7444,30 @@ class Solution:
                 stack.append(node.left)
         return root
 ```
+```cpp
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    TreeNode* invertTree(TreeNode* root) {
+        return helper(root);
+    }
+    TreeNode* helper(TreeNode* root) {
+        if (! root) { return nullptr; }
+        auto left = helper(root->left);
+        auto right = helper(root->right);
+        swap(root->left, root->right);
+        return root;
+    }
+};
+```
 
 #### [572. 另一个树的子树](https://leetcode-cn.com/problems/subtree-of-another-tree/)
 ```python
@@ -7380,6 +7594,41 @@ class Solution:
 
         if not root: return False
         return helper(root, 0)
+```
+```cpp
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    bool hasPathSum(TreeNode* root, int sum) {
+        if (!root) return false;
+        return helper(root, sum);
+    }
+
+    bool helper(TreeNode* root, int sum) {
+        if (!root->left && !root->right) {
+            if (sum-root->val == 0) { return true; }
+        }
+        if (root->left) {
+            if (helper(root->left, sum-root->val)) {
+                return true;
+            }
+        }
+        if (root->right) {
+            if (helper(root->right, sum-root->val)) {
+                return true;
+            }
+        }
+        return false;
+    }
+};
 ```
 
 #### [113. 路径总和 II](https://leetcode-cn.com/problems/path-sum-ii/)
@@ -7754,7 +8003,7 @@ public:
 1. node == None, return None
 2. left == None and right == None, return None
 2. only left == None, return right
-3. only right == None, return right
+3. only right == None, return left
 4. left != None and right != None, return node
 
 ```python
@@ -7780,20 +8029,30 @@ class Solution:
         return helper(root)
 ```
 ```cpp
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
 class Solution {
 public:
     TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
         return helper(root, p, q);
     }
+
     TreeNode* helper(TreeNode* root, TreeNode* p, TreeNode* q) {
-        if (!root) return nullptr;
-        if (root == p || root == q) return root;
+        if (!root) { return nullptr; }
+        if (root == p || root == q) { return root; }
         auto left = helper(root->left, p, q);
         auto right = helper(root->right, p, q);
-        if (left && right) return root;
-        else if (left) return left;
-        else if (right) return right;
-        return nullptr;
+        if (!left && !right) { return nullptr; }
+        if (!left) { return right; }
+        if (!right) { return left; }
+        return root;
     }
 };
 ```
@@ -7832,6 +8091,7 @@ class Solution:
             stack.append(node)
         return stack[0]
 ```
+
 #### [617. 合并二叉树](https://leetcode-cn.com/problems/merge-two-binary-trees/)
 ```cpp
 /**
@@ -9166,6 +9426,32 @@ class Solution:
             max_profit_in_this_node = max(steal_this_node, not_steal_this_node)
             return max_profit_in_this_node, not_steal_this_node
         return helper(root)[0]
+```
+```cpp
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    int rob(TreeNode* root) {
+        return helper(root)[0];
+    }
+
+    vector<int> helper(TreeNode* root) {
+        if (!root) { return {0, 0}; }
+        auto left = helper(root->left);
+        auto right = helper(root->right);
+        int steal_this_node = root->val + left[1] + right[1];
+        int not_steal_this_node = left[0] + right[0];
+        return {max(steal_this_node, not_steal_this_node), not_steal_this_node};
+    }
+};
 ```
 
 #### [968. 监控二叉树](https://leetcode-cn.com/problems/binary-tree-cameras/)
@@ -15636,4 +15922,65 @@ class Solution:
                 res.append(str(nums[p]))
                 p += 1
         return res
+```
+
+#### [1232. 缀点成线](https://leetcode-cn.com/problems/check-if-it-is-a-straight-line/)
+三点乘法斜率判断
+```python
+class Solution:
+    def checkStraightLine(self, coordinates: List[List[int]]) -> bool:
+        for i in range(1, len(coordinates)-1):
+            x1, y1 = coordinates[i-1][0], coordinates[i-1][1]
+            x2, y2 = coordinates[i][0], coordinates[i][1]
+            x3, y3 = coordinates[i+1][0], coordinates[i+1][1]
+            if (y2 - y1) * (x3 - x2) != (y3 - y2) * (x2 - x1):
+                return False
+        return True
+```
+
+#### [429. N 叉树的层序遍历](https://leetcode-cn.com/problems/n-ary-tree-level-order-traversal/)
+```cpp
+/*
+// Definition for a Node.
+class Node {
+public:
+    int val;
+    vector<Node*> children;
+
+    Node() {}
+
+    Node(int _val) {
+        val = _val;
+    }
+
+    Node(int _val, vector<Node*> _children) {
+        val = _val;
+        children = _children;
+    }
+};
+*/
+
+class Solution {
+public:
+    vector<vector<int>> levelOrder(Node* root) {
+        vector<vector<int>> res;
+        if (!root) return res;
+        queue<Node*> que;
+        que.push(root);
+        while (que.size() > 0) {
+            int size = que.size();
+            vector<int> line;
+            while (size--) {
+                auto top = que.front();
+                line.push_back(top->val);
+                que.pop();
+                for (auto& item : top->children) {
+                    que.push(item);
+                }
+            }
+            res.push_back(line);
+        }
+        return res;
+    }
+};
 ```
