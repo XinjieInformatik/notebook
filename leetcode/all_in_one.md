@@ -2491,6 +2491,36 @@ public:
     }
 };
 ```
+#### [1208. 尽可能使字符串相等](https://leetcode-cn.com/problems/get-equal-substrings-within-budget/)
+- 注意该题要求的是子串
+- 注意滑动窗口要检查一下最后一步的边界
+```cpp
+class Solution {
+public:
+    int equalSubstring(string s, string t, int maxCost) {
+        vector<int> dist;
+        int n = s.size();
+        for (int i = 0; i < n; ++i) {
+            dist.emplace_back(abs(s[i]-t[i]));
+        }
+        int left = 0;
+        int window = 0;
+        int maxcnt = 0;
+        for (int right = 0; right < n; ++right) {
+            window += dist[right];
+            if (window > maxCost) {
+                maxcnt = max(maxcnt, right-left);
+                while (window > maxCost) {
+                    window -= dist[left];
+                    ++left;
+                }
+            }
+        }
+        maxcnt = max(maxcnt, n-left);
+        return maxcnt;
+    }
+};
+```
 
 ### 线段树
 #### [307. 区域和检索 - 数组可修改](https://leetcode-cn.com/problems/range-sum-query-mutable/)
@@ -2945,6 +2975,230 @@ public:
 
     int dist(vector<int>& p1, vector<int>& p2) {
         return abs(p1[0]-p2[0]) + abs(p1[1]-p2[1]);
+    }
+};
+```
+
+#### [1631. 最小体力消耗路径](https://leetcode-cn.com/problems/path-with-minimum-effort/)
+```cpp
+class UnionFindSet {
+public:
+    vector<int> parent, rank;
+    UnionFindSet(int n) {
+        rank.resize(n, 0);
+        parent.resize(n, 0);
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+        }
+    }
+    int find(int x) {
+        if (x != parent[x]) {
+            parent[x] = find(parent[x]);
+        }
+        return parent[x];
+    }
+    void merge(int x, int y) {
+        int px = find(x);
+        int py = find(y);
+        if (px == py) { return; }
+        if (rank[px] < rank[py]) { parent[px] = py; }
+        else if (rank[px] > rank[py]) { parent[py] = px; }
+        else {
+            parent[px] = py;
+            ++rank[py];
+        }
+    }
+    bool is_connect(int x, int y) {
+        return find(x) == find(y);
+    }
+};
+
+class Solution {
+public:
+    int minimumEffortPath(vector<vector<int>>& heights) {
+        vector<tuple<int, int, int>> edges;
+        int n = heights.size();
+        int m = heights[0].size();
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                int id = i*m + j;
+                if (i > 0) {
+                    edges.emplace_back(id, id-m, abs(heights[i][j]-heights[i-1][j]));
+                }
+                if (j > 0) {
+                    edges.emplace_back(id, id-1, abs(heights[i][j]-heights[i][j-1]));
+                }
+            }
+        }
+        sort(edges.begin(), edges.end(), [](const auto a, const auto b) {
+            return get<2>(a) < get<2>(b);
+        });
+        UnionFindSet unionset(n*m);
+        for (auto [x, y, v] : edges) {
+            unionset.merge(x, y);
+            if (unionset.is_connect(0, n*m-1)) {
+                return v;
+            }
+        }
+        return 0;
+    }
+};
+```
+```cpp
+class Solution {
+public:
+    int minimumEffortPath(vector<vector<int>>& heights) {
+        int left = 0;
+        int right = 1000001;
+        int n = heights.size();
+        int m = heights[0].size();
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            vector<vector<int>> vis(n, vector<int>(m, 0));
+            bool flag = dfs(0, 0, heights, 0, mid, vis);
+            if (flag) { right = mid; }
+            else { left = mid + 1; }
+        }  
+        return left;
+    }
+
+    bool dfs(int i, int j, vector<vector<int>>& heights, int diff, int thresh, vector<vector<int>>& vis) {
+        if (diff > thresh) { return false; }
+        if (i == heights.size()-1 && j == heights[0].size()-1) { return true; }
+        vis[i][j] = 1;
+        if (i<heights.size()-1 && !vis[i+1][j] && dfs(i+1, j, heights, abs(heights[i][j]-heights[i+1][j]), thresh, vis)) {
+            return true;
+        }
+        if (j<heights[0].size()-1 && !vis[i][j+1] && dfs(i, j+1, heights, abs(heights[i][j]-heights[i][j+1]), thresh, vis)) {
+            return true;
+        }
+        if (i>0 && !vis[i-1][j] && dfs(i-1, j, heights, abs(heights[i][j]-heights[i-1][j]), thresh, vis)) {
+            return true;
+        }
+        if (j>0 && !vis[i][j-1] && dfs(i, j-1, heights, abs(heights[i][j]-heights[i][j-1]), thresh, vis)) {
+            return true;
+        }
+        // vis[i][j] = 0;
+        return false;
+    }
+};
+```
+
+#### [778. 水位上升的泳池中游泳](https://leetcode-cn.com/problems/swim-in-rising-water/)
+连通的条件是高于两者的max
+```cpp
+class UnionFindSet {
+    public:
+    vector<int> parent;
+    vector<int> rank;
+    UnionFindSet(int n) {
+        rank.resize(n, 0);
+        parent.resize(n, 0);
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+        }
+    }
+    int find(int x) {
+        if (x != parent[x]) {
+            parent[x] = find(parent[x]);
+        }
+        return parent[x];
+    }
+    void merge(int x, int y) {
+        int px = find(x);
+        int py = find(y);
+        if (px == py) { return; }
+        if (rank[px] < rank[py]) { parent[px] = py; }
+        else if (rank[px] > rank[py]) { parent[py] = px; }
+        else {
+            parent[px] = py;
+            ++rank[py];
+        }
+    }
+    bool is_connect(int x, int y) {
+        return find(x) == find(y);
+    }
+};
+
+class Solution {
+public:
+    int swimInWater(vector<vector<int>>& grid) {
+        int n = grid.size();
+        int m = grid[0].size();
+        vector<tuple<int, int, int>> edges;
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                int id = i * m + j;
+                if (i > 0) {
+                    edges.emplace_back(id, id-m, max(grid[i-1][j], grid[i][j]));
+                }
+                if (j > 0) {
+                    edges.emplace_back(id, id-1, max(grid[i][j-1], grid[i][j]));
+                }
+            }
+        }
+        sort(edges.begin(), edges.end(), [](const auto a, const auto b) {
+            return get<2>(a) < get<2>(b);
+        });
+        UnionFindSet unionset(n*m);
+        for (auto [x, y, v] : edges) {
+            unionset.merge(x, y);
+            if (unionset.is_connect(0, n*m-1)) { return v; }
+        }
+        return 0;
+    }
+};
+```
+
+#### [1319. 连通网络的操作次数](https://leetcode-cn.com/problems/number-of-operations-to-make-network-connected/)
+```cpp
+class UnionFindSet {
+    private:
+        vector<int> parent, rank;
+    public:
+        int area_num;
+        UnionFindSet(int n) {
+            area_num = n;
+            parent.resize(n, 0);
+            rank.resize(n, 0);
+            for (int i = 0; i < n; ++i) { parent[i] = i; }
+        }
+        int find(int x) {
+            if (x != parent[x]) {
+                parent[x] = find(parent[x]);
+            }
+            return parent[x];
+        }
+        void merge(int x, int y) {
+            int px = find(x);
+            int py = find(y);
+            if (px == py) { return; }
+            if (rank[px] < rank[py]) { parent[px] = py; }
+            else if (rank[px] > rank[py]) { parent[py] = px; }
+            else {
+                parent[px] = py;
+                ++rank[py];
+            }
+            --area_num;
+        }
+        bool is_connect(int x, int y) { return find(x) == find(y); }
+};
+
+class Solution {
+public:
+    int makeConnected(int n, vector<vector<int>>& connections) {
+        UnionFindSet unionset(n);
+        int cnt = 0;
+        if (connections.size() < n-1) { return -1; }
+        for (auto& c : connections) {
+            // cout << c[0] << ' ' << c[1] << endl;
+            if (unionset.is_connect(c[0], c[1])) {
+                ++cnt;
+                continue;
+            }
+            unionset.merge(c[0], c[1]);
+        }
+        return unionset.area_num - 1;
     }
 };
 ```
@@ -10912,6 +11166,9 @@ class Solution:
             ans = curnode
         return ans
 ```
+#### [959. 由斜杠划分区域](https://leetcode-cn.com/problems/regions-cut-by-slashes/)
+TODO
+
 
 ## 排序
 排序算法测试
