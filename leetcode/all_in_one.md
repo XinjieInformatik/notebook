@@ -1418,7 +1418,25 @@ class Solution:
                 down = up + 1
         return 0 if n == 0 else max(down, up)
 ```
-
+```cpp
+class Solution {
+public:
+    int maxTurbulenceSize(vector<int>& arr) {
+        int n = arr.size();
+        vector<int> down(n, 1);
+        vector<int> up(n, 1);
+        for (int i = 1; i < n; ++i) {
+            if (arr[i] < arr[i-1]) { down[i] = up[i-1] + 1; }
+            else if (arr[i] > arr[i-1]) { up[i] = down[i-1] + 1; }
+        }
+        int res = 1;
+        for (int i = 0; i < n; ++i) {
+            res = max(res, max(down[i], up[i]));
+        }
+        return res;
+    }
+};
+```
 
 #### [121. 买卖股票的最佳时机](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock/)
 ```
@@ -2518,6 +2536,58 @@ public:
         }
         maxcnt = max(maxcnt, n-left);
         return maxcnt;
+    }
+};
+```
+#### [1423. 可获得的最大点数](https://leetcode-cn.com/problems/maximum-points-you-can-obtain-from-cards/)
+```cpp
+class Solution {
+public:
+    int maxScore(vector<int>& cardPoints, int k) {
+        int n = cardPoints.size();
+        int window_size = n - k;
+        int temp = accumulate(cardPoints.begin(), cardPoints.begin()+window_size, 0);
+        int minPoint = temp;
+        int minleft = 0;
+        for (int i = window_size; i < n; ++i) {
+            temp += cardPoints[i] - cardPoints[i-window_size];
+            if (temp < minPoint) {
+                minPoint = temp;
+                minleft = i-window_size+1;
+            }
+        }
+        int sum = accumulate(cardPoints.begin(), cardPoints.end(), 0);
+        return sum - minPoint;
+    }
+};
+```
+#### [992. K 个不同整数的子数组](https://leetcode-cn.com/problems/subarrays-with-k-different-integers/)
+把问题转化为 最多K个 - 最多K-1个 不同整数的子数组
+```cpp
+class Solution {
+public:
+    int subarraysWithKDistinct(vector<int>& A, int K) {
+        return helper(A, K) - helper(A, K-1);
+    }
+    int helper(vector<int>& A, int K) {
+        int n = A.size();
+        int right = 0;
+        int left = 0;
+        unordered_map<int, int> stat;
+        int cnt = 0;
+        while (right < n) {
+            ++stat[A[right]];
+            ++right;
+            while (left < right && stat.size() > K) {
+                --stat[A[left]];
+                if (stat[A[left]] == 0) {
+                    stat.erase(A[left]);
+                }
+                ++left;
+            }
+            cnt += right-left;
+        }
+        return cnt;
     }
 };
 ```
@@ -8890,6 +8960,55 @@ class KthLargest:
             cur = cur.left
         return cur.val
 ```
+```python
+class KthLargest:
+    def __init__(self, k: int, nums: List[int]):
+        self.k = k
+        self.heap = [0]
+        for num in nums[:k]:
+            self.heap.append(num)
+            self.sift_up(self.heap, len(self.heap)-1)
+        for num in nums[k:]:
+            if num > self.heap[1]:
+                self.heap[1] = num
+                self.sift_down(self.heap, 1, self.k+1)
+
+
+    def add(self, val: int) -> int:
+        if len(self.heap) < self.k+1:
+            self.heap.append(val)
+            self.sift_up(self.heap, len(self.heap)-1)
+            return self.heap[1]
+        if val > self.heap[1]:
+            self.heap[1] = val
+            self.sift_down(self.heap, 1, self.k+1)
+        return self.heap[1]
+
+    def sift_down(self, arr, root, k):
+        val = arr[root]
+        while root<<1 < k:
+            child = root << 1
+            if child|1 < k and arr[child|1] < arr[child]:
+                child |= 1
+            if arr[child] < val:
+                arr[root] = arr[child]
+                root = child
+            else:
+                break
+        arr[root] = val
+
+    def sift_up(self, arr, child):
+        val = arr[child]
+        while child>>1 > 0 and val < arr[child>>1]:
+            arr[child] = arr[child>>1]
+            child >>= 1
+        arr[child] = val
+
+# Your KthLargest object will be instantiated and called as such:
+# obj = KthLargest(k, nums)
+# param_1 = obj.add(val)
+```
+
 #### [230. 二叉搜索树中第K小的元素](https://leetcode-cn.com/problems/kth-smallest-element-in-a-bst/)
 ```python
 class Solution:
@@ -16238,6 +16357,29 @@ public:
             res.push_back(line);
         }
         return res;
+    }
+};
+```
+
+#### [665. 非递减数列](https://leetcode-cn.com/problems/non-decreasing-array/)
+```cpp
+class Solution {
+public:
+    bool checkPossibility(vector<int> &nums) {
+        int n = nums.size(), cnt = 0;
+        for (int i = 0; i < n - 1; ++i) {
+            int x = nums[i], y = nums[i + 1];
+            if (x > y) {
+                cnt++;
+                if (cnt > 1) {
+                    return false;
+                }
+                if (i > 0 && y < nums[i - 1]) {
+                    nums[i + 1] = x;
+                }
+            }
+        }
+        return true;
     }
 };
 ```
