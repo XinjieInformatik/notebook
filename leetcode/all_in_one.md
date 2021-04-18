@@ -274,6 +274,7 @@ class Solution:
 #### [经典01背包](https://www.lintcode.com/problem/backpack-ii/description)
 ```
 有 n 个物品和一个大小为 m 的背包. 给定数组 A 表示每个物品的大小和数组 V 表示每个物品的价值. 问最多能装入背包的总价值是多大?
+所挑选的要装入背包的物品的总大小不能超过 m, 每个物品只能取一次
 ```
 为什么不能 return value
 ```python
@@ -337,6 +338,43 @@ class Solution:
                     y = max(0, k-packageSum[i-1][1])
                     dp[i][j][k] = min(dp[i-1][j][k], dp[i-1][x][y]+packageSum[i-1][2])
         return dp[-1][-1][-1]
+```
+
+#### [分组背包](https://www.acwing.com/problem/content/description/9/)
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+
+const int N=110;
+int f[N][N];  //只从前i组物品中选，当前体积小于等于j的最大值
+int v[N][N],w[N][N],s[N];   //v为体积，w为价值，s代表第i组物品的个数
+int n,m,k;
+
+int main(){
+    cin>>n>>m;
+    for(int i=1;i<=n;i++){
+        cin>>s[i];
+        for(int j=0;j<s[i];j++){
+            cin>>v[i][j]>>w[i][j];  //读入
+        }
+    }
+    // n = 3, m = 5
+    // v = [[1,2],[3],[4]]
+    // w = [[2,4],[4],[5]]
+
+    // 组数
+    for(int i=1;i<=n;i++){
+        // 背包容量
+        for(int j=0;j<=m;j++){
+            f[i][j]=f[i-1][j];  //不选
+            // 组内物品
+            for(int k=0;k<s[i];k++){
+                if(j>=v[i][k]) f[i][j]=max(f[i][j],f[i-1][j-v[i][k]]+w[i][k]);  
+            }
+        }
+    }
+    cout<<f[n][m]<<endl;
+}
 ```
 
 #### [563. 背包问题 V](https://www.lintcode.com/problem/backpack-v/my-submissions)
@@ -5569,6 +5607,33 @@ class Solution:
                     cnt += 1
         return cnt
 ```
+```python 
+class Solution:
+    def numIslands(self, grid: List[List[str]]) -> int:
+        oriens = [(1,0),(-1,0),(0,1),(0,-1)]
+        n = len(grid)
+        if n == 0: return 0
+        m = len(grid[0])
+        if m == 0: return 0
+        def dfs(i, j, grid):
+            for orien in oriens:
+                nxt_i = i + orien[0]
+                nxt_j = j + orien[1]
+                if nxt_i < 0 or nxt_i >= n or nxt_j < 0 or nxt_j >= m:
+                    continue
+                if grid[nxt_i][nxt_j] == '0':
+                    continue
+                grid[nxt_i][nxt_j] = '0'
+                dfs(nxt_i, nxt_j, grid)
+
+        cnt = 0
+        for i in range(n):
+            for j in range(m):
+                if grid[i][j] == '1':
+                    dfs(i, j, grid)
+                    cnt += 1
+        return cnt
+```
 ```cpp
 class Solution {
 public:
@@ -5607,38 +5672,47 @@ public:
 ```python
 class Solution:
     def closedIsland(self, grid: List[List[int]]) -> int:
+        self.oriens = [(0,1),(0,-1),(1,0),(-1,0)]
+        def dfs(i, j, grid):
+            for orien in self.oriens:
+                nxt_i = i + orien[0]
+                nxt_j = j + orien[1]
+                if nxt_i < 0 or nxt_i >= n:
+                    continue
+                if nxt_j < 0 or nxt_j >= m:
+                    continue
+                if grid[nxt_i][nxt_j] == 1:
+                    continue
+                grid[nxt_i][nxt_j] = 1
+                dfs(nxt_i, nxt_j, grid)
+
         n = len(grid)
         if n == 0: return 0
         m = len(grid[0])
         if m == 0: return 0
-        oriens = [(-1,0),(1,0),(0,-1),(0,1)]
 
-        def dfs(i, j):
-            for orien in oriens:
-                nxt_i, nxt_j = i+orien[0], j+orien[1]
-                if nxt_i < 0 or nxt_i >= n or nxt_j < 0 or nxt_j >= m:
-                    continue
-                if nxt_i == 0 or nxt_i == n-1 or nxt_j == 0 or nxt_j == m-1:
-                    if grid[nxt_i][nxt_j] == 0:
-                        self.flag = False
-                if grid[nxt_i][nxt_j] == 1:
-                    continue
-                grid[nxt_i][nxt_j] = 1
-                dfs(nxt_i, nxt_j)
+        for i in range(n):
+            if grid[i][0] == 0:
+                dfs(i, 0, grid)
+            if grid[i][m-1] == 0:
+                dfs(i, m-1, grid)
+
+        for j in range(m):
+            if grid[0][j] == 0:
+                dfs(0, j, grid)
+            if grid[n-1][j] == 0:
+                dfs(n-1, j, grid)
 
         cnt = 0
-        for i in range(n):
-            for j in range(m):
+        for i in range(1, n-1):
+            for j in range(1, m-1):
                 if grid[i][j] == 0:
-                    if i == 0 or i == n-1 or j == 0 or j == m-1:
-                        continue
-                    self.flag = True
-                    grid[i][j] = 1
-                    dfs(i, j)
-                    if self.flag:
-                        cnt += 1
+                    cnt += 1
+                    dfs(i, j, grid)
+
         return cnt
 ```
+
 ```cpp
 class Solution {
 public:

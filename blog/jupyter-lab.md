@@ -69,6 +69,11 @@ python -m ipykernel install --user --name ENVNAME --display-name "displayname"
 [清华源](https://mirrors.tuna.tsinghua.edu.cn/help/anaconda/)
 安装`xeus-python`时，清华源里没有这个资源，把`.condarc`备份一下删了，`conda clean -i` 清除索引缓存，装好了后可以再换回来
 
+为了支持plotly, 先安装ipywidgets再安装plotly的插件
+```sh
+pip install ipywidgets
+```
+
 remove jupyterlab
 ```sh
 conda uninstall notebook nbconvert nbformat ipykernel ipywidgets qtconsole traitlets tornado jupyter_* ipython_genutils jinja2 -y
