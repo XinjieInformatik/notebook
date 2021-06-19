@@ -8,8 +8,11 @@
 
 - [xgb github](https://github.com/microsoft/LightGBM)
 - [自定义损失函数和评估函数](https://xgboost.readthedocs.io/en/latest/tutorials/custom_metric_obj.html)
+- [自定义损失函数](https://www.zhangqibot.com/post/ml-custom-loss-lgbm-xgb/)
+- [lgb回归损失函数](https://stackoverflow.com/questions/60290304/reproduce-lightgbm-custom-loss-function-for-regression)
 - [basic walkthrough](https://github.com/dmlc/xgboost/blob/master/demo/guide-python/basic_walkthrough.py)
 - [xgb API](https://xgboost.readthedocs.io/en/latest/python/python_api.html)
+- [xgb 介绍](https://blog.csdn.net/a819825294/article/details/51206410)
 
 ```python
 def metric_eval(y_pred, dtrain):
@@ -48,6 +51,7 @@ plt.show()
 
 
 ```python
+# lgb 损失函数中的preds是没有经过sigmoid的，最终输出打分默认经过sigmoid
 def loglikelihood(preds, train_data):
     labels = train_data.get_label()
     preds = 1. / (1. + np.exp(-preds))

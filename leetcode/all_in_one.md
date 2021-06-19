@@ -1128,7 +1128,7 @@ class Solution:
         return dp[-1][-1]
 ```
 
-#### [正则表达式匹配](https://leetcode-cn.com/problems/regular-expression-matching/)
+#### [10. 正则表达式匹配](https://leetcode-cn.com/problems/regular-expression-matching/)
 递归中枚举所有情况,加上记忆化
 ```python
 import functools
@@ -1136,8 +1136,9 @@ class Solution:
     def isMatch(self, s: str, p: str) -> bool:
         @functools.lru_cache(None)
         def helper(text, pattern):
+            # 如果text用完了，helper(text, pattern[2:])会继续将pattern走到头
             if len(pattern) == 0: return text == ""
-            match =  len(text) != 0 and (pattern[0] == text[0] or pattern[0] == ".")
+            match = len(text) != 0 and (pattern[0] == text[0] or pattern[0] == ".")
             if len(pattern) > 1 and pattern[1] == "*":
                 return helper(text, pattern[2:]) or (match and helper(text[1:], pattern))
             return match and helper(text[1:], pattern[1:])
@@ -5607,7 +5608,7 @@ class Solution:
                     cnt += 1
         return cnt
 ```
-```python 
+```python
 class Solution:
     def numIslands(self, grid: List[List[str]]) -> int:
         oriens = [(1,0),(-1,0),(0,1),(0,-1)]
@@ -16456,4 +16457,30 @@ public:
         return true;
     }
 };
+```
+
+#### [690. 员工的重要性](https://leetcode-cn.com/problems/employee-importance/)
+```python
+"""
+# Definition for Employee.
+class Employee:
+    def __init__(self, id: int, importance: int, subordinates: List[int]):
+        self.id = id
+        self.importance = importance
+        self.subordinates = subordinates
+"""
+
+class Solution:
+    def getImportance(self, employees: List['Employee'], id: int) -> int:
+        mapper = {}
+        for i in range(len(employees)):
+            mapper[employees[i].id] = i
+
+        self.imp = 0
+        def helper(idx):
+            self.imp += employees[mapper[idx]].importance
+            for e in employees[mapper[idx]].subordinates:
+                helper(e)
+        helper(id)
+        return self.imp
 ```
