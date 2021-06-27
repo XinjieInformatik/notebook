@@ -3383,6 +3383,39 @@ if __name__ == "__main__":
     print(flexible)
 ```
 
+#### [1600. 皇位继承顺序](https://leetcode-cn.com/problems/throne-inheritance/)
+多叉树前序遍历
+```python
+from collections import defaultdict
+class ThroneInheritance:
+
+    def __init__(self, kingName: str):
+        self.adjacency = defaultdict(list)
+        self.deaths = set()
+        self.king = kingName
+
+    def birth(self, parentName: str, childName: str) -> None:
+        self.adjacency[parentName].append(childName)
+
+    def death(self, name: str) -> None:
+        self.deaths.add(name)
+
+    def getInheritanceOrder(self) -> List[str]:
+        result = []
+        def helper(name):
+            if name not in self.deaths:
+                result.append(name)
+            if name not in self.adjacency:
+                return
+            n = len(self.adjacency[name])
+            for i in range(n):
+                helper(self.adjacency[name][i])
+
+        # print(self.adjacency)
+        helper(self.king)
+        return result
+```
+
 ## 链表
 ### 反转链表
 #### [206. 反转链表](https://leetcode-cn.com/problems/reverse-linked-list/)

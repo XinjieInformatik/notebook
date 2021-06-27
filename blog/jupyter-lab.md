@@ -80,5 +80,8 @@ conda uninstall notebook nbconvert nbformat ipykernel ipywidgets qtconsole trait
 conda clean --all
 ```
 
+后台启动
+nohup jupyter notebook --allow-root >> notebook.log &
+
 reference:
 - [数据挖掘：工具篇（一）—— Jupyter Lab 配置环境](https://liketea.xyz/数据科学/数据科学/数据科学：工具使用（一）—— Jupyter Lab 配置环境/)
