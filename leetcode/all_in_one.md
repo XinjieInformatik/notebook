@@ -41,6 +41,11 @@ class Solution:
 ```
 一个整型数组 nums 里除两个数字之外，其他数字都出现了两次。
 ```
+思路：
+1. 遍历数组，得到只出现一次的两个数字的异或
+2. 找到只出现一次的两个数字异或的最低位1，记为pivot
+3. 用pivot将数组分为两份，只出现一次的数字必然分别在两份中
+4. 因此两份中数字的总体异或就是只出现一次的两个数字
 ```python
 class Solution:
     def singleNumbers(self, nums: List[int]) -> List[int]:
@@ -81,6 +86,24 @@ class Solution:
                 r = mid
         return l
 ```
+index [0,n], 数字 [1,n] 有重复数字，建立index指向数字的图，则一定有环，找到环的入口就是重复数字（多个index指向同一个数字）
+```python
+class Solution:
+    def findDuplicate(self, nums: List[int]) -> int:
+        slow = 0
+        fast = 0
+        flag = True
+        while (slow != fast or flag):
+            flag = False
+            slow = nums[slow]
+            fast = nums[nums[fast]]
+        slow = 0
+        while (slow != fast):
+            slow = nums[slow]
+            fast = nums[fast]
+        return slow
+```
+
 #### [169. 多数元素](https://leetcode-cn.com/problems/majority-element/)
 ```python
 class Solution:
@@ -138,6 +161,7 @@ class Solution:
         return False
 ```
 Boyer-Moore 投票：O(n), O(1). 数数相抵消，剩下的是众数
+注意使用前提是一个元素出现次数大于 N/2
 ```python
 class Solution:
     def majorityElement(self, nums: List[int]) -> int:
@@ -154,23 +178,47 @@ class Solution:
 ```python
 class Solution:
     def majorityElement(self, nums: List[int]) -> List[int]:
-        if not nums: return []
-        count1, count2, candidate1, candidate2 = 0, 0, 0, 1
-        for n in nums:
-            if n == candidate1:
-                count1 += 1
-            elif n == candidate2:
-                count2 += 1
-            elif count1 == 0:
-                candidate1, count1 = n, 1
-            elif count2 == 0:
-                candidate2, count2 = n, 1
+        cand1, cand2 = None, None
+        cnt1, cnt2 = 0, 0
+        for num in nums:
+            if cand1 == num:
+                cnt1 += 1
+            elif cand2 == num:
+                cnt2 += 1
+            elif cnt1 == 0:
+                cand1 = num
+                cnt1 = 1
+            elif cnt2 == 0:
+                cand2 = num
+                cnt2 = 1
             else:
-                count1, count2 = count1 - 1, count2 - 1
-        return [n for n in (candidate1, candidate2) if nums.count(n) > len(nums) // 3] # 注意最后有一个对c1,c2的筛选
+                cnt1 -= 1
+                cnt2 -= 1
+        result = []
+         # 注意最后有一个对cand1,cand2的筛选
+        for val in [cand1, cand2]:
+            if nums.count(val) > len(nums) // 3:
+                result.append(val)
+        return result
 ```
+
 #### [1018. 可被 5 整除的二进制前缀](https://leetcode-cn.com/problems/binary-prefix-divisible-by-5/)
+```python
+class Solution:
+    def prefixesDivBy5(self, A: List[int]) -> List[bool]:
+        n = len(A)
+        result = [False for i in range(n)]
+        val = 0
+        for i in range(n):
+            val += A[i]
+            if val % 5 == 0:
+                result[i] = True
+            val <<= 1
+        return result
+```
+
 #### [201. 数字范围按位与](https://leetcode-cn.com/problems/bitwise-and-of-numbers-range/)
+前提：m-n之间的数的位与，结果就是均为1的那一位后补0
 ```python
 class Solution:
     def rangeBitwiseAnd(self, m: int, n: int) -> int:
@@ -196,9 +244,16 @@ public:
     }
 };
 ```
+```
+
 #### [190. 颠倒二进制位](https://leetcode-cn.com/problems/reverse-bits/)
 颠倒给定的 32 位无符号整数的二进制位
 一共32位，先16，16交换，再8，8交换，再4，4交换，再2，2交换，再1，1交换。
+0x55555555 01010101010101010101010101010101
+0x33333333 00110011001100110011001100110011
+0x0f0f0f0f 00001111000011110000111100001111
+0x00ff00ff 00000000111111110000000011111111
+
 ```python
 class Solution:
     def reverseBits(self, n: int) -> int:
