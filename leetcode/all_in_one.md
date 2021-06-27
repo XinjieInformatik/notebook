@@ -6220,6 +6220,45 @@ class Solution:
         dfs(beginWord, [beginWord])
         return results
 ```
+
+#### [909. 蛇梯棋](https://leetcode-cn.com/problems/snakes-and-ladders/)
+```python
+from collections import deque
+class Solution:
+    def snakesAndLadders(self, board: List[List[int]]) -> int:
+        """ 移动方向只能是小->大，一次最多移动6步"""
+        mapping = {}
+        n = len(board)
+        cnt = 1
+        for i in range(n-1, -1, -1):
+            index = n-1-i  
+            if index%2==1:
+                for j in range(n-1, -1, -1):
+                    mapping[cnt] = (i,j)
+                    cnt += 1
+            else:
+                for j in range(n):
+                    mapping[cnt] = (i,j)
+                    cnt += 1
+        end = cnt - 1
+
+        queue = deque([(1, 0)])
+        visited = set([1])
+        while len(queue) > 0:
+            index, step = queue.pop()
+            if index == end:
+                return step
+            for i in range(1, 7):
+                if index+i > end:
+                    break  
+                nxt_x, nxt_y = mapping[index+i]
+                nxt_index = index + i if board[nxt_x][nxt_y] == -1 else board[nxt_x][nxt_y]
+                if nxt_index not in visited:
+                    queue.appendleft((nxt_index, step+1))
+                    visited.add(nxt_index)
+        return -1
+```
+
 ### 背包
 #### [416. 分割等和子集](https://leetcode-cn.com/problems/partition-equal-subset-sum/)
 ```python
