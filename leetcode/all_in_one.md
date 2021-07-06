@@ -283,24 +283,24 @@ class Solution:
     def backPack(self, m, A):
         # --- 递归
         n = len(A)
-        dp = [[0 for i in range(m+1)] for j in range(n+1)]
-        def helper(index, curr):
+        # dp = [[0 for j in range(m+1)] for i in range(n+1)]
+        dp = [0 for i in range(m+1)]
+        def helper(index, weight):
+            if weight > m:
+                return -1
             if index == n:
-                dp[index][curr] = curr
-                return dp[index][curr]
-            if dp[index][curr] > 0:
-                return dp[index][curr]
-            res = 0
-            if curr+A[index] <= m:
-                pick = helper(index+1, curr+A[index])
-                not_pick = helper(index+1, curr)
-                res = max(pick, not_pick)
-            else:
-                not_pick = helper(index+1, curr)
-                res = not_pick
-            dp[index][curr] = res
-            return res
-        return helper(0,0)
+                return weight
+            # if dp[index][weight] != 0:
+            #     return dp[index][weight]
+            if dp[weight] != 0:
+                return dp[weight]
+            pick = helper(index+1, weight+A[index])
+            nopick = helper(index+1, weight)
+            # dp[index][weight] = max(pick, nopick)
+            # return dp[index][weight]
+            dp[weight] = max(pick, nopick)
+            return dp[weight]
+        return helper(0, 0)
 
         #--- 二维数组
         n, m = len(A)+1, m+1
@@ -431,6 +431,33 @@ int main(){
     cout<<f[n][m]<<endl;
 }
 ```
+```python
+N, V = map(int, input().split())
+weight = [[] for i in range(N)]
+value = [[] for i in range(N)]
+for i in range(N):
+    num = int(input())
+    for k in range(num):
+        w, v = map(int, input().split())
+        weight[i].append(w)
+        value[i].append(v)
+
+dp = [[0 for j in range(V+1)] for i in range(N+1)]
+
+# 遍历组数
+for i in range(1, N+1):
+    # 遍历重量
+    for j in range(1, V+1):
+        # 遍历组内物体，状态从不选开始
+        dp[i][j] = dp[i-1][j]
+        for k in range(len(weight[i-1])):
+            if j < weight[i-1][k]:
+                continue
+            # 注意状态一定是从 dp[i][j] (之前选中的该组的max) 转移而来
+            dp[i][j] = max(dp[i][j], dp[i-1][j-weight[i-1][k]]+value[i-1][k])
+
+print(dp[-1][-1])
+```
 
 #### [563. 背包问题 V](https://www.lintcode.com/problem/backpack-v/my-submissions)
 ```
@@ -463,36 +490,55 @@ class Solution:
         return dp[-1][-1]
 
         # --- 一维dp
-        dp = [0] * (target+1)
-        dp[0] = 1
         n = len(nums)
-        for i in range(n):
-            for j in range(target, nums[i]-1, -1):
-                dp[j] = dp[j-nums[i]] + dp[j]
-            print(dp)
+        dp = [0 for j in range(target+1)]
+        dp[0] = 1 # 当背包大小为0，有1个填满方案
+        for i in range(1, n+1):
+            for j in range(target, 0, -1):
+                if j < nums[i-1]:
+                    continue
+                dp[j] = dp[j] + dp[j-nums[i-1]]
         return dp[-1]
+
 
         # --- 搜索
         n = len(nums)
-        memo = [[0 for i in range(target)] for j in range(n)]
-        def helper(index, curr):
-            if curr == target:
+        dp = [[0 for j in range(target)] for i in range(n)]
+        def helper(index, weight):
+            if weight == target:
                 return 1
-            if curr > target or index == n:
+            if weight > target:
                 return 0
-            if memo[index][curr]:
-                return memo[index][curr]
-            pick = helper(index+1, curr+nums[index])
-            not_pick = helper(index+1, curr)
-            res = pick + not_pick
-            memo[index][curr] = res
-            return res
+            if index == n:
+                return 0
+            if dp[index][weight] != 0:
+                return dp[index][weight]
+            pick = helper(index+1, weight+nums[index])
+            nopick = helper(index+1, weight)
+            dp[index][weight] = pick + nopick
+            return dp[index][weight]
+
         return helper(0, 0)
 ```
 #### [562. 背包问题 IV](https://www.lintcode.com/problem/backpack-iv/description)
 ```
 给出 n 个物品, 以及一个数组, nums[i]代表第i个物品的大小, 保证大小均为正数并且没有重复,正整数 target 表示背包的大小, 找到能填满背包的方案数。每一个物品可以使用无数次
 ```
+```python
+class Solution:
+    def backPackIV(self, nums, target):
+        dp = [0 for j in range(target+1)]
+        dp[0] = 1
+        n = len(nums)
+        for i in range(1, n+1):
+            for j in range(1, target+1):
+                if j < nums[i-1]:
+                    continue
+                # 上一个状态不装该物品方案数+该状态装该物品方案数
+                dp[j] = dp[j] + dp[j-nums[i-1]]
+        return dp[-1]
+```
+
 #### [518. 零钱兑换 II](https://leetcode-cn.com/problems/coin-change-2/)
 ```python
 class Solution:
@@ -650,6 +696,19 @@ public:
 ```
 
 #### [486. 预测赢家](https://leetcode-cn.com/problems/predict-the-winner/)
+dp[i][j]表示玩家1相对玩家2在区间[i,j]的净胜分
+```python
+class Solution:
+    def PredictTheWinner(self, nums: List[int]) -> bool:
+        n = len(nums)
+        dp = [[0 for j in range(n)] for i in range(n)]
+        for i in range(n):
+            dp[i][i] = nums[i]
+        for i in range(n-1, -1, -1):
+            for j in range(i+1, n):
+                dp[i][j] = max(nums[i]-dp[i+1][j], nums[j]-dp[i][j-1])
+        return dp[0][n-1] >= 0
+```
 ```python
 class Solution:
     def PredictTheWinner(self, nums: List[int]) -> bool:
@@ -12516,36 +12575,22 @@ T(n) = T(n/2) + O(1) --> T(n) = O(logn)
 ```python
 class Solution:
     def merge(self, intervals: List[List[int]]) -> List[List[int]]:
-        if len(intervals) <= 1: return intervals
-        result = []
-        intervals = sorted(intervals, key=lambda ele: (ele[0]))
-        is_not_end = True
+        n = len(intervals)
+        intervals = sorted(intervals, key=lambda x: x[0])
         index = 0
-        while is_not_end:
-            if intervals[index][1] >= intervals[index+1][0]:
-                up_bound = max(intervals[index][1], intervals[index+1][1])
-                low_bound = min(intervals[index][0], intervals[index+1][0])
-                intervals[index+1] = [low_bound, up_bound]
-                intervals.pop(index)
-            else:
-                index += 1
-            if index+1 >= len(intervals):
-                is_not_end = False
-        return intervals
-
-    def merge(self, intervals: List[List[int]]) -> List[List[int]]:
-        intervals.sort(key=lambda x: x[0])
-          merged = []
-          for interval in intervals:
-              # 如果列表为空，或者当前区间与上一区间不重合，直接添加
-              if not merged or merged[-1][1] < interval[0]:
-                  merged.append(interval)
-              else:
-                  # 否则的话，我们就可以与上一区间进行合并
-                  merged[-1][1] = max(merged[-1][1], interval[1])
-          return merged
+        result = []
+        while (index < n):
+            left = index
+            right = index + 1
+            end = intervals[left][1]
+            while (right < n and intervals[right][0] <= end):
+                end = max(end, intervals[right][1])
+                right += 1
+            result.append([intervals[index][0], end])
+            index = right
+        return result
 ```
-###
+### 次方
 ```python
 class Solution:
     def myPow(self, x: float, n: int) -> float:
