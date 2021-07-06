@@ -859,29 +859,33 @@ class Solution:
 输入: [1,1,2]   输出: [[1,1,2],[1,2,1],[2,1,1]]
 ```
 ```python
-from collections import Counter
+from collections import defaultdict
 class Solution:
     def permuteUnique(self, nums: List[int]) -> List[List[int]]:
-        nums.sort()
+        nums = sorted(nums)
+        count = defaultdict(int)
         n = len(nums)
-        count = Counter(nums)
-        results = []
-        def helper(res, count):
+        for i in range(n):
+            count[nums[i]] += 1
+        result = []
+
+        def helper(res):
             if len(res) == n:
-                results.append(res)
+                result.append(res)
                 return
             for i in range(n):
-                # 跳过重复数字
-                if i != 0 and nums[i] == nums[i-1]:
-                    continue
                 # 跳过用尽数字
                 if count[nums[i]] == 0:
                     continue
+                # 跳过重复数字
+                if i!=0 and nums[i-1]==nums[i]:
+                    continue
                 count[nums[i]] -= 1
-                helper(res+[nums[i]], count)
+                helper(res+[nums[i]])
                 count[nums[i]] += 1
-        helper([], count)
-        return results
+
+        helper([])
+        return result
 ```
 ```cpp
 class Solution {
@@ -916,6 +920,9 @@ public:
 
 #### [60. 第k个排列](https://leetcode-cn.com/problems/permutation-sequence/)
 直接去找第k个排列，剪枝。提前计算好剩余数字对应排列数，然后有剩余就都跳过。
+
+![20210706_205417_31](assets/20210706_205417_31.png)
+
 ```python
 class Solution:
     def getPermutation(self, n: int, k: int) -> str:
@@ -1037,25 +1044,21 @@ public:
 ```python
 class Solution:
     def longestPalindrome(self, s: str) -> str:
-        """dp[i][j]: 子串s[i,j]是否回文. 2个for循环顺序遍历
-        if s[i]==s[j], dp[i][j]=dp[i+1][j-1] or 1(if j-i<3)"""
         n = len(s)
-        if n == 0: return ""
-        dp = [[0]*n for i in range(n)]
-        res = (0, 0)
+        dp = [[0 for i in range(n)] for j in range(n)]
         for i in range(n):
             dp[i][i] = 1
-        for j in range(n):
-            for i in range(j):
+        left = 0
+        lenth = 0
+        for i in range(n-1, -1, -1):
+            for j in range(i, n):
                 if s[i] == s[j]:
-                    if j - i < 3:
+                    if j - i <= 2 or dp[i+1][j-1]:
                         dp[i][j] = 1
-                    else:
-                        dp[i][j] = dp[i+1][j-1]
-                    if dp[i][j] == 1:
-                        if j - i > res[1] - res[0]:
-                            res = (i, j)
-        return s[res[0]: res[1]+1]
+                if dp[i][j] == 1 and (j-i+1 > lenth):
+                    lenth = j-i+1
+                    left = i
+        return s[left:left+lenth]
 ```
 ```cpp
 class Solution {
@@ -1124,7 +1127,7 @@ class Solution:
         for i in range(1, n1):
             for j in range(1, n2):
                 if text1[i-1] == text2[j-1]:
-                    dp[i][j] = max(dp[i-1][j-1]+1, dp[i][j-1], dp[i-1][j])
+                    dp[i][j] = dp[i-1][j-1]+1
                 else:
                     dp[i][j] = max(dp[i][j-1], dp[i-1][j])
         return dp[-1][-1]
