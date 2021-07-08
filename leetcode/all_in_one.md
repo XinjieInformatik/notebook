@@ -2340,6 +2340,23 @@ public:
     }
 };
 ```
+#### [930. 和相同的二元子数组](https://leetcode-cn.com/problems/binary-subarrays-with-sum/)
+```python
+from collections import defaultdict
+class Solution:
+    def numSubarraysWithSum(self, nums: List[int], goal: int) -> int:
+        lookup = defaultdict(int)
+        lookup[0] = 1
+        n = len(nums)
+        prefix = 0
+        result = 0
+        for i in range(n):
+            prefix += nums[i]
+            if prefix - goal in lookup:
+                result += lookup[prefix-goal]
+            lookup[prefix] += 1
+        return result
+```
 
 ### 树
 #### 建树
