@@ -1305,23 +1305,26 @@ class Solution:
 ```python
 class Solution:
     def maxProduct(self, nums: List[int]) -> int:
-        """ 滚动变量,不能只使用curr,要引入prev
-        curr_min: 到数组当前index,最近一段连续的最小乘积
-        curr_max: 到数组当前index,最近一段连续的最大乘积
-        注意 prev <-> curr 之间的转化
+        """ 滚动变量
+        prev_min: 到数组当前index,最近一段连续的最小乘积,用nums[i]截断
+        prev_max: 到数组当前index,最近一段连续的最大乘积,用nums[i]截断
+        注意要引入tmp变量
         """
+        if len(nums) == 0:
+            return -1
+        prev_max, prev_min = nums[0], nums[0]
+        result = nums[0]
         n = len(nums)
-        prev_max, prev_min, res = nums[0], nums[0], nums[0]
         for i in range(1, n):
             if nums[i] > 0:
-                curr_min = min(nums[i], prev_min*nums[i])
-                curr_max = max(nums[i], prev_max*nums[i])
+                prev_max = max(nums[i], nums[i]*prev_max)
+                prev_min = min(nums[i], nums[i]*prev_min)
             else:
-                curr_min = min(nums[i], prev_max*nums[i])
-                curr_max = max(nums[i], prev_min*nums[i])
-            prev_min, prev_max = curr_min, curr_max
-            res = max(res, curr_max)
-        return res
+                tmp_max = max(nums[i], nums[i]*prev_min)
+                tmp_min = min(nums[i], nums[i]*prev_max)
+                prev_max, prev_min = tmp_max, tmp_min
+            result = max(result, prev_max)
+        return result
 ```
 
 #### [53. 最大子序和](https://leetcode-cn.com/problems/maximum-subarray/)
@@ -1348,12 +1351,15 @@ class Solution:
 ```python
 class Solution:
     def maxSubArray(self, nums: List[int]) -> int:
-        comsum, res = nums[0], nums[0]
         n = len(nums)
+        if n == 0:
+            return -1
+        prev_max = nums[0]
+        result = nums[0]
         for i in range(1, n):
-            comsum = max(nums[i], comsum+nums[i])
-            res = max(res, comsum)
-        return res
+            prev_max = max(prev_max+nums[i], nums[i])
+            result = max(result, prev_max)
+        return result
 ```
 
 #### [300. 最长上升子序列](https://leetcode-cn.com/problems/longest-increasing-subsequence/)
@@ -1385,25 +1391,24 @@ class Solution:
 ```python
 class Solution:
     def lengthOfLIS(self, nums: List[int]) -> int:
-        def low_bound(nums, l, r, target):
-            while l < r:
-                m = l + (r-l) // 2
-                if nums[m] < target:
-                    l = m + 1
+        def low_bound(left, right, nums, target):
+            while left < right:
+                mid = left + (right - left) // 2
+                if nums[mid] < target:
+                    left = mid + 1
                 else:
-                    r = m
-            return l
+                    right = mid
+            return left
 
         dp = []
-        for num in nums:
-            if len(dp) == 0:
-                dp.append(num)
-                continue
-            index = low_bound(dp, 0, len(dp), num)
+        n = len(nums)
+        for i in range(n):
+            index = low_bound(0, len(dp), dp, nums[i])
             if index == len(dp):
-                dp.append(num)
+                dp.append(nums[i])
             else:
-                dp[index] = num
+                dp[index] = nums[i]
+
         return len(dp)
 ```
 
@@ -1415,14 +1420,15 @@ class Solution:
 class Solution:
     def findLengthOfLCIS(self, nums: List[int]) -> int:
         n = len(nums)
-        if n == 0: return 0
-        dp = [1] * n
-        max_len = 1
-        for i in range(1, n):
-            if nums[i] > nums[i-1]:
-                dp[i] = dp[i-1] + 1
-            max_len = max(max_len, dp[i])
-        return max_len
+        cnt = 1
+        result = 1
+        for i in range(n-1):
+            if nums[i+1] > nums[i]:
+                cnt += 1
+            else:
+                cnt = 1
+            result = max(result, cnt)
+        return result
 ```
 
 #### [435. 无重叠区间](https://leetcode-cn.com/problems/non-overlapping-intervals/)
@@ -1445,20 +1451,21 @@ class Solution:
             res = max(dp[i], res)
         return n - res
 ```
-贪心, O(nlogn)
 ```python
 class Solution:
     def eraseOverlapIntervals(self, intervals: List[List[int]]) -> int:
-        intervals = sorted(intervals, key=lambda ele:ele[1])
+        # 注意，以结束时间sort
+        intervals = sorted(intervals, key=lambda x: x[1])
         n = len(intervals)
-        p, cnt = 0, 0
-        while p < n:
-            last = intervals[p][1]
-            j = p+1
-            while j < n and intervals[j][0] < last:
-                j += 1
+        left = 0
+        right = 1
+        cnt = 0
+        while right < n:
+            if intervals[right][0] < intervals[left][1]:
                 cnt += 1
-            p = j
+            else:
+                left = right
+            right += 1
         return cnt
 ```
 ```cpp
@@ -1614,6 +1621,17 @@ class Solution:
             profit1 = max(profit1, -prices[i])
         return profit0
 ```
+```python
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        n = len(prices)
+        prev = prices[0]
+        max_profit = 0
+        for i in range(1, n):
+            max_profit = max(prices[i]-prev, max_profit)
+            prev = min(prev, prices[i])
+        return max_profit
+```
 
 #### [122. 买卖股票的最佳时机 II](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-ii/)
 ```
@@ -1622,6 +1640,10 @@ class Solution:
 ```python
 class Solution:
     def maxProfit(self, prices: List[int]) -> int:
+        """
+        profit0: 状态为手中无股票的最大收益
+        profit1: 状态为手中有股票的最大收益
+        """
         n = len(prices)
         if n == 0: return 0
         profit0 = 0
@@ -12595,19 +12617,19 @@ T(n) = T(n/2) + O(1) --> T(n) = O(logn)
 ```python
 class Solution:
     def merge(self, intervals: List[List[int]]) -> List[List[int]]:
+        intervals = sorted(intervals, key=lambda x:x[0])
         n = len(intervals)
-        intervals = sorted(intervals, key=lambda x: x[0])
-        index = 0
+        right = 0
+        left = 0
         result = []
-        while (index < n):
-            left = index
-            right = index + 1
+        while right < n:
             end = intervals[left][1]
-            while (right < n and intervals[right][0] <= end):
+            right += 1
+            while right < n and intervals[right][0] <= end:
                 end = max(end, intervals[right][1])
                 right += 1
-            result.append([intervals[index][0], end])
-            index = right
+            result.append([intervals[left][0], end])
+            left = right
         return result
 ```
 ### 次方
@@ -16675,4 +16697,43 @@ class Solution:
                 helper(e)
         helper(id)
         return self.imp
+```
+
+#### [981. 基于时间的键值存储](https://leetcode-cn.com/problems/time-based-key-value-store/)
+```python
+from collections import defaultdict
+class TimeMap:
+
+    def __init__(self):
+        self.lookup = defaultdict(list)
+
+    def set(self, key: str, value: str, timestamp: int) -> None:
+        # TimeMap.set 操作中的时间戳 timestamps 严格递增
+        self.lookup[key].append((value, timestamp))
+
+    def get(self, key: str, timestamp: int) -> str:
+        if key not in self.lookup:
+            return ""
+        candidates = self.lookup[key]
+        index = self.low_bound(candidates, timestamp)
+        if index == len(candidates):
+            return candidates[-1][0]
+        elif candidates[index][1] == timestamp:
+            return candidates[index][0]
+        elif index == 0:
+            return ""
+        else:
+            return candidates[index-1][0]
+
+    def low_bound(self, candidates, target):
+        n = len(candidates)
+        left = 0
+        right = n
+        while left < right:
+            mid = left + (right - left) // 2
+            if candidates[mid][1] < target:
+                left = mid + 1
+            else:
+                right = mid
+        return left
 ```
