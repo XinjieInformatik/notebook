@@ -3924,9 +3924,39 @@ class Solution:
 ```
 ##### [274. H指数](https://leetcode-cn.com/problems/h-index)
 ![](assets/400_leetcode-bec248b5.png)
-两种方法：1. sort，取直方图下最大正方形 2. cut为正方形，计数排序
-https://leetcode-cn.com/problems/h-index/solution/hzhi-shu-by-leetcode/
-
+```python
+class Solution:
+    def hIndex(self, citations: List[int]) -> int:
+        citations = sorted(citations)
+        n = len(citations)
+        index = n - 1
+        h = 0
+        while index >= 0:
+            if citations[index] > h:
+                h += 1
+            else:
+                break
+            index -= 1
+        return h
+```
+```python
+class Solution:
+    def hIndex(self, citations: List[int]) -> int:
+        # 二分尝试法，h一定在[left,right)之间
+        left = 0
+        right = len(citations) + 1
+        while left < right:
+            mid = left + (right - left) // 2
+            h = 0
+            for num in citations:
+                if num >= mid:
+                    h += 1
+            if mid <= h:
+                left = mid + 1
+            else:
+                right = mid
+        return left - 1
+```
 ##### [275. H指数 II](https://leetcode-cn.com/problems/h-index-ii)
 线性
 ```python
@@ -3942,20 +3972,20 @@ class Solution:
 数组有序，用二分查找 时间复杂度 O(logn)
 ```python
 class Solution:
-    def hIndex(self, citations):
+    def hIndex(self, citations: List[int]) -> int:
         n = len(citations)
-        left, right = 0, n - 1
-        while left <= right:
-            pivot = left + (right - left) // 2
-            if citations[pivot] == n - pivot:
-                return n - pivot
-            elif citations[pivot] < n - pivot:
-                left = pivot + 1
+        left = 0
+        right = n
+        while left < right:
+            mid = left + (right - left) // 2
+            if citations[mid] == n - mid:
+                return n - mid
+            elif citations[mid] < n - mid:
+                left = mid + 1
             else:
-                right = pivot - 1
+                right = mid
         return n - left
 ```
-https://leetcode-cn.com/problems/h-index-ii/solution/hzhi-shu-ii-by-leetcode/
 
 ##### [11. 盛最多水的容器](https://leetcode-cn.com/problems/container-with-most-water)
 首尾双指针，哪边低，哪边指针向内移动
@@ -16736,4 +16766,134 @@ class TimeMap:
             else:
                 right = mid
         return left
+```
+
+#### [5809. 长度为 3 的不同回文子序列](https://leetcode-cn.com/problems/unique-length-3-palindromic-subsequences/)
+记录字符首次出现和最后出现index，统计之间有多少个不同的字符
+```python
+class Solution:
+    def countPalindromicSubsequence(self, s: str) -> int:
+        begin = {}
+        end = {}
+        n = len(s)
+        for i in range(n):
+            if s[i] not in begin:
+                begin[s[i]] = i
+            end[s[i]] = i
+        result = 0
+        for c in end:
+            cnt = set()
+            if end[c] - begin[c] < 2:
+                continue
+            for i in range(begin[c]+1, end[c]):
+                cnt.add(s[i])
+            result += len(cnt)
+        return result
+```
+
+#### [5811. 用三种不同颜色为网格涂色](https://leetcode-cn.com/problems/painting-a-grid-with-three-different-colors/)
+```python
+class Solution {
+public:
+    int f[1005][255];
+    int mod = 1e9 + 7, M;
+    bool check(int S) {
+        int last = -1;
+        for(int i = 0; i < M; ++i){
+            if(S%3==last)return false;
+            last = S%3;
+            S /= 3;
+        }
+        return true;
+    }
+    bool check_n(int x, int y) {
+        for(int i = 0; i < M; ++i) {
+            if(x%3==y%3)return false;
+            x/=3,y/=3;
+        }
+        return true;
+    }
+    int colorTheGrid(int m, int n) {
+        M = m;
+        int tot = 1;
+        for(int i = 1; i <= m; ++i)tot*=3;
+        for(int i = 0; i < tot; ++i)
+            if(check(i))f[1][i] = 1;
+        for(int i = 2; i <= n; ++i)
+            for(int j = 0; j < tot; ++j)
+                if(check(j))
+                    for(int k = 0;k < tot; ++k)
+                        if(check(k)) {
+                            if(!check_n(j,k))continue;
+                            f[i][j] = (f[i][j] + f[i - 1][k]) % mod;
+                        }
+        int ans = 0;
+        for(int i = 0; i < tot; ++i)
+            ans = (ans + f[n][i]) % mod;
+
+        return ans;
+    }
+};
+```
+
+#### [5795. 规定时间内到达终点的最小花费](https://leetcode-cn.com/problems/minimum-cost-to-reach-destination-in-time/)
+```python
+from collections import defaultdict
+class Solution:
+    def minCost(self, maxTime: int, edges: List[List[int]], passingFees: List[int]) -> int:
+        adjacency = defaultdict(set)
+        n = len(passingFees)
+        min_time = {}
+        # 两个城市间多条道路，保留最短耗时路径
+        for i in range(len(edges)):
+            begin, end, time = edges[i]
+            adjacency[begin].add(end)
+            adjacency[end].add(begin)
+            if (begin,end) in min_time:
+                min_time[(begin,end)] = min(min_time[(begin,end)], time)
+                min_time[(end,begin)] = min(min_time[(end,begin)], time)
+                continue
+            min_time[(begin,end)] = time
+            min_time[(end,begin)] = time
+
+        visited = [0 for i in range(n)]
+        visited[0] = 1
+        self.result = float('inf')
+        def helper(begin, t, cost):
+            if t > maxTime:
+                return
+            # 如果之前以更短时间，更少花费访问过该节点，return
+            if dp[begin][0] < t and dp[begin][1] < cost:
+                return  
+            if begin == n-1:
+                self.result = min(self.result, cost)
+                return
+            dp[begin][0] = min(dp[begin][0], t)
+            dp[begin][1] = min(dp[begin][1], cost)
+            for end in adjacency[begin]:
+                if visited[end]:
+                    continue
+                visited[end] = 1
+                time = min_time[(begin,end)]
+                helper(end, t+time, cost+passingFees[end])
+                visited[end] = 0
+        dp = [[float('inf'), float('inf')] for i in range(n)] # time, cost
+        helper(0, 0, passingFees[0])
+        return self.result if self.result != float('inf') else -1
+```
+```python
+class Solution:
+    def minCost(self, maxTime: int, edges: List[List[int]], passingFees: List[int]) -> int:
+        n = len(passingFees)
+        # dp[t][i] 表示使用 t 分钟到达城市 i 需要的最少通行费总和
+        dp = [[float("inf")] * n for _ in range(maxTime + 1)]
+        dp[0][0] = passingFees[0]
+        for t in range(1, maxTime + 1):
+            for i, j, cost in edges:
+                if cost <= t:
+                    dp[t][i] = min(dp[t][i], dp[t - cost][j] + passingFees[i])
+                    dp[t][j] = min(dp[t][j], dp[t - cost][i] + passingFees[j])
+
+        ans = min(dp[t][n - 1] for t in range(1, maxTime + 1))
+        return -1 if ans == float("inf") else ans
 ```
