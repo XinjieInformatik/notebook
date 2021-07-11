@@ -58,7 +58,6 @@ https://www.kaggle.com/cdeotte/moa-post-process-lb-1777
 - 仔细阅读比赛的评分指标，包括loss计算时上下界的设定，建立更准确的local CV
 - sklearn.decomposition 中，PCA, FactorAnalysis结果较为接近，FastICA与他们不同
 - sklearn.preprocessing 中，不同的标准化 https://www.jianshu.com/p/580688e4a069. QuantileTransformer 受离群值影响小，但是特征间距离失真。注意norm用于行缩放到单位范数，standardization 用于列
--
 
 ### feature engineering 思路
 - 生成 多项式特征
