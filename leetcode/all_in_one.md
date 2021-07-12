@@ -1677,24 +1677,18 @@ class Solution:
 class Solution:
     def maxProfit(self, k: int, prices: List[int]) -> int:
         n = len(prices)
-        if n == 0 or k == 0: return 0
-        # 如果交易次数>天数,当作无限次交易O(n)处理
-        if k >= n:
-            profit0 = 0
-            profit1 = -prices[0]
-            for i in range(n):
-                profit0 = max(profit0, profit1+prices[i])
-                profit1 = max(profit1, profit0-prices[i])
-            return profit0
-        profit0 = [0 for i in range(k)]
-        profit1 = [-prices[0] for i in range(k)]
-        for i in range(1, n):
-            profit0[0] = max(profit0[0], profit1[0]+prices[i])
-            profit1[0] = max(profit1[0], -prices[i])
-            for j in range(1, k):
-                profit0[j] = max(profit0[j], profit1[j]+prices[i])
-                profit1[j] = max(profit1[j], profit0[j-1]-prices[i])
-        return profit0[-1]
+        # 注意边界
+        if n == 0 or n == 1 or k == 0:
+            return 0
+        m = min(n//2, k)
+        profits = [[0, -prices[0]] for j in range(m)]
+        for i in range(n):
+            profits[0][0] = max(profits[0][0], profits[0][1]+prices[i])
+            profits[0][1] = max(profits[0][1], -prices[i])
+            for j in range(1, m):
+                profits[j][0] = max(profits[j][0], profits[j][1]+prices[i])
+                profits[j][1] = max(profits[j][1], profits[j-1][0]-prices[i])
+        return profits[-1][0]
 ```
 
 #### [714. 买卖股票的最佳时机含手续费](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/)
