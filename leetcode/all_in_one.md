@@ -1305,23 +1305,26 @@ class Solution:
 ```python
 class Solution:
     def maxProduct(self, nums: List[int]) -> int:
-        """ 滚动变量,不能只使用curr,要引入prev
-        curr_min: 到数组当前index,最近一段连续的最小乘积
-        curr_max: 到数组当前index,最近一段连续的最大乘积
-        注意 prev <-> curr 之间的转化
+        """ 滚动变量
+        prev_min: 到数组当前index,最近一段连续的最小乘积,用nums[i]截断
+        prev_max: 到数组当前index,最近一段连续的最大乘积,用nums[i]截断
+        注意要引入tmp变量
         """
+        if len(nums) == 0:
+            return -1
+        prev_max, prev_min = nums[0], nums[0]
+        result = nums[0]
         n = len(nums)
-        prev_max, prev_min, res = nums[0], nums[0], nums[0]
         for i in range(1, n):
             if nums[i] > 0:
-                curr_min = min(nums[i], prev_min*nums[i])
-                curr_max = max(nums[i], prev_max*nums[i])
+                prev_max = max(nums[i], nums[i]*prev_max)
+                prev_min = min(nums[i], nums[i]*prev_min)
             else:
-                curr_min = min(nums[i], prev_max*nums[i])
-                curr_max = max(nums[i], prev_min*nums[i])
-            prev_min, prev_max = curr_min, curr_max
-            res = max(res, curr_max)
-        return res
+                tmp_max = max(nums[i], nums[i]*prev_min)
+                tmp_min = min(nums[i], nums[i]*prev_max)
+                prev_max, prev_min = tmp_max, tmp_min
+            result = max(result, prev_max)
+        return result
 ```
 
 #### [53. 最大子序和](https://leetcode-cn.com/problems/maximum-subarray/)
@@ -1348,12 +1351,15 @@ class Solution:
 ```python
 class Solution:
     def maxSubArray(self, nums: List[int]) -> int:
-        comsum, res = nums[0], nums[0]
         n = len(nums)
+        if n == 0:
+            return -1
+        prev_max = nums[0]
+        result = nums[0]
         for i in range(1, n):
-            comsum = max(nums[i], comsum+nums[i])
-            res = max(res, comsum)
-        return res
+            prev_max = max(prev_max+nums[i], nums[i])
+            result = max(result, prev_max)
+        return result
 ```
 
 #### [300. 最长上升子序列](https://leetcode-cn.com/problems/longest-increasing-subsequence/)
@@ -1385,25 +1391,24 @@ class Solution:
 ```python
 class Solution:
     def lengthOfLIS(self, nums: List[int]) -> int:
-        def low_bound(nums, l, r, target):
-            while l < r:
-                m = l + (r-l) // 2
-                if nums[m] < target:
-                    l = m + 1
+        def low_bound(left, right, nums, target):
+            while left < right:
+                mid = left + (right - left) // 2
+                if nums[mid] < target:
+                    left = mid + 1
                 else:
-                    r = m
-            return l
+                    right = mid
+            return left
 
         dp = []
-        for num in nums:
-            if len(dp) == 0:
-                dp.append(num)
-                continue
-            index = low_bound(dp, 0, len(dp), num)
+        n = len(nums)
+        for i in range(n):
+            index = low_bound(0, len(dp), dp, nums[i])
             if index == len(dp):
-                dp.append(num)
+                dp.append(nums[i])
             else:
-                dp[index] = num
+                dp[index] = nums[i]
+
         return len(dp)
 ```
 
@@ -1415,14 +1420,15 @@ class Solution:
 class Solution:
     def findLengthOfLCIS(self, nums: List[int]) -> int:
         n = len(nums)
-        if n == 0: return 0
-        dp = [1] * n
-        max_len = 1
-        for i in range(1, n):
-            if nums[i] > nums[i-1]:
-                dp[i] = dp[i-1] + 1
-            max_len = max(max_len, dp[i])
-        return max_len
+        cnt = 1
+        result = 1
+        for i in range(n-1):
+            if nums[i+1] > nums[i]:
+                cnt += 1
+            else:
+                cnt = 1
+            result = max(result, cnt)
+        return result
 ```
 
 #### [435. 无重叠区间](https://leetcode-cn.com/problems/non-overlapping-intervals/)
@@ -1445,20 +1451,21 @@ class Solution:
             res = max(dp[i], res)
         return n - res
 ```
-贪心, O(nlogn)
 ```python
 class Solution:
     def eraseOverlapIntervals(self, intervals: List[List[int]]) -> int:
-        intervals = sorted(intervals, key=lambda ele:ele[1])
+        # 注意，以结束时间sort
+        intervals = sorted(intervals, key=lambda x: x[1])
         n = len(intervals)
-        p, cnt = 0, 0
-        while p < n:
-            last = intervals[p][1]
-            j = p+1
-            while j < n and intervals[j][0] < last:
-                j += 1
+        left = 0
+        right = 1
+        cnt = 0
+        while right < n:
+            if intervals[right][0] < intervals[left][1]:
                 cnt += 1
-            p = j
+            else:
+                left = right
+            right += 1
         return cnt
 ```
 ```cpp
@@ -1614,6 +1621,17 @@ class Solution:
             profit1 = max(profit1, -prices[i])
         return profit0
 ```
+```python
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        n = len(prices)
+        prev = prices[0]
+        max_profit = 0
+        for i in range(1, n):
+            max_profit = max(prices[i]-prev, max_profit)
+            prev = min(prev, prices[i])
+        return max_profit
+```
 
 #### [122. 买卖股票的最佳时机 II](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-ii/)
 ```
@@ -1622,6 +1640,10 @@ class Solution:
 ```python
 class Solution:
     def maxProfit(self, prices: List[int]) -> int:
+        """
+        profit0: 状态为手中无股票的最大收益
+        profit1: 状态为手中有股票的最大收益
+        """
         n = len(prices)
         if n == 0: return 0
         profit0 = 0
@@ -1655,24 +1677,18 @@ class Solution:
 class Solution:
     def maxProfit(self, k: int, prices: List[int]) -> int:
         n = len(prices)
-        if n == 0 or k == 0: return 0
-        # 如果交易次数>天数,当作无限次交易O(n)处理
-        if k >= n:
-            profit0 = 0
-            profit1 = -prices[0]
-            for i in range(n):
-                profit0 = max(profit0, profit1+prices[i])
-                profit1 = max(profit1, profit0-prices[i])
-            return profit0
-        profit0 = [0 for i in range(k)]
-        profit1 = [-prices[0] for i in range(k)]
-        for i in range(1, n):
-            profit0[0] = max(profit0[0], profit1[0]+prices[i])
-            profit1[0] = max(profit1[0], -prices[i])
-            for j in range(1, k):
-                profit0[j] = max(profit0[j], profit1[j]+prices[i])
-                profit1[j] = max(profit1[j], profit0[j-1]-prices[i])
-        return profit0[-1]
+        # 注意边界
+        if n == 0 or n == 1 or k == 0:
+            return 0
+        m = min(n//2, k)
+        profits = [[0, -prices[0]] for j in range(m)]
+        for i in range(n):
+            profits[0][0] = max(profits[0][0], profits[0][1]+prices[i])
+            profits[0][1] = max(profits[0][1], -prices[i])
+            for j in range(1, m):
+                profits[j][0] = max(profits[j][0], profits[j][1]+prices[i])
+                profits[j][1] = max(profits[j][1], profits[j-1][0]-prices[i])
+        return profits[-1][0]
 ```
 
 #### [714. 买卖股票的最佳时机含手续费](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/)
@@ -2339,6 +2355,23 @@ public:
         return wall.size() - cnt;
     }
 };
+```
+#### [930. 和相同的二元子数组](https://leetcode-cn.com/problems/binary-subarrays-with-sum/)
+```python
+from collections import defaultdict
+class Solution:
+    def numSubarraysWithSum(self, nums: List[int], goal: int) -> int:
+        lookup = defaultdict(int)
+        lookup[0] = 1
+        n = len(nums)
+        prefix = 0
+        result = 0
+        for i in range(n):
+            prefix += nums[i]
+            if prefix - goal in lookup:
+                result += lookup[prefix-goal]
+            lookup[prefix] += 1
+        return result
 ```
 
 ### 树
@@ -3885,9 +3918,39 @@ class Solution:
 ```
 ##### [274. H指数](https://leetcode-cn.com/problems/h-index)
 ![](assets/400_leetcode-bec248b5.png)
-两种方法：1. sort，取直方图下最大正方形 2. cut为正方形，计数排序
-https://leetcode-cn.com/problems/h-index/solution/hzhi-shu-by-leetcode/
-
+```python
+class Solution:
+    def hIndex(self, citations: List[int]) -> int:
+        citations = sorted(citations)
+        n = len(citations)
+        index = n - 1
+        h = 0
+        while index >= 0:
+            if citations[index] > h:
+                h += 1
+            else:
+                break
+            index -= 1
+        return h
+```
+```python
+class Solution:
+    def hIndex(self, citations: List[int]) -> int:
+        # 二分尝试法，h一定在[left,right)之间
+        left = 0
+        right = len(citations) + 1
+        while left < right:
+            mid = left + (right - left) // 2
+            h = 0
+            for num in citations:
+                if num >= mid:
+                    h += 1
+            if mid <= h:
+                left = mid + 1
+            else:
+                right = mid
+        return left - 1
+```
 ##### [275. H指数 II](https://leetcode-cn.com/problems/h-index-ii)
 线性
 ```python
@@ -3903,20 +3966,20 @@ class Solution:
 数组有序，用二分查找 时间复杂度 O(logn)
 ```python
 class Solution:
-    def hIndex(self, citations):
+    def hIndex(self, citations: List[int]) -> int:
         n = len(citations)
-        left, right = 0, n - 1
-        while left <= right:
-            pivot = left + (right - left) // 2
-            if citations[pivot] == n - pivot:
-                return n - pivot
-            elif citations[pivot] < n - pivot:
-                left = pivot + 1
+        left = 0
+        right = n
+        while left < right:
+            mid = left + (right - left) // 2
+            if citations[mid] == n - mid:
+                return n - mid
+            elif citations[mid] < n - mid:
+                left = mid + 1
             else:
-                right = pivot - 1
+                right = mid
         return n - left
 ```
-https://leetcode-cn.com/problems/h-index-ii/solution/hzhi-shu-ii-by-leetcode/
 
 ##### [11. 盛最多水的容器](https://leetcode-cn.com/problems/container-with-most-water)
 首尾双指针，哪边低，哪边指针向内移动
@@ -12578,19 +12641,19 @@ T(n) = T(n/2) + O(1) --> T(n) = O(logn)
 ```python
 class Solution:
     def merge(self, intervals: List[List[int]]) -> List[List[int]]:
+        intervals = sorted(intervals, key=lambda x:x[0])
         n = len(intervals)
-        intervals = sorted(intervals, key=lambda x: x[0])
-        index = 0
+        right = 0
+        left = 0
         result = []
-        while (index < n):
-            left = index
-            right = index + 1
+        while right < n:
             end = intervals[left][1]
-            while (right < n and intervals[right][0] <= end):
+            right += 1
+            while right < n and intervals[right][0] <= end:
                 end = max(end, intervals[right][1])
                 right += 1
-            result.append([intervals[index][0], end])
-            index = right
+            result.append([intervals[left][0], end])
+            left = right
         return result
 ```
 ### 次方
@@ -16658,4 +16721,173 @@ class Solution:
                 helper(e)
         helper(id)
         return self.imp
+```
+
+#### [981. 基于时间的键值存储](https://leetcode-cn.com/problems/time-based-key-value-store/)
+```python
+from collections import defaultdict
+class TimeMap:
+
+    def __init__(self):
+        self.lookup = defaultdict(list)
+
+    def set(self, key: str, value: str, timestamp: int) -> None:
+        # TimeMap.set 操作中的时间戳 timestamps 严格递增
+        self.lookup[key].append((value, timestamp))
+
+    def get(self, key: str, timestamp: int) -> str:
+        if key not in self.lookup:
+            return ""
+        candidates = self.lookup[key]
+        index = self.low_bound(candidates, timestamp)
+        if index == len(candidates):
+            return candidates[-1][0]
+        elif candidates[index][1] == timestamp:
+            return candidates[index][0]
+        elif index == 0:
+            return ""
+        else:
+            return candidates[index-1][0]
+
+    def low_bound(self, candidates, target):
+        n = len(candidates)
+        left = 0
+        right = n
+        while left < right:
+            mid = left + (right - left) // 2
+            if candidates[mid][1] < target:
+                left = mid + 1
+            else:
+                right = mid
+        return left
+```
+
+#### [5809. 长度为 3 的不同回文子序列](https://leetcode-cn.com/problems/unique-length-3-palindromic-subsequences/)
+记录字符首次出现和最后出现index，统计之间有多少个不同的字符
+```python
+class Solution:
+    def countPalindromicSubsequence(self, s: str) -> int:
+        begin = {}
+        end = {}
+        n = len(s)
+        for i in range(n):
+            if s[i] not in begin:
+                begin[s[i]] = i
+            end[s[i]] = i
+        result = 0
+        for c in end:
+            cnt = set()
+            if end[c] - begin[c] < 2:
+                continue
+            for i in range(begin[c]+1, end[c]):
+                cnt.add(s[i])
+            result += len(cnt)
+        return result
+```
+
+#### [5811. 用三种不同颜色为网格涂色](https://leetcode-cn.com/problems/painting-a-grid-with-three-different-colors/)
+```python
+class Solution {
+public:
+    int f[1005][255];
+    int mod = 1e9 + 7, M;
+    bool check(int S) {
+        int last = -1;
+        for(int i = 0; i < M; ++i){
+            if(S%3==last)return false;
+            last = S%3;
+            S /= 3;
+        }
+        return true;
+    }
+    bool check_n(int x, int y) {
+        for(int i = 0; i < M; ++i) {
+            if(x%3==y%3)return false;
+            x/=3,y/=3;
+        }
+        return true;
+    }
+    int colorTheGrid(int m, int n) {
+        M = m;
+        int tot = 1;
+        for(int i = 1; i <= m; ++i)tot*=3;
+        for(int i = 0; i < tot; ++i)
+            if(check(i))f[1][i] = 1;
+        for(int i = 2; i <= n; ++i)
+            for(int j = 0; j < tot; ++j)
+                if(check(j))
+                    for(int k = 0;k < tot; ++k)
+                        if(check(k)) {
+                            if(!check_n(j,k))continue;
+                            f[i][j] = (f[i][j] + f[i - 1][k]) % mod;
+                        }
+        int ans = 0;
+        for(int i = 0; i < tot; ++i)
+            ans = (ans + f[n][i]) % mod;
+
+        return ans;
+    }
+};
+```
+
+#### [5795. 规定时间内到达终点的最小花费](https://leetcode-cn.com/problems/minimum-cost-to-reach-destination-in-time/)
+```python
+from collections import defaultdict
+class Solution:
+    def minCost(self, maxTime: int, edges: List[List[int]], passingFees: List[int]) -> int:
+        adjacency = defaultdict(set)
+        n = len(passingFees)
+        min_time = {}
+        # 两个城市间多条道路，保留最短耗时路径
+        for i in range(len(edges)):
+            begin, end, time = edges[i]
+            adjacency[begin].add(end)
+            adjacency[end].add(begin)
+            if (begin,end) in min_time:
+                min_time[(begin,end)] = min(min_time[(begin,end)], time)
+                min_time[(end,begin)] = min(min_time[(end,begin)], time)
+                continue
+            min_time[(begin,end)] = time
+            min_time[(end,begin)] = time
+
+        visited = [0 for i in range(n)]
+        visited[0] = 1
+        self.result = float('inf')
+        def helper(begin, t, cost):
+            if t > maxTime:
+                return
+            # 如果之前以更短时间，更少花费访问过该节点，return
+            if dp[begin][0] < t and dp[begin][1] < cost:
+                return  
+            if begin == n-1:
+                self.result = min(self.result, cost)
+                return
+            dp[begin][0] = min(dp[begin][0], t)
+            dp[begin][1] = min(dp[begin][1], cost)
+            for end in adjacency[begin]:
+                if visited[end]:
+                    continue
+                visited[end] = 1
+                time = min_time[(begin,end)]
+                helper(end, t+time, cost+passingFees[end])
+                visited[end] = 0
+        dp = [[float('inf'), float('inf')] for i in range(n)] # time, cost
+        helper(0, 0, passingFees[0])
+        return self.result if self.result != float('inf') else -1
+```
+```python
+class Solution:
+    def minCost(self, maxTime: int, edges: List[List[int]], passingFees: List[int]) -> int:
+        n = len(passingFees)
+        # dp[t][i] 表示使用 t 分钟到达城市 i 需要的最少通行费总和
+        dp = [[float("inf")] * n for _ in range(maxTime + 1)]
+        dp[0][0] = passingFees[0]
+        for t in range(1, maxTime + 1):
+            for i, j, cost in edges:
+                if cost <= t:
+                    dp[t][i] = min(dp[t][i], dp[t - cost][j] + passingFees[i])
+                    dp[t][j] = min(dp[t][j], dp[t - cost][i] + passingFees[j])
+
+        ans = min(dp[t][n - 1] for t in range(1, maxTime + 1))
+        return -1 if ans == float("inf") else ans
 ```
