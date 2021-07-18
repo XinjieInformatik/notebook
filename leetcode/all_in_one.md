@@ -1747,36 +1747,41 @@ Leetcode: 402, 316, 42, 84, 739, 496, 503, 901
 ```python
 class Solution:
     def removeKdigits(self, num: str, k: int) -> str:
+        """优先删除靠前的大的数字，维护单调递增stack。
+        可pop次数为k，剩下的数字去除前置0，使用完k为最终结果"""
         n = len(num)
-        if k == n: return "0"
-        maintain = n - k
         stack = []
-        cnt = 0
         for i in range(n):
             val = int(num[i])
-            # 把val<stack[-1]判断放在while,避免写break
-            while stack and val < stack[-1] and cnt<k:
+            while len(stack) > 0 and val < stack[-1] and k > 0:
                 stack.pop()
-                cnt += 1
-            if val == 0 and not stack: continue
+                k -= 1
             stack.append(val)
-        ans = "0" if not stack else "".join(map(str, stack[:maintain]))
-        return ans
+        # 去除前置0
+        index = 0
+        while index < len(stack) and stack[index] == 0:
+            index += 1
+        stack = stack[index:]
+        # 把k使用完
+        if k > 0:
+            stack = stack[:-k]
+        return '0' if len(stack) == 0 else "".join(map(str, stack))
 ```
 #### [456. 132模式](https://leetcode-cn.com/problems/132-pattern/)
 ```python
 class Solution:
     def find132pattern(self, nums: List[int]) -> bool:
-        ak = -float("inf")
+        """ 注意是子序列，可以不连续. 倒序遍历,
+        stack单调递减栈中为3，子序列pop出的max为2，如果2>当前num则满足132模式"""
         stack = []
-        nums = nums[::-1]
-        for num in nums:
-            if ak > num:
+        val_two = -float('inf')
+        n = len(nums)
+        for i in range(n-1, -1, -1):
+            if val_two > nums[i]:
                 return True
-            # stack 维护单调递减栈
-            while stack and num > stack[-1]:
-                ak = stack.pop()
-            stack.append(num)
+            while len(stack) > 0 and nums[i] > stack[-1]:
+                val_two = max(val_two, stack.pop())
+            stack.append(nums[i])
         return False
 ```
 
@@ -4287,7 +4292,7 @@ class Solution:
 ```
 
 #### [324. 摆动排序 II](https://leetcode-cn.com/problems/wiggle-sort-ii/)
-快速选择中位数 + 三路快排 + 插入
+快速选择中位数 + 三路排 + 插入
 
 #### [278. 第一个错误的版本](https://leetcode-cn.com/problems/first-bad-version/)
 二分查找
@@ -11629,9 +11634,9 @@ O(nlog(n)), 最坏 O(n^2)
 1. 已排序
 2. 数值全部相等（已排序的特殊情况）
 
-快排最好的情况是，每次正好中分，复杂度为O(nlogn)。最差情况，复杂度为O(n^2)，退化成冒泡排序
+最好的情况是，每次正好中分，复杂度为O(nlogn)。最差情况，复杂度为O(n^2)，退化成冒泡排序
 为了尽量避免最差情况的发生，就要尽量使每次选择的pivot为中位数。
-一般常用的方法是，对每一个数列都取一次中位数(O(n))，这样总体的快排时间复杂度仍为O(nlogn)。
+一般常用的方法是，对每一个数列都取一次中位数(O(n))，这样总体的时间复杂度仍为O(nlogn)。
 更为简化的方法是，取头、中、尾的中位数(O(1))作为pivot
 ```
 1. 通过partition操作,使得pivot左边数均 < pivot, 右边 >= pivot
@@ -11721,30 +11726,47 @@ def qsort(array, l, r):
 2. 当被分子数组长度为1时,结束递归,return子数组
 3. merge 返回的左右子数组
 ```python
-def mergeSort(arr, l, r):
-    def merge(l_arr, r_arr):
-        result = []
-        p1, p2 = 0, 0
-        n1, n2 = len(l_arr), len(r_arr)
-        while p1 < n1 and p2 < n2:
-            if l_arr[p1] < r_arr[p2]:
-                result.append(l_arr[p1])
-                p1 += 1
-            else:
-                result.append(r_arr[p2])
-                p2 += 1
-        result.extend(l_arr[p1:] or r_arr[p2:])
-        return result
+class Solution:
+    def sortArray(self, nums: List[int]) -> List[int]:
+        def mergeSort(array, left, right):
+            def merge(arr_left, arr_right):
+                result = []
+                n1, n2 = len(arr_left), len(arr_right)
+                p1, p2 = 0, 0
+                while p1 < n1 and p2 < n2:
+                    if arr_left[p1] < arr_right[p2]:
+                        result.append(arr_left[p1])
+                        p1 += 1
+                    else:
+                        result.append(arr_right[p2])
+                        p2 += 1
+                result.extend(arr_left[p1:] or arr_right[p2:])
+                return result
 
-    if r == 0:
-        return []
-    if l == r-1:
-        return [arr[l]]
-    m = l + (r-l)//2
-    l_arr = mergeSort(arr, l, m)
-    r_arr = mergeSort(arr, m, r)
-    return merge(l_arr, r_arr)
-```
+            def merge2(arr_left, arr_right):
+                result = []
+                n1, n2 = len(arr_left), len(arr_right)
+                p1, p2 = 0, 0
+                while p1 < n1 or p2 < n2:
+                    if p2 == n2 or (p1 < n1 and arr_left[p1] < arr_right[p2]):
+                        result.append(arr_left[p1])
+                        p1 += 1
+                    else:
+                        result.append(arr_right[p2])
+                        p2 += 1
+                return result
+
+            if left == right - 1:
+                return [array[left]]
+            mid = left + (right - left) // 2
+            arr_left = mergeSort(array, left, mid)
+            arr_right = mergeSort(array, mid, right)
+            return merge2(arr_left, arr_right)
+
+        if len(nums) == 0:
+            return nums
+        return mergeSort(nums, 0, len(nums))
+```     
 
 #### 冒泡排序
 O(n^2). 两两比较大小,每次循环将最大的数放在最后面
@@ -11755,7 +11777,8 @@ def bubbleSort(array):
         for j in range(n-i):
             if array[j+1] < array[j]:
                 array[j], array[j+1] = array[j+1], array[j]
-    return array
+bubbleSort(nums)
+return nums
 ```
 
 #### 选择排序
