@@ -2786,6 +2786,30 @@ public:
 };
 ```
 
+#### [1838. 最高频元素的频数](https://leetcode-cn.com/problems/frequency-of-the-most-frequent-element/)
+
+![20210720_003518_72](assets/20210720_003518_72.png)
+图中面积是k的大小，向右增长的时候横向添加，向右收缩的时候纵向释放
+```python
+class Solution:
+    def maxFrequency(self, nums: List[int], k: int) -> int:
+        nums = sorted(nums)
+        n = len(nums)
+        left = 0
+        max_freq = 1
+        for right in range(1, n):
+            fill = (nums[right]-nums[right-1]) * (right-left)
+            k -= fill
+            if k >= 0:
+                max_freq = max(max_freq, right-left+1)
+            while k < 0:
+                add_area = (nums[left+1]-nums[left]) * (left+1)
+                k += add_area
+                left += 1
+            max_freq = max(max_freq, right-left+1)
+        return max_freq
+```
+
 ### 线段树
 #### [307. 区域和检索 - 数组可修改](https://leetcode-cn.com/problems/range-sum-query-mutable/)
 ```python
