@@ -8063,19 +8063,29 @@ class Solution:
 对称条件 1.左右节点值相同 2.左子节点左，右子节点右相同 3.左子节点右，右子节点左相同
 如果该节点None return, 检查节点处比检查孩子节点处方便很多
 ```python
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
 class Solution:
     def isSymmetric(self, root: TreeNode) -> bool:
-        def helper(node_left, node_right):
-            if not node_left and not node_right:
+        def helper(left, right):
+            if left == None and right == None:
                 return True
-            elif not node_left or not node_right:
+            if left == None or right == None:
                 return False
-            if node_left.val == node_right.val:
-                if helper(node_left.left, node_right.right) and helper(node_left.right, node_right.left):
-                    return True
-            return False
-
-        return helper(root, root)
+            if left.val != right.val:
+                return False
+            if not helper(left.left, right.right):
+                return False
+            if not helper(left.right, right.left):
+                return False
+            return True
+        if not root:
+            return True
+        return helper(root.left, root.right)
 ```
 迭代
 ```python
@@ -8638,19 +8648,14 @@ class Solution:
 class Solution:
     def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
         def helper(root):
-            # 如果p,q均小于根，父节点向左移
-            if max_val < root.val:
-                return helper(root.left) # 注意要return
-            # 如果p,q均大于根，父节点向右移
-            elif min_val > root.val:
+            if not root:
+                return None
+            if root.val > p.val and root.val > q.val:
+                return helper(root.left)
+            elif root.val < p.val and root.val < q.val:
                 return helper(root.right)
-            # 如果p,q一个大于一个小于根，则该父节点是最近的分叉节点,然后层层return
             else:
                 return root
-
-        min_val = min(p.val, q.val)
-        max_val = max(p.val, q.val)
-
         return helper(root)
 ```
 ```cpp
@@ -8687,25 +8692,32 @@ public:
 4. left != None and right != None, return node
 
 ```python
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
 class Solution:
     def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
-        def helper(node):
-            # 提前退出
-            if not node:
-                return
-            if node == p or node == q:
-                return node
-            left = helper(node.left)
-            right = helper(node.right)
-            # 后序遍历的操作
-            if not left and not right:
-                return
-            if not left:
-                return right
-            if not right:
+        """ """
+        # 前序遍历, IF 找到了p,q return root
+        # 后序遍历, IF 左右非空 return root, IF 左子树找到了 return left, IF 右子树找到了 return right
+        def helper(root):
+            if not root:
+                return None
+            if root == p or root == q:
+                return root
+            left = helper(root.left)
+            right = helper(root.right)
+            if left != None and right != None:
+                return root
+            if left:
                 return left
-            return node
-
+            if right:
+                return right
+            return None
         return helper(root)
 ```
 ```cpp
@@ -8736,6 +8748,47 @@ public:
     }
 };
 ```
+
+#### [863. 二叉树中所有距离为 K 的结点](https://leetcode-cn.com/problems/all-nodes-distance-k-in-binary-tree/)
+建图 bfs, 注意bfs添加visited
+```python  
+from collections import deque
+class Solution:
+    def distanceK(self, root: TreeNode, target: TreeNode, k: int) -> List[int]:
+        lookup = {}
+        def helper(root):
+            if not root:
+                return None
+            if root.left:
+                lookup[root.left] = root
+            if root.right:
+                lookup[root.right] = root
+            helper(root.left)
+            helper(root.right)
+        helper(root)
+
+        queue = deque()
+        queue.appendleft([target, 0])
+        result = []
+        visited = set()
+        visited.add(target)
+        while len(queue) > 0:
+            top, step = queue.pop()  
+            if step == k:
+                result.append(top.val)
+                continue
+            if top.left and top.left not in visited:
+                queue.appendleft([top.left, step+1])
+                visited.add(top.left)
+            if top.right and top.right not in visited:
+                queue.appendleft([top.right, step+1])
+                visited.add(top.right)
+            if top in lookup and lookup[top] not in visited:
+                queue.appendleft([lookup[top], step+1])
+                visited.add(lookup[top])
+        return result
+```
+
 
 #### [1028. 从先序遍历还原二叉树](https://leetcode-cn.com/problems/recover-a-tree-from-preorder-traversal/)
 if 当前结点的深度 = 前一个结点的深度 + 1
