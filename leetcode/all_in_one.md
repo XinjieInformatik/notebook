@@ -1040,25 +1040,27 @@ public:
 给定一个字符串 s，找到 s 中最长的回文子串。
 输入: "babad" 输出: "bab" 注意: "aba" 也是一个有效答案。
 ```
-从上到下,从左到右
 ```python
 class Solution:
     def longestPalindrome(self, s: str) -> str:
         n = len(s)
+        # dp[i][j]: s[i:j+1]是否是回文串
         dp = [[0 for i in range(n)] for j in range(n)]
         for i in range(n):
             dp[i][i] = 1
         left = 0
-        lenth = 0
+        right = 0
         for i in range(n-1, -1, -1):
-            for j in range(i, n):
+            for j in range(i+1, n):
                 if s[i] == s[j]:
-                    if j - i <= 2 or dp[i+1][j-1]:
+                    if j - i < 3:
                         dp[i][j] = 1
-                if dp[i][j] == 1 and (j-i+1 > lenth):
-                    lenth = j-i+1
-                    left = i
-        return s[left:left+lenth]
+                    else:
+                        dp[i][j] = dp[i+1][j-1]
+                    if dp[i][j] and j-i > right-left:
+                        left = i
+                        right = j
+        return s[left:right+1]
 ```
 ```cpp
 class Solution {
@@ -1119,17 +1121,16 @@ class Solution:
 ```python
 class Solution:
     def longestCommonSubsequence(self, text1: str, text2: str) -> int:
-        """ dp[i][j] s1[:i],s2[:j]最长公共子序列
-        dp长度为(n1+1,n2+1) 因为要向i-1,j-1查询
-        不需要初始化因为初始最长公共子序列为0 """
-        n1, n2 = len(text1)+1, len(text2)+1
-        dp = [[0]*n2 for i in range(n1)]
-        for i in range(1, n1):
-            for j in range(1, n2):
+        n = len(text1)
+        m = len(text2)
+        # dp[i][j] text1[:i+1]与text2[:j+1]的最长公共子序列,不需要初始化因为初始公共子序列为0
+        dp = [[0 for j in range(m+1)] for i in range(n+1)]
+        for i in range(1, n+1):
+            for j in range(1, m+1):
                 if text1[i-1] == text2[j-1]:
-                    dp[i][j] = dp[i-1][j-1]+1
+                    dp[i][j] = dp[i-1][j-1] + 1
                 else:
-                    dp[i][j] = max(dp[i][j-1], dp[i-1][j])
+                    dp[i][j] = max(dp[i-1][j], dp[i][j-1])
         return dp[-1][-1]
 
         """ 求公共子序列元素,倒序遍历,通过dp控制双指针移动 """
@@ -1198,19 +1199,19 @@ rose -> ros (删除 'e')
 ```python
 class Solution:
     def minDistance(self, word1: str, word2: str) -> int:
-        n, m = len(word1)+1, len(word2)+1
-        dp = [[0] * m for i in range(n)]
-        # 注意初始化空串到另一字符串的距离
-        for i in range(n):
+        n = len(word1)
+        m = len(word2)
+        dp = [[float('inf') for j in range(m+1)] for i in range(n+1)]
+        for i in range(n+1):
             dp[i][0] = i
-        for j in range(m):
+        for j in range(m+1):
             dp[0][j] = j
-        for i in range(1, n):
-            for j in range(1, m):
+        for i in range(1, n+1):
+            for j in range(1, m+1):
                 if word1[i-1] == word2[j-1]:
                     dp[i][j] = dp[i-1][j-1]
                 else:
-                    dp[i][j] = min(dp[i-1][j-1], dp[i-1][j], dp[i][j-1]) + 1
+                    dp[i][j] = min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]) + 1
         return dp[-1][-1]
 ```
 
@@ -1736,6 +1737,27 @@ class Solution:
         return profit0
 ```
 
+#### [413. 等差数列划分](https://leetcode-cn.com/problems/arithmetic-slices/)
+
+```python
+class Solution:
+    def numberOfArithmeticSlices(self, nums: List[int]) -> int:
+        n = len(nums)
+        if n < 3:
+            return 0
+        cnt = 0
+        d = nums[1] - nums[0]
+        total = 0
+        for i in range(2, n):
+            if nums[i] - nums[i-1] == d:
+                cnt += 1
+                total += cnt
+            else:
+                cnt = 0
+                d = nums[i] - nums[i-1]
+        return total
+```
+
 ### 单调栈
 Leetcode: 402, 316, 42, 84, 739, 496, 503, 901
 #### [402. 移掉K位数字](https://leetcode-cn.com/problems/remove-k-digits/)
@@ -1747,36 +1769,41 @@ Leetcode: 402, 316, 42, 84, 739, 496, 503, 901
 ```python
 class Solution:
     def removeKdigits(self, num: str, k: int) -> str:
+        """优先删除靠前的大的数字，维护单调递增stack。
+        可pop次数为k，剩下的数字去除前置0，使用完k为最终结果"""
         n = len(num)
-        if k == n: return "0"
-        maintain = n - k
         stack = []
-        cnt = 0
         for i in range(n):
             val = int(num[i])
-            # 把val<stack[-1]判断放在while,避免写break
-            while stack and val < stack[-1] and cnt<k:
+            while len(stack) > 0 and val < stack[-1] and k > 0:
                 stack.pop()
-                cnt += 1
-            if val == 0 and not stack: continue
+                k -= 1
             stack.append(val)
-        ans = "0" if not stack else "".join(map(str, stack[:maintain]))
-        return ans
+        # 去除前置0
+        index = 0
+        while index < len(stack) and stack[index] == 0:
+            index += 1
+        stack = stack[index:]
+        # 把k使用完
+        if k > 0:
+            stack = stack[:-k]
+        return '0' if len(stack) == 0 else "".join(map(str, stack))
 ```
 #### [456. 132模式](https://leetcode-cn.com/problems/132-pattern/)
 ```python
 class Solution:
     def find132pattern(self, nums: List[int]) -> bool:
-        ak = -float("inf")
+        """ 注意是子序列，可以不连续. 倒序遍历,
+        stack单调递减栈中为3，子序列pop出的max为2，如果2>当前num则满足132模式"""
         stack = []
-        nums = nums[::-1]
-        for num in nums:
-            if ak > num:
+        val_two = -float('inf')
+        n = len(nums)
+        for i in range(n-1, -1, -1):
+            if val_two > nums[i]:
                 return True
-            # stack 维护单调递减栈
-            while stack and num > stack[-1]:
-                ak = stack.pop()
-            stack.append(num)
+            while len(stack) > 0 and nums[i] > stack[-1]:
+                val_two = max(val_two, stack.pop())
+            stack.append(nums[i])
         return False
 ```
 
@@ -2399,7 +2426,7 @@ class Solution:
 
 
 ### 滑动窗口
-#### [3.无重复字符的最长子串](https://leetcode-cn.com/problems/longest-substring-without-repeating-characters/)
+#### [3. 无重复字符的最长子串](https://leetcode-cn.com/problems/longest-substring-without-repeating-characters/)
 ```python
 class Solution:
     def lengthOfLongestSubstring(self, s: str) -> int:
@@ -2779,6 +2806,30 @@ public:
         return cnt;
     }
 };
+```
+
+#### [1838. 最高频元素的频数](https://leetcode-cn.com/problems/frequency-of-the-most-frequent-element/)
+
+![20210720_003518_72](assets/20210720_003518_72.png)
+图中面积是k的大小，向右增长的时候横向添加，向右收缩的时候纵向释放
+```python
+class Solution:
+    def maxFrequency(self, nums: List[int], k: int) -> int:
+        nums = sorted(nums)
+        n = len(nums)
+        left = 0
+        max_freq = 1
+        for right in range(1, n):
+            fill = (nums[right]-nums[right-1]) * (right-left)
+            k -= fill
+            if k >= 0:
+                max_freq = max(max_freq, right-left+1)
+            while k < 0:
+                add_area = (nums[left+1]-nums[left]) * (left+1)
+                k += add_area
+                left += 1
+            max_freq = max(max_freq, right-left+1)
+        return max_freq
 ```
 
 ### 线段树
@@ -3665,6 +3716,42 @@ class Solution:
         return dummy.next
 ```
 #### [25. K 个一组翻转链表](https://leetcode-cn.com/problems/reverse-nodes-in-k-group/)
+1. 反转链表
+2. 走k步，切断，反转链表返回反转后的头节点，尾节点
+3. 链表链接 tail.next = nx, prev.next = head
+4. 节点移动，prev = tail, head = nxt
+```python
+class Solution:
+    def reverseKGroup(self, head: ListNode, k: int) -> ListNode:
+        def reverse_link(head):
+            prev = None
+            curr = head
+            while curr:
+                nxt = curr.next
+                curr.next = prev
+                prev = curr
+                curr = nxt
+            return prev, head
+
+        prev = dummy_head = ListNode(-1)
+        dummy_head.next = head
+        prev.next = head
+        while head:
+            tail = prev
+            for i in range(k):
+                tail = tail.next
+                if not tail:
+                    return dummy_head.next
+            nxt = tail.next
+            tail.next = None
+            head, tail = reverse_link(head)
+            tail.next = nxt
+            prev.next = head
+            prev = tail
+            head = nxt
+        return dummy_head.next
+```
+
 ```python
 class Solution:
     def reverseKGroup(self, head: ListNode, k: int) -> ListNode:
@@ -4287,7 +4374,7 @@ class Solution:
 ```
 
 #### [324. 摆动排序 II](https://leetcode-cn.com/problems/wiggle-sort-ii/)
-快速选择中位数 + 三路快排 + 插入
+快速选择中位数 + 三路排 + 插入
 
 #### [278. 第一个错误的版本](https://leetcode-cn.com/problems/first-bad-version/)
 二分查找
@@ -7160,6 +7247,34 @@ public:
 };
 ```
 
+#### [457. 环形数组是否存在循环](https://leetcode-cn.com/problems/circular-array-loop/)
+```python
+class Solution:
+    def circularArrayLoop(self, nums: List[int]) -> bool:
+        n = len(nums)
+        if n == 0:
+            return False
+        def forward(start_index, nums, n):
+            start_index += nums[start_index]
+            start_index %= n
+            return start_index
+
+        for index in range(n):
+            slow = index
+            fast = index
+            sign = nums[index] > 0
+            while sign == (nums[fast]>0) and sign == (nums[forward(fast, nums, n)]>0):
+                slow = forward(slow, nums, n)
+                fast = forward(fast, nums, n)
+                fast = forward(fast, nums, n)
+                if slow == fast:
+                    if forward(slow, nums, n) != slow:
+                        return True
+                    else:
+                        break
+        return False
+```
+
 #### [24. 两两交换链表中的节点](https://leetcode-cn.com/problems/swap-nodes-in-pairs/)
 ```python
 class Solution:
@@ -7979,19 +8094,25 @@ public:
 #### [98. 验证二叉搜索树](https://leetcode-cn.com/problems/validate-binary-search-tree/)
 递归写法
 ```python
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
 class Solution:
     def isValidBST(self, root: TreeNode) -> bool:
-        def helper(node, low, up):
-            if not node:
+        def helper(root, minval, maxval):
+            if not root:
                 return True
-            if not low < node.val < up:
+            if root.val <= minval or root.val >= maxval:
                 return False
-            if not helper(node.left, low, node.val):
+            if not helper(root.left, minval, root.val):
                 return False
-            if not helper(node.right, node.val, up):
+            if not helper(root.right, root.val, maxval):
                 return False
             return True
-        return helper(root, -float("inf"), float("inf"))
+        return helper(root, -float('inf'), float('inf'))
 ```
 ```cpp
 class Solution {
@@ -8034,19 +8155,29 @@ class Solution:
 对称条件 1.左右节点值相同 2.左子节点左，右子节点右相同 3.左子节点右，右子节点左相同
 如果该节点None return, 检查节点处比检查孩子节点处方便很多
 ```python
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
 class Solution:
     def isSymmetric(self, root: TreeNode) -> bool:
-        def helper(node_left, node_right):
-            if not node_left and not node_right:
+        def helper(left, right):
+            if left == None and right == None:
                 return True
-            elif not node_left or not node_right:
+            if left == None or right == None:
                 return False
-            if node_left.val == node_right.val:
-                if helper(node_left.left, node_right.right) and helper(node_left.right, node_right.left):
-                    return True
-            return False
-
-        return helper(root, root)
+            if left.val != right.val:
+                return False
+            if not helper(left.left, right.right):
+                return False
+            if not helper(left.right, right.left):
+                return False
+            return True
+        if not root:
+            return True
+        return helper(root.left, root.right)
 ```
 迭代
 ```python
@@ -8609,19 +8740,14 @@ class Solution:
 class Solution:
     def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
         def helper(root):
-            # 如果p,q均小于根，父节点向左移
-            if max_val < root.val:
-                return helper(root.left) # 注意要return
-            # 如果p,q均大于根，父节点向右移
-            elif min_val > root.val:
+            if not root:
+                return None
+            if root.val > p.val and root.val > q.val:
+                return helper(root.left)
+            elif root.val < p.val and root.val < q.val:
                 return helper(root.right)
-            # 如果p,q一个大于一个小于根，则该父节点是最近的分叉节点,然后层层return
             else:
                 return root
-
-        min_val = min(p.val, q.val)
-        max_val = max(p.val, q.val)
-
         return helper(root)
 ```
 ```cpp
@@ -8658,25 +8784,32 @@ public:
 4. left != None and right != None, return node
 
 ```python
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
 class Solution:
     def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
-        def helper(node):
-            # 提前退出
-            if not node:
-                return
-            if node == p or node == q:
-                return node
-            left = helper(node.left)
-            right = helper(node.right)
-            # 后序遍历的操作
-            if not left and not right:
-                return
-            if not left:
-                return right
-            if not right:
+        """ """
+        # 前序遍历, IF 找到了p,q return root
+        # 后序遍历, IF 左右非空 return root, IF 左子树找到了 return left, IF 右子树找到了 return right
+        def helper(root):
+            if not root:
+                return None
+            if root == p or root == q:
+                return root
+            left = helper(root.left)
+            right = helper(root.right)
+            if left != None and right != None:
+                return root
+            if left:
                 return left
-            return node
-
+            if right:
+                return right
+            return None
         return helper(root)
 ```
 ```cpp
@@ -8706,6 +8839,74 @@ public:
         return root;
     }
 };
+```
+
+#### [863. 二叉树中所有距离为 K 的结点](https://leetcode-cn.com/problems/all-nodes-distance-k-in-binary-tree/)
+建图 bfs, 注意bfs添加visited
+```python  
+from collections import deque
+class Solution:
+    def distanceK(self, root: TreeNode, target: TreeNode, k: int) -> List[int]:
+        lookup = {}
+        def helper(root):
+            if not root:
+                return None
+            if root.left:
+                lookup[root.left] = root
+            if root.right:
+                lookup[root.right] = root
+            helper(root.left)
+            helper(root.right)
+        helper(root)
+
+        queue = deque()
+        queue.appendleft([target, 0])
+        result = []
+        visited = set()
+        visited.add(target)
+        while len(queue) > 0:
+            top, step = queue.pop()  
+            if step == k:
+                result.append(top.val)
+                continue
+            if top.left and top.left not in visited:
+                queue.appendleft([top.left, step+1])
+                visited.add(top.left)
+            if top.right and top.right not in visited:
+                queue.appendleft([top.right, step+1])
+                visited.add(top.right)
+            if top in lookup and lookup[top] not in visited:
+                queue.appendleft([lookup[top], step+1])
+                visited.add(lookup[top])
+        return result
+```
+#### [1104. 二叉树寻路](https://leetcode-cn.com/problems/path-in-zigzag-labelled-binary-tree/)
+数学, 找到index-label映射关系
+```python
+class Solution:
+    def pathInZigZagTree(self, label: int) -> List[int]:
+        def get_index(prefix, level, val):
+            index = prefix-label if (level&1) else (1<<level)-(prefix-label)-1
+            return index
+        def get_label(prefix, level, index):
+            label = prefix-index if (level&1) else prefix-(1<<level)+index+1
+            return label
+
+        level = 0
+        prefix = 0
+        while prefix < label:
+            prefix += (1 << level)
+            level += 1
+        result = []
+        while level > 0:
+            result.append(label)
+            level -= 1
+            index = get_index(prefix, level, label)
+            index = index // 2
+            prefix -= (1 << level)
+            # print(prefix, level, index)
+            label = get_label(prefix, level-1, index)
+        return result[::-1]
 ```
 
 #### [1028. 从先序遍历还原二叉树](https://leetcode-cn.com/problems/recover-a-tree-from-preorder-traversal/)
@@ -8773,6 +8974,7 @@ public:
 
 #### [面试题07. 重建二叉树](https://leetcode-cn.com/problems/zhong-jian-er-cha-shu-lcof/)
 从中序与前序遍历序列构造二叉树
+[105. 从前序与中序遍历序列构造二叉树](https://leetcode-cn.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/)
 ```python
 # Definition for a binary tree node.
 # class TreeNode:
@@ -10981,65 +11183,32 @@ class Solution:
 ```
 
 #### [987. 二叉树的垂序遍历](https://leetcode-cn.com/problems/vertical-order-traversal-of-a-binary-tree/submissions/)
-输出顺序：左 -> 右， 上 -> 下
 ```python
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+from collections import defaultdict
 class Solution:
     def verticalTraversal(self, root: TreeNode) -> List[List[int]]:
-        def traversal(node, level, res, levels, deep=0):
-            if node != None:
-                # 层次遍历
-                if level not in levels: levels.append(level); res[level] = []
-                traversal(node.left, level-1, res, levels, deep = deep + 1)
-                res[level].append([node.val, deep])
-                traversal(node.right, level+1, res, levels, deep = deep +  1)
-
-        res = {}; res_order = []; level = 0; levels = []; out = []
-        traversal(root, level, res, levels)
-        # 按宽度排序
-        for key in sorted(res.keys()):
-            res_order.append(res[key])
-        # 按深度排序（同时保证同深度的，值小的在前）
-        for item in res_order:
-            item = sorted(item, key=lambda ele:(ele[1],ele[0]))
-            out.append([i[0] for i in item])
-        return out
-
-class Solution:
-    def verticalTraversal(self, root: TreeNode) -> List[List[int]]:
-        def traversal(node, level, deep, res):
-            if node:
-
-                traversal(node.left, level+1, deep-1, res)
-                res.append((node.val, deep, level))
-                traversal(node.right, level+1, deep+1, res)
-
-        level = 0
-        deep = 0
-        res = []
-        traversal(root, level, deep, res)
-
-        res_deep = sorted(res, key=lambda ele: ele[1])
-        output = []
-        deep_level = -1
-        deep_last = None
-
-        for item in res_deep:
-            val, deep, level = item
-            if deep_last != deep:
-                output.append([])
-                deep_level += 1
-
-            output[deep_level].append((val, level))
-            deep_last = deep
-
-        out = []
-        for i in range(len(output)):
-            output[i] = sorted(output[i], key=lambda ele: (ele[1], ele[0]))
-            out.append([])
-            for item in output[i]:
-                out[i].append(item[0])
-
-        return out
+        result = defaultdict(list)
+        def helper(root, row, col):
+            if not root:
+                return None
+            result[col].append([row, root.val])
+            helper(root.left, row+1, col-1)
+            helper(root.right, row+1, col+1)
+        helper(root, 0, 0)
+        ans = []
+        for key in sorted(result.keys()):
+            result[key] = sorted(result[key], key=lambda x:(x[0],x[1]))
+            line = []
+            for item in result[key]:
+                line.append(item[1])
+            ans.append(line)
+        return ans
 ```
 
 #### [538. 把二叉搜索树转换为累加树](https://leetcode-cn.com/problems/convert-bst-to-greater-tree/)
@@ -11083,6 +11252,31 @@ class Solution:
 ```
 
 ### 图
+#### [743. 网络延迟时间](https://leetcode-cn.com/problems/network-delay-time/)
+Dijkstra 算法
+```python
+class Solution:
+    def networkDelayTime(self, times: List[List[int]], n: int, k: int) -> int:
+        graph = [[float('inf') for j in range(n)] for i in range(n)]
+        for u, v, w in times:
+            graph[u-1][v-1] = w
+        dist = [float('inf') for i in range(n)]
+        dist[k-1] = 0
+        used = [0 for i in range(n)]
+        for i in range(n):
+            index_min = -1
+            # 从未标记为最优路径的节点中选取最近节点
+            for index, is_used in enumerate(used):
+                if not is_used and (index_min==-1 or dist[index]<dist[index_min]):
+                    index_min = index
+            used[index_min] = True
+            # 更新最近节点能到达节点距离源节点的最短路径
+            for index, time in enumerate(graph[index_min]):
+                dist[index] = min(dist[index], dist[index_min]+time)
+        # 每个节点到源节点的最短路径取max
+        ans = max(dist)
+        return ans if ans < float('inf') else -1
+```
 #### [399. 除法求值](https://leetcode-cn.com/problems/evaluate-division/)
 ```python
 from collections import defaultdict, deque
@@ -11629,9 +11823,9 @@ O(nlog(n)), 最坏 O(n^2)
 1. 已排序
 2. 数值全部相等（已排序的特殊情况）
 
-快排最好的情况是，每次正好中分，复杂度为O(nlogn)。最差情况，复杂度为O(n^2)，退化成冒泡排序
+最好的情况是，每次正好中分，复杂度为O(nlogn)。最差情况，复杂度为O(n^2)，退化成冒泡排序
 为了尽量避免最差情况的发生，就要尽量使每次选择的pivot为中位数。
-一般常用的方法是，对每一个数列都取一次中位数(O(n))，这样总体的快排时间复杂度仍为O(nlogn)。
+一般常用的方法是，对每一个数列都取一次中位数(O(n))，这样总体的时间复杂度仍为O(nlogn)。
 更为简化的方法是，取头、中、尾的中位数(O(1))作为pivot
 ```
 1. 通过partition操作,使得pivot左边数均 < pivot, 右边 >= pivot
@@ -11721,30 +11915,47 @@ def qsort(array, l, r):
 2. 当被分子数组长度为1时,结束递归,return子数组
 3. merge 返回的左右子数组
 ```python
-def mergeSort(arr, l, r):
-    def merge(l_arr, r_arr):
-        result = []
-        p1, p2 = 0, 0
-        n1, n2 = len(l_arr), len(r_arr)
-        while p1 < n1 and p2 < n2:
-            if l_arr[p1] < r_arr[p2]:
-                result.append(l_arr[p1])
-                p1 += 1
-            else:
-                result.append(r_arr[p2])
-                p2 += 1
-        result.extend(l_arr[p1:] or r_arr[p2:])
-        return result
+class Solution:
+    def sortArray(self, nums: List[int]) -> List[int]:
+        def mergeSort(array, left, right):
+            def merge(arr_left, arr_right):
+                result = []
+                n1, n2 = len(arr_left), len(arr_right)
+                p1, p2 = 0, 0
+                while p1 < n1 and p2 < n2:
+                    if arr_left[p1] < arr_right[p2]:
+                        result.append(arr_left[p1])
+                        p1 += 1
+                    else:
+                        result.append(arr_right[p2])
+                        p2 += 1
+                result.extend(arr_left[p1:] or arr_right[p2:])
+                return result
 
-    if r == 0:
-        return []
-    if l == r-1:
-        return [arr[l]]
-    m = l + (r-l)//2
-    l_arr = mergeSort(arr, l, m)
-    r_arr = mergeSort(arr, m, r)
-    return merge(l_arr, r_arr)
-```
+            def merge2(arr_left, arr_right):
+                result = []
+                n1, n2 = len(arr_left), len(arr_right)
+                p1, p2 = 0, 0
+                while p1 < n1 or p2 < n2:
+                    if p2 == n2 or (p1 < n1 and arr_left[p1] < arr_right[p2]):
+                        result.append(arr_left[p1])
+                        p1 += 1
+                    else:
+                        result.append(arr_right[p2])
+                        p2 += 1
+                return result
+
+            if left == right - 1:
+                return [array[left]]
+            mid = left + (right - left) // 2
+            arr_left = mergeSort(array, left, mid)
+            arr_right = mergeSort(array, mid, right)
+            return merge2(arr_left, arr_right)
+
+        if len(nums) == 0:
+            return nums
+        return mergeSort(nums, 0, len(nums))
+```     
 
 #### 冒泡排序
 O(n^2). 两两比较大小,每次循环将最大的数放在最后面
@@ -11755,7 +11966,8 @@ def bubbleSort(array):
         for j in range(n-i):
             if array[j+1] < array[j]:
                 array[j], array[j+1] = array[j+1], array[j]
-    return array
+bubbleSort(nums)
+return nums
 ```
 
 #### 选择排序
@@ -13359,7 +13571,33 @@ class Solution:
 ```
 
 #### [576.出界的路径数](https://leetcode-cn.com/problems/out-of-boundary-paths/)
-动态规划,搜索
+注意状态是三维 dp[row][col][k]，剪枝
+```PYTHON
+class Solution:
+    def findPaths(self, m: int, n: int, maxMove: int, startRow: int, startColumn: int) -> int:
+        oriens = [(0,1), (0,-1), (1,0), (-1,0)]
+        dp = [[[0]*(maxMove+1) for j in range(n)] for i in range(m)]
+
+        def dfs(row, col, k):
+            if row<0 or row==m or col<0 or col==n:
+                return 1
+            if k == 0:
+                return 0
+            # 剪枝：剩下k步无论如何也无法移动出界
+            if (m - k > row > k - 1 and n - k > col > k - 1):
+                return 0
+            if dp[row][col][k] > 0:
+                return dp[row][col][k]
+            res = 0
+            for orien in oriens:
+                nxt_row = row + orien[0]
+                nxt_col = col + orien[1]
+                res += dfs(nxt_row, nxt_col, k-1)
+            dp[row][col][k] = res % 1000000007
+            return dp[row][col][k]
+
+        return dfs(startRow, startColumn, maxMove)
+```
 ```python
 import functools
 class Solution:
@@ -16377,36 +16615,42 @@ class Solution:
 #### [103. 二叉树的锯齿形层序遍历](https://leetcode-cn.com/problems/binary-tree-zigzag-level-order-traversal/)
 两个stack实现遍历顺序转化
 ```python
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
 class Solution:
     def zigzagLevelOrder(self, root: TreeNode) -> List[List[int]]:
-        if not root: return []
-        stack, stack_inv = [root], []
+        if not root:
+            return []
+        stack = [root]
+        stack_rev = []
         result = []
-        while True:
-            line = []
-            while stack:
+        level = -1
+        while len(stack) > 0:
+            level += 1
+            result.append([])
+            while len(stack) > 0:
                 top = stack.pop()
-                line.append(top.val)
+                result[level].append(top.val)
                 if top.left:
-                    stack_inv.append(top.left)
+                    stack_rev.append(top.left)
                 if top.right:
-                    stack_inv.append(top.right)
-            if line:
-                result.append(line)
-            else:
+                    stack_rev.append(top.right)
+            if len(stack_rev) == 0:
                 break
-            line = []
-            while stack_inv:
-                top = stack_inv.pop()
-                line.append(top.val)
+            level += 1
+            result.append([])
+            while len(stack_rev) > 0:
+                top = stack_rev.pop()
+                result[level].append(top.val)
                 if top.right:
                     stack.append(top.right)
                 if top.left:
                     stack.append(top.left)
-            if line:
-                result.append(line)
-            else:
-                break
         return result
 ```
 ```cpp
