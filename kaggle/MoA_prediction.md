@@ -70,7 +70,7 @@ https://www.kaggle.com/cdeotte/moa-post-process-lb-1777
 ### online augmentation
 mixup, swap, ctl增强等，人为引入噪声，引入更多数据量
 train1[genes+cells].values + ctl1[genes+cells].values - ctl2[genes+cells].values
-no_ctl_samples+ctl_sample1-ctl_sample2 to augment.( ctl_sample1/2 are randomly choosed from all ctl samples).
+no_ctl_samples+ctl_sample1-ctl_sample2 to augment. ( ctl_sample1/2 are randomly choosed from all ctl samples ).
 
 ### pseudo labeling
 使用 pseudo labeling 要小心，如果 public test 与 private test 差异较大，那 pseudo labeling可能会把自己坑了。如果 test 上预测的准确率不高，也没啥用。
