@@ -4276,6 +4276,26 @@ class Solution:
 1. 一次遍历就可以了. O(n)
 
 #### [88. 合并两个有序数组](https://leetcode-cn.com/problems/merge-sorted-array/)
+```python 
+class Solution:
+    def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:
+        p1 = m - 1
+        p2 = n - 1
+        p3 = m + n - 1
+
+        while p2 >= 0:
+            if p1 >= 0 and nums1[p1] > nums2[p2]:
+                nums1[p3] = nums1[p1]
+                p1 -= 1
+                p3 -= 1
+            else:
+                nums1[p3] = nums2[p2]
+                p2 -= 1
+                p3 -= 1
+
+        return nums1
+```
+
 #### [面试题 10.01. 合并排序的数组](https://leetcode-cn.com/problems/sorted-merge-lcci/)
 从后往前遍历，更利于数组的修改 O(n+m)
 这道题坑了我半小时！！ 注意：
