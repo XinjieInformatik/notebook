@@ -2644,18 +2644,19 @@ public:
 ```python
 class Solution:
     def addStrings(self, num1: str, num2: str) -> str:
-        n1, n2 = len(num1), len(num2)
+        n1 = len(num1)
+        n2 = len(num2)
         n = max(n1, n2)
-        carry = 0
         p = 0
-        res = ""
-        while carry or p < n:
+        carry = 0
+        s = ""
+        while p < n or carry:
             val1 = int(num1[-(p+1)]) if p < n1 else 0
             val2 = int(num2[-(p+1)]) if p < n2 else 0
             carry, val = divmod(val1+val2+carry, 10)
-            res = str(val) + res
+            s = str(val) + s
             p += 1
-        return res
+        return s
 ```
 ```cpp
 class Solution {
@@ -4276,7 +4277,7 @@ class Solution:
 1. 一次遍历就可以了. O(n)
 
 #### [88. 合并两个有序数组](https://leetcode-cn.com/problems/merge-sorted-array/)
-```python 
+```python
 class Solution:
     def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:
         p1 = m - 1
