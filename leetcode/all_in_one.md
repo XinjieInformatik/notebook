@@ -3219,8 +3219,8 @@ private:
     vector<int> parent, rank;
     int n;
 public:
-    UnionFindSet(int _n) {
-        n = _n;
+    UnionFindSet(int n) {
+        n = n;
         rank.resize(n, 0);
         parent.resize(n, 0);
         for (int i = 0; i < n; ++i) { parent[i] = i; }
@@ -3613,8 +3613,30 @@ class ThroneInheritance:
             for i in range(n):
                 helper(self.adjacency[name][i])
 
-        # print(self.adjacency)
         helper(self.king)
+        return result
+```
+
+#### [797. 所有可能的路径](https://leetcode-cn.com/problems/all-paths-from-source-to-target/)
+```python
+from collections import defaultdict
+class Solution:
+    def allPathsSourceTarget(self, graph: List[List[int]]) -> List[List[int]]:
+        adjacency = defaultdict(list)
+        n = len(graph)
+        for i in range(n):
+            if len(graph[i]) > 0:
+                src = i
+                for dst in graph[i]:
+                    adjacency[src].append(dst)
+        result = []
+        end = n - 1
+        def dfs(src, path):
+            if src == end:
+                result.append(path)
+            for dst in adjacency[src]:
+                dfs(dst, path+[dst])
+        dfs(0, [0])
         return result
 ```
 
@@ -9704,18 +9726,16 @@ public:
 class Solution:
     def isValid(self, s: str) -> bool:
         stack = []
-        match = {'{':'}', '[':']', '(':')'}
-        for item in s:
-            if item in match.keys():
-                stack.append(item)
-            else:
-                if len(stack) != 0:
-                    if match[stack[-1]] == item:
-                        stack.pop()
-                    else: return False
-                else: return False
-        if len(stack) == 0: return True
-        else: return False
+        mapping = {')':'(', '}':'{', ']':'['}
+        for char in s:
+            if char in mapping:
+                if len(stack) > 0 and stack[-1] == mapping[char]:
+                    stack.pop()
+                    continue
+                else:
+                    return False
+            stack.append(char)
+        return len(stack) == 0
 ```
 
 #### [394. 字符串解码](https://leetcode-cn.com/problems/decode-string/)
@@ -11382,13 +11402,40 @@ public:
             string nxt = item.first;
             if (vis.count(nxt)) { continue; }
             vis.insert(nxt);
-            value *= graph[top][nxt];
+            value = value * graph[top][nxt];
             if (dfs(graph, nxt, bottom, value, vis)) { return true; }
             value /= graph[top][nxt];
         }
         return false;
     }
 };
+```
+
+#### [787. K 站中转内最便宜的航班](https://leetcode-cn.com/problems/cheapest-flights-within-k-stops/)
+```python
+from collections import deque, defaultdict
+class Solution:
+    def findCheapestPrice(self, n: int, flights: List[List[int]], src: int, dst: int, k: int) -> int:
+        visited = {}
+        adjancency = defaultdict(list)
+        for s, d, price in flights:
+            if d not in adjancency[s]:
+                # src -> dst 没有重复
+                adjancency[s].append((d, price))
+        queue = deque([(src, 0)])
+        min_price = float('inf')
+        while len(queue) > 0 and k >= -1:
+            for i in range(len(queue)):
+                s, price = queue.pop()
+                if s == dst:
+                    min_price = min(min_price, price)
+                for d, d_price in adjancency[s]:
+                    if d in visited and price+d_price > visited[d]:
+                        continue
+                    visited[d] = price + d_price
+                    queue.appendleft((d, price+d_price))
+            k -= 1
+        return -1 if min_price == float('inf') else min_price
 ```
 
 #### [473. 火柴拼正方形](https://leetcode-cn.com/problems/matchsticks-to-square/)
