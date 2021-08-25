@@ -12921,19 +12921,19 @@ T(n) = T(n/2) + O(1) --> T(n) = O(logn)
 ```python
 class Solution:
     def merge(self, intervals: List[List[int]]) -> List[List[int]]:
-        intervals = sorted(intervals, key=lambda x:x[0])
-        n = len(intervals)
-        right = 0
-        left = 0
+        intervals = sorted(intervals, key=lambda x: x[0])
         result = []
-        while right < n:
-            end = intervals[left][1]
-            right += 1
-            while right < n and intervals[right][0] <= end:
-                end = max(end, intervals[right][1])
-                right += 1
-            result.append([intervals[left][0], end])
-            left = right
+        index = 0
+        n = len(intervals)
+        while index < n:
+            pivot = intervals[index]
+            p = index + 1
+            right_bound = pivot[1]
+            while p < n and intervals[p][0]<=right_bound:
+                right_bound = max(right_bound, intervals[p][1])
+                p += 1
+            result.append([pivot[0], right_bound])
+            index = p
         return result
 ```
 ### 次方
