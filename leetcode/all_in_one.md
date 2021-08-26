@@ -3883,6 +3883,24 @@ public:
 ```python
 class Solution:
     def firstMissingPositive(self, nums: List[int]) -> int:
+        n = len(nums)
+        for i in range(n):
+            while 1 <= nums[i] <= n and nums[i] != nums[nums[i]-1]:
+                # nums[i], nums[nums[i]-1] = nums[nums[i]-1], nums[i] wrong
+                self.__swap(nums, i, nums[i] - 1)
+            #     print(nums)
+            # print('----')
+        for i in range(n):
+            if nums[i] != i+1:
+                return i+1
+        return n+1
+
+    def __swap(self, nums, index1, index2):
+        nums[index1], nums[index2] = nums[index2], nums[index1]
+```
+```python
+class Solution:
+    def firstMissingPositive(self, nums: List[int]) -> int:
         i = 1
         nums = set(nums)
         while i in nums:
