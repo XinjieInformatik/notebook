@@ -10089,7 +10089,33 @@ public:
 ```
 .
 #### [295. 数据流的中位数](https://leetcode-cn.com/problems/find-median-from-data-stream/)
-新数据来了,先加入大顶堆,再将大顶堆堆顶pop()加入小顶堆,如果大顶堆元素小于小顶堆,再把小顶堆堆顶pop()加入大顶堆. 然后大顶堆堆顶(奇数),大顶堆小顶堆均值(偶数),就是中位数.
+维护1个大顶堆（小于中位数的数），1个小顶堆（大于中位数的数），保持大顶堆大小 == 小顶堆 or 大顶堆 == 小顶堆+1.
+注意heapq默认是小顶堆，构造大顶堆时添加负号，取数时候均要记得还原。
+
+```python
+import heapq
+class MedianFinder:
+    def __init__(self):
+        self.maxheap = []
+        self.minheap = []
+
+    def addNum(self, num: int) -> None:
+        if len(self.maxheap) == 0 or num <= -self.maxheap[0]:
+            heapq.heappush(self.maxheap, -num)
+            if len(self.maxheap) > len(self.minheap) + 1:
+                val = -heapq.heappop(self.maxheap)
+                heapq.heappush(self.minheap, val)
+        else:
+            heapq.heappush(self.minheap, num)
+            if len(self.minheap) > len(self.maxheap):
+                val = heapq.heappop(self.minheap)
+                heapq.heappush(self.maxheap, -val)
+
+    def findMedian(self) -> float:
+        if len(self.maxheap) == len(self.minheap):
+            return (-self.maxheap[0] + self.minheap[0]) / 2
+        return -self.maxheap[0]
+```
 ```python
 class MaxHeap:
     def __init__(self):
