@@ -3738,6 +3738,46 @@ class Solution:
             pre.next = nxt
         return dummy.next
 ```
+```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def reverseBetween(self, head: ListNode, left: int, right: int) -> ListNode:
+        slow = head  
+        stage1 = left - 2
+        while stage1 > 0:
+            slow = slow.next
+            stage1 -= 1
+        if left > 1:
+            cut_head = slow.next
+            slow.next = None
+        else:
+            cut_head = head
+
+        fast = cut_head
+        stage2 = right - left
+        while stage2 > 0:
+            fast = fast.next
+            stage2 -= 1
+        cut_nxt = fast.next
+        fast.next = None
+
+        prev = None
+        curr = cut_head
+        while curr:
+            nxt = curr.next
+            curr.next = prev
+            prev = curr
+            curr = nxt
+
+        slow.next = prev
+        cut_head.next = cut_nxt
+        return head if left != 1 else prev
+```
+
 #### [25. K 个一组翻转链表](https://leetcode-cn.com/problems/reverse-nodes-in-k-group/)
 1. 反转链表
 2. 走k步，切断，反转链表返回反转后的头节点，尾节点
@@ -3883,20 +3923,18 @@ public:
 ```python
 class Solution:
     def firstMissingPositive(self, nums: List[int]) -> int:
+        def swap(nums, index1, index2):
+            nums[index1], nums[index2] = nums[index2], nums[index1]
         n = len(nums)
         for i in range(n):
+            # 把在[1,n]数值范围但是不在正确位置的数s交换到正确位置
             while 1 <= nums[i] <= n and nums[i] != nums[nums[i]-1]:
-                # nums[i], nums[nums[i]-1] = nums[nums[i]-1], nums[i] wrong
-                self.__swap(nums, i, nums[i] - 1)
-            #     print(nums)
-            # print('----')
-        for i in range(n):
-            if nums[i] != i+1:
-                return i+1
-        return n+1
+                swap(nums, i, nums[i]-1)
 
-    def __swap(self, nums, index1, index2):
-        nums[index1], nums[index2] = nums[index2], nums[index1]
+        for i in range(1, n+1):
+            if nums[i-1] != i:
+                return i
+        return n+1
 ```
 ```python
 class Solution:
@@ -4317,24 +4355,22 @@ class Solution:
 1. 一次遍历就可以了. O(n)
 
 #### [88. 合并两个有序数组](https://leetcode-cn.com/problems/merge-sorted-array/)
+3指针从后往前，如果P2走到-1结束即可，如果P1走到-1剩下将P2走完即可
 ```python
 class Solution:
     def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:
         p1 = m - 1
         p2 = n - 1
         p3 = m + n - 1
-
         while p2 >= 0:
-            if p1 >= 0 and nums1[p1] > nums2[p2]:
-                nums1[p3] = nums1[p1]
-                p1 -= 1
-                p3 -= 1
-            else:
+            if p1 < 0 or nums1[p1] < nums2[p2]:
                 nums1[p3] = nums2[p2]
-                p2 -= 1
                 p3 -= 1
-
-        return nums1
+                p2 -= 1
+            else:
+                nums1[p3] = nums1[p1]
+                p3 -= 1
+                p1 -= 1
 ```
 
 #### [面试题 10.01. 合并排序的数组](https://leetcode-cn.com/problems/sorted-merge-lcci/)
@@ -12390,9 +12426,14 @@ sqrt x
 ```python
 class Solution:
     def mySqrt(self, ａ: int) -> int:
-        """牛顿法,解　f(x)-a=0 这个方程的正根
-        核心: x' = x - f(x)/f'(x)
-             if abs(x'-x)<1e-4: return x
+        """牛顿法核心: 迭代后的x' = 迭代前x - delta x
+        x' = x - f(x) / f'(x)
+
+        解　f(x) = x^2 - a = 0 这个方程的正根
+        f'(x) = 2x
+        x' = x - (x^2-a) / 2x
+           = x - x/2-a/(2x)
+           = (x - a/x) / 2
         """
         if a == 0:
             return 0
@@ -12402,17 +12443,23 @@ class Solution:
             curr = (curr + a/curr) / 2
             if abs(curr - prev) < 1e-1:
                 return int(curr)
+
+    def mySqrt(self, x: int) -> int:
         """二分法,小心边界"""
-        left, right = 0, x
+        left = 0
+        right = x + 1
         while left < right:
-            mid = left + (right-left+1)//2
-            val = mid ** 2
-            if val <= x:
-                left = mid
+            mid = left + (right-left) // 2
+            trail = mid ** 2
+            if trail == x:
+                return mid
+            elif trail < x:
+                left = mid + 1
             else:
-                right = mid - 1
-        return left
+                right = mid
+        return left - 1
 ```
+
 #### [441. 排列硬币](https://leetcode-cn.com/problems/arranging-coins/solution/er-fen-fa-by-xxinjiee/)
 可以直接用数学公式求解，也可以通过二分法求解数学公式 类似[69. x的平方根](https://leetcode-cn.com/problems/sqrtx/)
 
