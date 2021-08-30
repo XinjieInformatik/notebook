@@ -2175,6 +2175,23 @@ class Solution:
         return cnt
 ```
 
+#### [1588. 所有奇数长度子数组的和](https://leetcode-cn.com/problems/sum-of-all-odd-length-subarrays/)
+```python
+class Solution:
+    def sumOddLengthSubarrays(self, arr: List[int]) -> int:
+        n = len(arr)
+        length = 1
+        total = 0
+        while length  <= n:
+            prefix = sum(arr[:length])
+            total += prefix
+            for i in range(n-length):
+                prefix = prefix - arr[i] + arr[i+length]
+                total += prefix
+            length += 2
+        return total
+```
+
 #### [523. 连续的子数组和](https://leetcode-cn.com/problems/continuous-subarray-sum/)
 ```python
 class Solution:
@@ -2501,34 +2518,36 @@ class Solution:
 ```
 #### [76.最小覆盖子串](https://leetcode-cn.com/problems/longest-common-prefix/)
 ```python
-from collections import Counter
+from collections import defaultdict
 class Solution:
     def minWindow(self, s: str, t: str) -> str:
         """
         1. 右指针逐步向前移动,满足条件后停下
         2. 左指针逐步向前收缩,不满足条件后停下,先记录最后满足条件的答案,再向前一步进入不满足状态
         3. 循环1,2, 过程中记录所有满足条件的最小值, return时如果没有被更新过, return ""
-        """
-		count = collections.defaultdict(int)
-		for c in t:
-			count[c] += 1
+        """  
+        window = defaultdict(int)
+        for char in t:
+            window[char] += 1
+        cnt = len(window)
         n = len(s)
-        l = 0
-        res = (0, n+1)
-        for r in range(n):
-            if s[r] in count:
-                count[s[r]] -= 1
-                if count[s[r]] == 0:
+        res = (0, n)
+        left, right = 0, 0
+        while right < n:
+            if s[right] in window:
+                window[s[right]] -= 1
+                if window[s[right]] == 0:
                     cnt -= 1
                 while cnt == 0:
-                    if s[l] in count:
-                        count[s[l]] += 1
-                        if count[s[l]] == 1:
+                    if s[left] in window:
+                        window[s[left]] += 1
+                        if window[s[left]] == 1:
                             cnt += 1
-                            if r - l < res[1] - res[0]:
-                                res = (l, r)
-                    l += 1
-        return s[res[0]:res[1]+1] if res != (0, n+1) else ""
+                            if res[1] - res[0] > right - left:
+                                res = (left, right)
+                    left += 1
+            right += 1
+        return s[res[0]:res[1]+1] if res[1] != n else ''
 ```
 
 #### [567.字符串的排列](https://leetcode-cn.com/problems/permutation-in-string/)
@@ -8765,21 +8784,28 @@ class Solution:
 #### [124. 二叉树中的最大路径和](https://leetcode-cn.com/problems/binary-tree-maximum-path-sum/)
 注意: 1. max_path 初始化为-inf 2. 计算最大路径时 max(root.val+l, root.val+r, root.val, root.val+l+r) 3. 向上层return时, max(root.val+l, root.val+r, root.val)
 ```python
+class Node:
+  def __init__(self, val, left=None, right=None):
+    self.val = val
+    self.left = left
+    self.right = right
+
 class Solution:
     def maxPathSum(self, root: TreeNode) -> int:
-        path = -float("inf")
+        max_path = -float('inf')
         def helper(root):
             if not root:
                 return 0
-            l = helper(root.left)
-            r = helper(root.right)
-            nonlocal path
-            val = max(root.val, root.val+l, root.val+r)
-            path = max(path, val, root.val+l+r)
+            left = helper(root.left)
+            right = helper(root.right)
+            # 返回上层最大路径，每个节点处记录两端通路与路径最大值
+            val = max(left+root.val, right+root.val, root.val)
+            nonlocal max_path
+            max_path = max(max_path, val, left+right+root.val)
             return val
-        if not root: return None
+
         helper(root)
-        return path
+        return max_path
 ```
 
 #### [958. 二叉树的完全性检验](https://leetcode-cn.com/problems/check-completeness-of-a-binary-tree/)
@@ -14243,6 +14269,7 @@ class Solution:
 ```
 
 #### [剑指 Offer 09. 用两个栈实现队列](https://leetcode-cn.com/problems/yong-liang-ge-zhan-shi-xian-dui-lie-lcof/)
+[232. 用栈实现队列](https://leetcode-cn.com/problems/implement-queue-using-stacks/)
 stack1用来append, stack2为空时把stack1元素依次pop入stack2, return stack2.pop()
 ```python
 class CQueue:
@@ -17293,4 +17320,36 @@ class Solution:
 
         ans = min(dp[t][n - 1] for t in range(1, maxTime + 1))
         return -1 if ans == float("inf") else ans
+```
+
+#### [528. 按权重随机选择](https://leetcode-cn.com/problems/random-pick-with-weight/)
+![20210831_000133_36](assets/20210831_000133_36.png)
+前缀和，随机数，二分查找
+```python
+import random
+class Solution:
+    def __init__(self, w: List[int]):
+        self.presum = [w[0]]
+        n = len(w)
+        for i in range(1, n):
+            self.presum.append(self.presum[-1]+w[i])
+
+
+    def low_bound(self, nums, target):
+        left = 0
+        right = len(nums)
+        while left < right:
+            mid = left + (right-left) // 2
+            if nums[mid] < target:
+                left = mid + 1
+            else:
+                right = mid
+        return left
+
+
+    def pickIndex(self) -> int:
+        bounder = self.presum[-1]
+        rand_num = random.randint(1, bounder)
+        index = self.low_bound(self.presum, rand_num)
+        return index
 ```
