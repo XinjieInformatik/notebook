@@ -2212,6 +2212,24 @@ class Solution:
                 prefix[comsum] = i
         return False
 ```
+#### [1109. 航班预订统计](https://leetcode-cn.com/problems/corporate-flight-bookings/)
+巧妙的前缀和, 构造一个prefix在头和尾部分别加上减去val, 然后求前缀和
+```python
+class Solution:
+    def corpFlightBookings(self, bookings: List[List[int]], n: int) -> List[int]:
+        prefix = [0 for i in range(n)]
+        for first, last, seat in bookings:
+            prefix[first-1] += seat
+            if last < n:
+                prefix[last] -= seat
+
+        result = []
+        presum = 0
+        for num in prefix:
+            presum += num
+            result.append(presum)
+        return result
+```
 
 #### [1477. 找两个和为目标值且不重叠的子数组](https://leetcode-cn.com/problems/find-two-non-overlapping-sub-arrays-each-with-target-sum/)
 ```
@@ -4657,6 +4675,7 @@ public:
 你可以假设 nums[-1] = nums[n] = -∞。
 
 注意：
+0. 二分尝试法，寻找峰值节点，不断从左右向中间收缩
 1. len(nums)-1取中点靠前，所以 nums[m] 与 nums[m+1] 比较
 2. 因为前后元素比较，所以要 left < right
 ```python
@@ -7548,7 +7567,7 @@ class Solution:
 ```
 
 #### [82. 删除排序链表中的重复元素 II](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list-ii/)
-排序链表中重复的节点,均删除不保留.引入dummy节点是为了避免head就是重复元素,无法删除. 链表重复节点.
+排序链表中重复的节点,均删除不保留.引入dummy节点是为了避免head就是重复元素,无法删除链表重复节点. slow, fast一前一后双指针
 ```python
 class Solution:
     def deleteDuplicates(self, head: ListNode) -> ListNode:
@@ -14688,24 +14707,24 @@ class Solution:
 时间O(n),空间O(1)
 ```python
 class Solution:
-    def get_val(self, p, n, version):
-        if p > n-1:
-            return 0, p
-        r = p
-        while r < n and version[r] != ".":
-            r += 1
-        return int(version[p:r]), r+1
-
     def compareVersion(self, version1: str, version2: str) -> int:
-        n1 = len(version1)
-        n2 = len(version2)
+        def get_val(p, version):
+            if p >= len(version):
+                return 0, p
+            left = p
+            right = p  
+            while right < len(version) and version[right] != '.':
+                right += 1
+            return int(version[left:right]), right+1
+
+        n1, n2 = len(version1), len(version2)
         p1, p2 = 0, 0
         while p1 < n1 or p2 < n2:
-            val1, p1 = self.get_val(p1, n1, version1)
-            val2, p2 = self.get_val(p2, n2, version2)
+            val1, p1 = get_val(p1, version1)
+            val2, p2 = get_val(p2, version2)
             if val1 < val2:
                 return -1
-            elif val1 > val2:
+            if val1 > val2:
                 return 1
         return 0
 ```
