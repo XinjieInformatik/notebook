@@ -824,6 +824,23 @@ class Solution:
         return results
 ```
 
+#### [90. 子集 II](https://leetcode-cn.com/problems/subsets-ii/)
+先把nums排序，for loop中对于首个i总是可以继续的，此外重复的数字跳过
+```python
+class Solution:
+    def subsetsWithDup(self, nums: List[int]) -> List[List[int]]:
+        n = len(nums)
+        result = []
+        nums.sort()
+        def helper(index, path):
+            result.append(path)
+            for i in range(index, n):
+                if i == index or nums[i] != nums[i-1]:
+                    helper(i+1, path+[nums[i]])
+        helper(0, [])
+        return result
+```
+
 #### [46. 全排列](https://leetcode-cn.com/problems/permutations/)
 ```
 给定一个 没有重复 数字的序列，返回其所有可能的全排列。
@@ -2465,19 +2482,19 @@ class Solution:
 ```python
 class Solution:
     def lengthOfLongestSubstring(self, s: str) -> int:
-        l = 0
-        n = len(s)
         window = set()
+        left = 0
+        n = len(s)
         max_len = 0
-        for r in range(n):
-            if s[r] not in window:
-                window.add(s[r])
-                max_len = max(max_len, r-l+1)
+        for right in range(n):
+            if s[right] not in window:
+                window.add(s[right])
+                max_len = max(max_len, right-left+1)
             else:
-                while s[r] in window:
-                    window.remove(s[l])
-                    l += 1
-                window.add(s[r])
+                while s[left] != s[right]:
+                    window.remove(s[left])
+                    left += 1
+                left += 1
         return max_len
 ```
 ```cpp
@@ -2508,31 +2525,39 @@ public:
 ```
 
 #### [30.串联所有单词的子串](https://leetcode-cn.com/problems/substring-with-concatenation-of-all-words/)
-TODO
-```python
-from collections import Counter
-class Solution:
-    def isvalid(self, window):
-        for val in window.values():
-            if val > 0: return False
-        return True
 
+```python
+from collections import defaultdict
+class Solution:
     def findSubstring(self, s: str, words: List[str]) -> List[int]:
-        if not s or not words: return []
-        n = len(words)
-        m = len(words[0])
-        window0 = Counter(words)
-        p = 0
-        results = []
-        for i in range(len(s)-n*m+1):
-            p = i
-            window = window0.copy()
-            while p+m <= len(s) and s[p:p+m] in window and window[s[p:p+m]]>0:
-                window[s[p:p+m]] -= 1
-                p += m
-                if self.isvalid(window):
-                    results.append(i)
-        return results
+        """ left遍历每个char，right从每个char出发，每隔word长度检查一次，
+        cnt用来计数
+        """
+        stat = defaultdict(int)
+        for word in words:
+            stat[word] += 1
+        word_len = len(words[0])
+        word_cnt = len(words)
+        d_words = set(words)
+        n = len(s)
+        result = []
+        for left in range(n-word_len*word_cnt+1):
+            cnt = len(d_words)
+            window = stat.copy()
+            right = left + word_len
+            while right <= n and cnt > 0:
+                w = s[right-word_len:right]
+                if w in window and window[w] > 0:
+                    window[w] -= 1
+                    if window[w] == 0:
+                        cnt -= 1
+                        if cnt == 0:
+                            result.append(left)
+                else:
+                    break
+                right += word_len
+
+        return result
 ```
 #### [76.最小覆盖子串](https://leetcode-cn.com/problems/longest-common-prefix/)
 ```python
@@ -2620,19 +2645,18 @@ class Solution:
 #### [209.长度最小的子数组](https://leetcode-cn.com/problems/minimum-size-subarray-sum/)
 ```python
 class Solution:
-    def minSubArrayLen(self, s: int, nums: List[int]) -> int:
-        i = 0
-        comsum = 0
-        res = (0, float("inf"))
-        for j in range(len(nums)):
-            comsum += nums[j]
-            while comsum >= s:
-                if j-i < res[1]-res[0]:
-                    res = (i, j)
-                comsum -= nums[i]
-                i += 1
-        minlen = res[1] - res[0] + 1
-        return minlen if minlen < float("inf") else 0
+    def minSubArrayLen(self, target: int, nums: List[int]) -> int:
+        total = 0
+        n = len(nums)
+        left = 0
+        min_len = float('inf')
+        for right in range(n):
+            total += nums[right]
+            while total >= target:
+                min_len = min(min_len, right-left+1)
+                total -= nums[left]
+                left += 1
+        return 0 if min_len == float('inf') else min_len
 ```
 #### [239.滑动窗口最大值](https://leetcode-cn.com/problems/sliding-window-maximum/)
 ```python
@@ -3879,6 +3903,67 @@ class Solution:
         return dummyhead.next
 ```
 
+#### [排序奇升偶降链表](https://mp.weixin.qq.com/s/0WVa2wIAeG0nYnVndZiEXQ)
+```python
+class ListNode:
+    def __init__(self, val, nxt=None):
+        self.val = val
+        self.next = nxt
+
+input_line = '1 8 3 6 5 4 7 2'
+inputs = list(map(int, input_line.split(' ')))
+dummy = ListNode(-1)
+dummy_head = dummy
+for val in inputs:
+    node = ListNode(val)
+    dummy.next = node
+    dummy = dummy.next
+dummy.next = None
+head = dummy_head.next
+
+cnt = 1
+increase_list = ListNode(-1)
+decrease_list = ListNode(-1)
+dummy_increase = increase_list
+dummy_decrease = decrease_list
+while head:
+    if cnt & 1:
+        increase_list.next = head
+        increase_list = increase_list.next
+    else:
+        decrease_list.next = head
+        decrease_list = decrease_list.next
+    cnt += 1
+    head = head.next
+increase_list.next = None
+decrease_list.next = None
+
+prev = None
+curr = dummy_decrease.next
+while curr:
+    nxt = curr.next
+    curr.next = prev
+    prev = curr
+    curr = nxt
+
+dummy = ListNode(-1)
+dummy_head = dummy
+inc_head = dummy_increase.next
+while prev and inc_head:
+    if prev.val < inc_head.val:
+        dummy.next = prev
+        prev = prev.next
+    else:
+        dummy.next = inc_head
+        inc_head = inc_head.next
+    dummy = dummy.next
+dummy.next = prev if prev else inc_head
+ans = dummy_head.next
+while ans:
+    print(ans.val, end=' ')
+    ans = ans.next
+```
+
 # 400 leetcode
 ### Array
 #### 基础题
@@ -3999,6 +4084,20 @@ class Solution:
         for row in range(rows):
             for col in range(cols//2):
                 matrix[row][col], matrix[row][cols-1-col] = matrix[row][cols-1-col], matrix[row][col]
+```
+
+#### [48. 旋转图像](https://leetcode-cn.com/problems/rotate-image/)
+```python
+class Solution:
+    def rotate(self, matrix: List[List[int]]) -> None:
+        """ 先上下交换 再对角线交换 """
+        n = len(matrix)
+        for i in range(n//2):
+            for j in range(n):
+                matrix[i][j], matrix[n-1-i][j] = matrix[n-1-i][j], matrix[i][j]
+        for i in range(n):
+            for j in range(i+1, n):
+                matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]
 ```
 
 ##### [299. 猜数字游戏](https://leetcode-cn.com/problems/bulls-and-cows/)
@@ -5440,21 +5539,20 @@ class Solution:
 ```python
 class Solution:
     def generateParenthesis(self, n: int) -> List[str]:
-        """用dfs逆向枚举， r<l剪枝"""
-        ans = []
-        def dfs(l, r, s):
-            # 到底了向结果添加
-            if l == r == 0:
-                ans.append(s)
-            # 保证括号有效，相当于剪枝操作
-            if r < l:
+        result = []
+        def helper(left, right, res):
+            if left == 0 and right == 0:
+                result.append(res)
                 return
-            if l > 0:
-                dfs(l-1, r, s+"(")
-            if r > 0:
-                dfs(l, r-1, s+")")
-        dfs(n, n, "")
-        return ans
+            # 保证括号有效，left剩余个数不能多于right
+            if left > right:
+                return
+            if left > 0:
+                helper(left-1, right, res+'(')
+            if right > 0:
+                helper(left, right-1, res+')')
+        helper(n, n, '')
+        return result
 ```
 
 #### [32. 最长有效括号](https://leetcode-cn.com/problems/longest-valid-parentheses/)
@@ -13895,6 +13993,33 @@ class Solution:
         helper(0, 0, "")
         return result
 ```
+```python
+class Solution:
+    def restoreIpAddresses(self, s: str) -> List[str]:
+        result = []
+        n = len(s)
+        def is_valid(s):  
+            if len(s) == 2:
+                return False if s[0] == '0' else True
+            elif len(s) == 3:
+                return False if s[0] == '0' or int(s) > 255 else True
+            return True
+
+        def helper(index, path, cnt):
+            if cnt == 4:
+                if index == n:
+                    result.append('.'.join(path))
+                return
+
+            for right in range(1, 4):
+                sub_s = s[index:index+right]
+                if not is_valid(sub_s):
+                    continue
+                helper(index+right, path+[sub_s], cnt+1)
+
+        helper(0, [], 0)
+        return result
+```
 #### [二叉树的锯齿形层次遍历](https://leetcode-cn.com/problems/binary-tree-zigzag-level-order-traversal/)
 双栈stack(left,right), stack_inv(right,left)
 Z字型遍历
@@ -17371,4 +17496,38 @@ class Solution:
         rand_num = random.randint(1, bounder)
         index = self.low_bound(self.presum, rand_num)
         return index
+```
+
+#### [470. 用 Rand7() 实现 Rand10()](https://leetcode-cn.com/problems/implement-rand10-using-rand7/)
+
+![20210904_165129_37](assets/20210904_165129_37.png)
+```
+每轮调用2次rand7(), 调用 rand7() 次数的期望：
+E = 2 + 9/49 * 2 + (9/49)^2 * 2 + ...
+  = a1 * (1-q^n) / (1-q)
+  = 2 * (1 / (1-9/49))
+  = 2.45
+```
+**(randX() - 1) * Y + randY() \in [1, x*y]**
+```python
+# The rand7() API is already defined for you.
+# def rand7():
+# @return a random integer in the range 1 to 7
+
+class Solution:
+    def rand10(self):
+        while True:
+            # (randX() - 1) * Y + randY() \in [1, x*y]
+            num = (rand7() - 1) * 7 + rand7()
+            if num <= 40:
+                return num % 10 + 1
+            num -= 40
+            num = (num - 1) * 7 + rand7()
+            if num <= 60:
+                return num % 10 + 1
+            num -= 60
+            num = (num - 1) * 7 + rand7()
+            if num <= 20:
+                return num % 10 + 1
+        return -1
 ```
