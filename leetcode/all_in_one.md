@@ -561,7 +561,6 @@ class Solution:
         # 4. 输出最终状态
         return dp[-1][-1]
 ```
-
 ```python
 import functools
 class Solution:
@@ -580,6 +579,30 @@ class Solution:
                 if val < 0:
                     break
                 res += helper(val, i)
+            return res
+        return helper(amount, 0)
+```
+```python
+class Solution:
+    def change(self, amount: int, coins: List[int]) -> int:
+        n = len(coins)
+        coins = sorted(coins)
+        dp = [[0 for j in range(n+1)] for i in range(amount+1)]
+        def helper(amount, index):
+            if amount == 0:
+                return 1
+            if amount < 0:
+                return 0
+            if index == n:
+                return 0
+            if dp[amount][index]:
+                return dp[amount][index]
+            res = 0
+            for i in range(index, n):
+                if amount-coins[i] < 0:
+                    break
+                res += helper(amount-coins[i], i)
+            dp[amount][index] = res
             return res
         return helper(amount, 0)
 ```
@@ -1167,21 +1190,22 @@ class Solution:
 ```
 
 #### [求最长公共子串的长度和该子串](https://www.nowcoder.com/questionTerminal/02e7cc263f8a49e8b1e1dc9c116f7602)
+[718. 最长重复子数组](https://leetcode-cn.com/problems/maximum-length-of-repeated-subarray/)
 dp[i][j] 表示子串1中到下标为i的子串 和 子串2中到下标为j的子串，这两个子串的公共子串长度. 在整个过程中对dp[i][j]取max,即为最长公共子串长度.
 对于求解子串，前向传播的过程就可以求解。因为子串是连续的，记录最后一个最大长度对应下标，向前截取dp[i][j]长度即可。
 ```python
-class LongestSubstring:
-    def findLongest(self, A, n, B, m):
-        dp = [[0]*(m+1) for i in range(n+1)]
-        ans = 0
+class Solution:
+    def findLength(self, nums1: List[int], nums2: List[int]) -> int:
+        n = len(nums1)
+        m = len(nums2)
+        dp = [[0 for j in range(m+1)] for i in range(n+1)]
+        max_len = 0
         for i in range(1, n+1):
             for j in range(1, m+1):
-                if A[i-1] == B[j-1]:
+                if nums1[i-1] == nums2[j-1]:
                     dp[i][j] = dp[i-1][j-1] + 1
-                    ans = max(ans, dp[i][j])
-                else:
-                    dp[i][j] = 0
-        return ans
+                    max_len = max(max_len, dp[i][j])
+        return max_len
 ```
 ```python
 def sameStr(A, B):
@@ -5534,6 +5558,24 @@ class Solution:
                         min_s[i] = min(min_s[i], min_s[j - 1] + 1)
         return min_s[-1]
 ```
+#### [5869. 两个回文子序列长度的最大乘积](https://leetcode-cn.com/problems/maximum-product-of-the-length-of-two-palindromic-subsequences/)
+```python
+class Solution:
+    def maxProduct(self, s: str) -> int:
+        """遍历所有情况，当前单词只可能加入其中一个字符串或者都不加入。递归终点检查两个均是回文就返回乘积。"""
+        def search(i, u, v):
+            if i == len(s):
+                if u == u[::-1] and v == v[::-1]:
+                    return len(u) * len(v)
+                else:
+                    return 0
+            else:
+                return max(search(i + 1, u + s[i], v),
+                           search(i + 1, u, v + s[i]),
+                           search(i + 1, u, v))
+        return search(0, "", "")
+```
+
 #### [22. 括号生成](https://leetcode-cn.com/problems/generate-parentheses/)
 二叉树dfs用的妙
 ```python
@@ -6200,6 +6242,37 @@ public:
         }
     }
 };
+```
+#### [695. 岛屿的最大面积](https://leetcode-cn.com/problems/max-area-of-island/)
+```python
+class Solution:
+    def maxAreaOfIsland(self, grid: List[List[int]]) -> int:
+        oriens = [(1,0),(-1,0),(0,1),(0,-1)]
+        n = len(grid)
+        if n == 0:
+            return 0
+        m = len(grid[0])
+        if m == 0:
+            return 0
+        def helper(row, col):
+            if grid[row][col] == 0:
+                return 0
+            grid[row][col] = 0
+            res = 1
+            for orien in oriens:
+                nxt_row = row + orien[0]
+                nxt_col = col + orien[1]
+                if nxt_row < 0 or nxt_row >= n or nxt_col < 0 or nxt_col >= m:
+                    continue
+                res += helper(nxt_row, nxt_col)
+            return res
+
+        ans = 0
+        for i in range(n):
+            for j in range(m):
+                cnt = helper(i, j)
+                ans = max(ans, cnt)
+        return ans
 ```
 
 #### [1254. 统计封闭岛屿的数目](https://leetcode-cn.com/problems/number-of-closed-islands/)
@@ -9935,6 +10008,34 @@ class Solution:
         return len(stack) == 0
 ```
 
+#### [678. 有效的括号字符串](https://leetcode-cn.com/problems/valid-parenthesis-string/)
+分别用两个栈存储(和*的index，最后要检查'*'的index大于(才可以抵消
+```python
+class Solution:
+    def checkValidString(self, s: str) -> bool:
+        left_stack = []
+        star_stack = []
+        n = len(s)
+        for i in range(n):
+            if s[i] == '(':
+                left_stack.append(i)
+            elif s[i] == '*':
+                star_stack.append(i)
+            else:
+                if len(left_stack) > 0:
+                    left_stack.pop()
+                elif len(star_stack) > 0:
+                    star_stack.pop()
+                else:
+                    return False
+        while len(left_stack) > 0:
+            top_index = left_stack.pop()
+            if len(star_stack) == 0 or top_index > star_stack[-1]:
+                return False
+            star_stack.pop()
+        return True
+```
+
 #### [394. 字符串解码](https://leetcode-cn.com/problems/decode-string/)
 递归
 ```python
@@ -10543,15 +10644,14 @@ class Solution:
 class Solution:
     def rob(self, nums: List[int]) -> int:
         n = len(nums)
-        if n == 0: return 0
-        if n < 3: return max(nums)
-        dp = [0] * (n+1)
-        dp[1] = nums[0]
-        for i in range(2, n+1):
-            steal_pre = dp[i-1]
-            steal_this = dp[i-2] + nums[i-1]
-            dp[i] = max(steal_pre, steal_this)
-
+        dp = [0 for i in range(n)]
+        for i in range(n):
+            if i == 0:
+                dp[i] = nums[i]
+            elif i == 1:
+                dp[i] = max(nums[i-1], nums[i])
+            else:
+                dp[i] = max(dp[i-2]+nums[i], dp[i-1])
         return dp[-1]
 ```
 
@@ -12739,6 +12839,46 @@ class WordDictionary:
 ```
 #### [79. 单词搜索](https://leetcode-cn.com/problems/word-search/)
 ```python
+class Solution:
+    def exist(self, board: List[List[str]], word: str) -> bool:
+        n = len(board)
+        if n == 0:
+            return False
+        m = len(board[0])
+        if m == 0:
+            return False
+        oriens = [(1,0),(-1,0),(0,1),(0,-1)]
+        word_n = len(word)
+        visited = [[0 for j in range(m)] for i in range(n)]
+        def helper(row, col, index):
+            if board[row][col] != word[index]:
+                return False
+            if index == word_n-1:
+                return True
+            for orien in oriens:
+                nxt_row = row + orien[0]
+                nxt_col = col + orien[1]
+                if nxt_row < 0 or nxt_row >= n:
+                    continue
+                if nxt_col < 0 or nxt_col >= m:
+                    continue
+                if visited[nxt_row][nxt_col]:
+                    continue
+                visited[nxt_row][nxt_col] = 1
+                if helper(nxt_row, nxt_col, index+1):
+                    return True
+                visited[nxt_row][nxt_col] = 0
+            return False
+
+        for i in range(n):
+            for j in range(m):
+                visited[i][j] = 1
+                if helper(i, j, 0):
+                    return True
+                visited[i][j] = 0
+        return False
+```
+```python
 class Node():
     def __init__(self):
         self.lookup = {}
@@ -14082,6 +14222,7 @@ class Solution:
         return matrix[t][l] == target
 ```
 #### [240. 搜索二维矩阵 II](https://leetcode-cn.com/problems/search-a-2d-matrix-ii/)
+线性游走排除法，从左下角开始，解空间是右上角，如果target大于当前值，可以col+1排除上方值，如果target小于当前值，可以row-1排除右侧值
 ```python
 class Solution:
     def searchMatrix(self, matrix, target):
@@ -17530,4 +17671,30 @@ class Solution:
             if num <= 20:
                 return num % 10 + 1
         return -1
+```
+
+#### [600. 不含连续1的非负整数](https://leetcode-cn.com/problems/non-negative-integers-without-consecutive-ones/)
+```python
+class Solution:
+    def findIntegers(self, n: int) -> int:
+        dp = [0] * 31
+        dp[0] = 1
+        dp[1] = 1
+        for i in range(2, 31):
+            dp[i] = dp[i - 1] + dp[i - 2]
+        pre = 0
+        res = 0
+        for i in range(29, -1, -1):
+            val = (1 << i)
+            if n & val:
+                res += dp[i + 1]
+                if pre == 1:
+                    break
+                pre = 1
+            else:
+                pre = 0
+
+            if i == 0:
+                res += 1
+        return res
 ```
