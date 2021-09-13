@@ -85,3 +85,35 @@ nohup jupyter notebook --allow-root >> notebook.log &
 
 reference:
 - [数据挖掘：工具篇（一）—— Jupyter Lab 配置环境](https://liketea.xyz/数据科学/数据科学/数据科学：工具使用（一）—— Jupyter Lab 配置环境/)
+
+## 配置终端颜色/vim
+```shell
+# vi .bashrc 配置终端颜色
+PS1='\[\e[1;32m\]\u@\h\[\e[m\]:\[\e[1;34m\]\W\[\e[1;33m\]\$\[\e[m\] '
+```
+```shell
+# vi .vimrc 配置vim编辑器
+set number                                         
+colorscheme desert
+au BufNewFile,BufRead *.py,*.pyw setf python
+set autoindent " same level indent
+set smartindent " next level indent
+set expandtab
+set tabstop=4
+set shiftwidth=4
+set textwidth=200
+set softtabstop=4
+
+set cuc
+set cul
+
+set mouse=r
+syntax on
+set showmatch
+set hlsearch
+set ignorecase
+set wildmenu
+set wildmode=longest:list,full
+set autoindent
+set history=1000
+```

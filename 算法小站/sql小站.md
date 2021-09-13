@@ -25,6 +25,7 @@ where rk = 1
 
 ### DATEADD
 DATEADD(单位, number, date)
+date_sub('2021-08-08', 2), date_add('2021-08-08', 2)
 
 
 ## 知识点
@@ -81,4 +82,49 @@ from (
 ) t
 group by user_id, DATEADD(D, -t.rk, login_date)
 having count(user_id) >= 3
+```
+
+## sql online 快速验证
+http://sqlfiddle.com/#!9/e8d5a/1
+```sql
+CREATE TABLE IF NOT EXISTS `feat` (
+  `poi` int,
+  `f1`  double,
+  `f2`  double,
+  PRIMARY KEY (`poi`)
+) DEFAULT CHARSET=utf8;
+INSERT INTO `feat` (`poi`, `f1`, `f2`) VALUES
+  (1, 22, 33),
+  (2, 44, 55);
+
+CREATE TABLE IF NOT EXISTS `mapping` (
+  `poi`     int,
+  `user_id` int,
+  PRIMARY KEY (`user_id`)
+) DEFAULT CHARSET=utf8;
+INSERT INTO `mapping` (`poi`, `user_id`) VALUES
+  (1, 10),
+  (1, 20),
+  (2, 30),
+  (2, 40);
+```
+
+```sql
+select
+b.user_id,
+a.f1,
+a.f2
+
+from (
+  select
+  poi, f1, f2
+  from `feat`
+) a
+left join (
+  select
+  poi,
+  user_id
+  from `mapping`
+) b
+on a.poi = b.poi
 ```
