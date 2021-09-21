@@ -8009,8 +8009,7 @@ class Solution:
         return head.next
 ```
 #### [234. 回文链表](https://leetcode-cn.com/problems/palindrome-linked-list/)
-思路一：快慢指针找到中点，翻转后半个链表，再逐一比较前后两个半个链表
-思路二：加入.val 到list中， 判断 [:] == [::-1]
+快慢指针找到中点切断，翻转后半个链表，再逐一比较前后两个半个链表
 ```python
 class Solution:
     def isPalindrome(self, head: ListNode) -> bool:
@@ -10083,6 +10082,33 @@ class Solution:
                 res += s[i]
         return res
 ```
+```python
+class Solution:
+    def decodeString(self, s: str) -> str:
+        stack = []
+        n = len(s)
+        num = 0
+        res = ""
+        for i in range(n):
+            char = s[i]
+            if char == ']':
+                sub_s = ""
+                while len(stack)>0 and stack[-1] != '[':
+                    sub_s += stack.pop()
+                stack.pop()
+                num = ""
+                while len(stack)>0 and stack[-1].isdigit():
+                    c = stack.pop()
+                    num = c + num
+                num = int(num)
+                sub_s *= num  
+                for i in range(len(sub_s)-1, -1, -1):
+                    stack.append(sub_s[i])
+                continue
+            stack.append(char)
+        return "".join(stack)
+```
+
 
 ## 堆
 #### [347. 前 K 个高频元素](https://leetcode-cn.com/problems/top-k-frequent-elements)
@@ -13025,7 +13051,52 @@ class Solution:
                     dfs(i, j, trie.root.lookup[char], char)
         return result
 ```
+```python  
+朴素版
+class Solution:
+    def findWords(self, board: List[List[str]], words: List[str]) -> List[str]:
+        oriens = [(1,0),(-1,0),(0,1),(0,-1)]
+        n = len(board)
+        if n == 0:
+            return []
+        m = len(board[0])
+        if m == 0:
+            return []
 
+        def helper(row, col, index, word):
+            if visited[row][col]:
+                return False  
+            if board[row][col] != word[index]:
+                return False
+            visited[row][col] = 1
+            if index == len(word)-1:
+                return True
+            for orien in oriens:
+                nxt_row = row + orien[0]
+                nxt_col = col + orien[1]
+                if nxt_row < 0 or nxt_row >= n or nxt_col < 0 or nxt_col >= m:
+                    continue
+                if helper(nxt_row, nxt_col, index+1, word):
+                    return True
+            visited[row][col] = 0
+            return False
+
+        result = []
+        index = 0
+        while index < len(words):
+            word = words[index]
+            flag = False
+            for i in range(n):
+                for j in range(m):
+                    visited = [[0 for j in range(m)] for i in range(n)]
+                    if helper(i, j, 0, word):
+                        result.append(word)
+                        flag = True
+                        break
+                if flag: break
+            index += 1
+        return result
+```
 #### [443. 压缩字符串](https://leetcode-cn.com/problems/string-compression/)
 ```python
 class Solution:
@@ -17250,6 +17321,27 @@ class Solution:
 ```
 
 #### [36. 有效的数独](https://leetcode-cn.com/problems/valid-sudoku/)
+```python
+class Solution:
+    def isValidSudoku(self, board: List[List[str]]) -> bool:
+        row_vis = [[0 for val in range(9)] for i in range(9)]
+        col_vis = [[0 for val in range(9)] for j in range(9)]
+        box_vis = [[0 for val in range(9)] for i in range(9)]
+        for i in range(9):
+            for j in range(9):
+                if board[i][j] == '.':
+                    continue
+                val = int(board[i][j]) - 1
+                box_idx = i//3*3 + j //3
+                if row_vis[i][val] == 0 and col_vis[j][val] == 0 and box_vis[box_idx][val] == 0:
+                    row_vis[i][val] = 1
+                    col_vis[j][val] = 1
+                    box_vis[box_idx][val] = 1
+                else:
+                    return False
+        return True
+```
+
 ```cpp
 class Solution {
 public:
@@ -17697,4 +17789,24 @@ class Solution:
             if i == 0:
                 res += 1
         return res
+```
+
+#### [524. 通过删除字母匹配到字典里最长单词](https://leetcode-cn.com/problems/longest-word-in-dictionary-through-deleting/)
+```python
+class Solution:
+    def findLongestWord(self, s: str, dictionary: List[str]) -> str:
+        dictionary = sorted(dictionary, key=lambda x: (-len(x), x))
+        n1 = len(s)
+        for word in dictionary:
+            p1, p2 = 0, 0
+            n2 = len(word)
+            while p1 < n1 and p2 < n2:
+                if s[p1] == word[p2]:
+                    p1 += 1
+                    p2 += 1
+                    if p2 == n2:
+                        return word
+                else:
+                    p1 += 1
+        return ""
 ```
