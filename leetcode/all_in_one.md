@@ -4899,7 +4899,26 @@ class Solution:
 ```
 
 #### [34. 在排序数组中查找元素的第一个和最后一个位置](https://leetcode-cn.com/problems/find-first-and-last-position-of-element-in-sorted-array/)
-low_bound, up_bound, 注意边界，注意up_bound为>target的index
+low_bound, up_bound, 注意边界，注意up_bound为>target的第一个index
+```python
+class Solution:
+    def searchRange(self, nums: List[int], target: int) -> List[int]:
+        def binary_search(nums, left, right, target, func):
+            while left < right:
+                mid = left + (right - left) // 2
+                if func(mid):
+                    left = mid + 1
+                else:
+                    right = mid
+            return left
+
+        low = binary_search(nums, 0, len(nums), target, lambda x: nums[x] < target)
+        if low == len(nums) or nums[low] != target:
+            return [-1, -1]
+        up = binary_search(nums, 0, len(nums), target, lambda x: nums[x] <= target)
+        return [low, up-1]
+```
+
 ```python
 class Solution:
     def searchRange(self, nums: List[int], target: int) -> List[int]:
@@ -7679,6 +7698,45 @@ def sort_linkedlist(head):
 		dummy = dummy.next
 	dummy.next = prev if prev else dummy1
 	return d_head
+```
+
+#### [725. 分隔链表](https://leetcode-cn.com/problems/split-linked-list-in-parts/)
+```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def splitListToParts(self, head: ListNode, k: int) -> List[ListNode]:
+        n = 0
+        node = head
+        while node:
+            n += 1
+            node = node.next
+        part_num, rest = divmod(n, k)
+        result = []
+        index = 0
+        while head:
+            result.append(head)
+            index += 1
+            if rest > 0:
+                forword_step = part_num + 1
+                rest -= 1
+            else:
+                forword_step = part_num
+            cut_point = head
+            while forword_step > 0:
+                if forword_step == 1:
+                    cut_point = head
+                head = head.next
+                forword_step -= 1
+            cut_point.next = None
+
+        for i in range(index, k):
+            result.append(None)
+
+        return result
 ```
 
 #### [19. 删除链表的倒数第N个节点](https://leetcode-cn.com/problems/remove-nth-node-from-end-of-list/)
