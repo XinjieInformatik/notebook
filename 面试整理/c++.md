@@ -244,5 +244,7 @@ a[]
 
 ![](assets/markdown-img-paste-20200819001136662.png)
 
+### 头文件与cpp的说明
+https://www.runoob.com/w3cnote/cpp-header.html
 
 # 设计模式

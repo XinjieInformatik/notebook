@@ -202,3 +202,4 @@ GBDT是非线性模型，具有天然的特征组合优势，特征表达能力�
 #### 其他参考
 
 https://zhuanlan.zhihu.com/p/29765582
+https://xgboost.readthedocs.io/en/latest/tutorials/model.html
