@@ -1318,29 +1318,20 @@ class Solution:
 ```python
 class Solution:
     def maxProduct(self, nums: List[int]) -> int:
-        """
-        dp[i][0]: 到数组index为i的元素,最近一段连续的最小乘积
-        dp[i][1]: 到数组index为i的元素,最近一段连续的最大乘积
-        """
+        pos_max = nums[0]
+        neg_min = nums[0]
         n = len(nums)
-        # 注意２在里面，ｎ在外面
-        dp = [[0 for i in range(2)] for j in range(n)]
-        # 初始化
-        if n == 0: return None
-        dp[0][0], dp[0][1] = nums[0], nums[0]
-        res = nums[0]
+        result = nums[0]
         for i in range(1, n):
-            # nums[i] 为正负 两种情况下状态的改变
-            if nums[i] > 0:
-                # min 的意思为可以在这里截断，dp[i-1]维护的是上一段连续乘积
-                dp[i][0] = min(dp[i-1][0]*nums[i], nums[i])
-                dp[i][1] = max(dp[i-1][1]*nums[i], nums[i])
+            if nums[i] >= 0:
+                pos_max = max(nums[i], pos_max * nums[i])
+                neg_min = min(nums[i], neg_min * nums[i])
             else:
-                # 最大值变为最小值，最小值变为最大值
-                dp[i][0] = min(dp[i-1][1]*nums[i], nums[i])
-                dp[i][1] = max(dp[i-1][0]*nums[i], nums[i])
-            res = max(res, dp[i][1])
-        return res
+                pos_max_ori = pos_max
+                pos_max = max(nums[i], neg_min*nums[i])
+                neg_min = min(nums[i], pos_max_ori*nums[i])
+            result = max(result, pos_max)
+        return result
 ```
 
 滚动变量,空间优化
@@ -1810,25 +1801,21 @@ Leetcode: 402, 316, 42, 84, 739, 496, 503, 901
 ```python
 class Solution:
     def removeKdigits(self, num: str, k: int) -> str:
-        """优先删除靠前的大的数字，维护单调递增stack。
-        可pop次数为k，剩下的数字去除前置0，使用完k为最终结果"""
-        n = len(num)
+        """ 单调递增stack """
         stack = []
-        for i in range(n):
-            val = int(num[i])
-            while len(stack) > 0 and val < stack[-1] and k > 0:
+        for char in num:
+            while len(stack) > 0 and char < stack[-1] and k > 0:
                 stack.pop()
                 k -= 1
-            stack.append(val)
-        # 去除前置0
+            stack.append(char)
+        # 去除前导0
         index = 0
-        while index < len(stack) and stack[index] == 0:
+        while index < len(stack) and stack[index] == '0':
             index += 1
-        stack = stack[index:]
-        # 把k使用完
-        if k > 0:
-            stack = stack[:-k]
-        return '0' if len(stack) == 0 else "".join(map(str, stack))
+        # 如果k还没用完
+        up_bound = len(stack) - k
+        res = stack[index:up_bound]
+        return "".join(res) if len(res) > 0 else '0'
 ```
 #### [456. 132模式](https://leetcode-cn.com/problems/132-pattern/)
 ```python
@@ -2769,6 +2756,7 @@ public:
 ```
 
 #### [43. 字符串相乘](https://leetcode-cn.com/problems/multiply-strings/)
+字符串乘法
 ```python
 class Solution:
     def multiply(self, num1: str, num2: str) -> str:
@@ -3863,7 +3851,7 @@ class Solution:
         return head if left != 1 else prev
 ```
 
-#### [25. K 个一组翻转链表](https://leetcode-cn.com/problems/reverse-nodes-in-k-group/)
+#### [25. K个一组翻转链表](https://leetcode-cn.com/problems/reverse-nodes-in-k-group/)
 1. 反转链表
 2. 走k步，切断，反转链表返回反转后的头节点，尾节点
 3. 链表链接 tail.next = nx, prev.next = head
@@ -4352,6 +4340,23 @@ class Solution:
 输入: [100, 4, 200, 1, 3, 2]   输出: 4
 解释: 最长连续序列是 [1, 2, 3, 4]。它的长度为 4。
 ```
+```python
+class Solution:
+    def longestConsecutive(self, nums: List[int]) -> int:
+        lookup = {}
+        result = 0
+        for num in nums:
+            if num in lookup:
+                continue
+            left = lookup.get(num-1, 0)
+            right = lookup.get(num+1, 0)
+            curr = left + right + 1
+            lookup[num] = curr
+            lookup[num-left] = curr
+            lookup[num+right] = curr
+            result = max(result, curr)
+        return result
+```
 哈希map倒序查询,巧妙O(n)
 ```python
 class Solution:
@@ -4619,15 +4624,16 @@ class Solution:
 ```python
 class Solution:
     def moveZeroes(self, nums: List[int]) -> None:
-        end = len(nums)
-        i = 0
-        while (i<end): # 注意inplace操作不要用for
-            if nums[i] == 0:
-                nums.pop(i)
-                nums.append(0)
-                end -= 1
-            else:
-                i += 1
+      p1, p2 = 0, 0
+        n = len(nums)
+        while p2 < n:
+            if nums[p2] != 0:
+                nums[p1] = nums[p2]
+                p1 += 1
+            p2 += 1
+        while p1 < n:
+            nums[p1] = 0
+            p1 += 1
 ```
 
 #### [324. 摆动排序 II](https://leetcode-cn.com/problems/wiggle-sort-ii/)
@@ -7126,6 +7132,43 @@ class Solution:
         return dp[n-1][m-1]
 ```
 
+#### [329. 矩阵中的最长递增路径](https://leetcode-cn.com/problems/longest-increasing-path-in-a-matrix/)
+```python
+class Solution:
+    def longestIncreasingPath(self, matrix: List[List[int]]) -> int:
+        """ 采用dfs+记忆化实现， 使用dp[i][j]记录当前(i, j)的最长递增路径 """
+        n = len(matrix)
+        if n == 0:
+            return 0
+        m = len(matrix[0])
+        if m == 0:
+            return 0
+        oriens = [(1,0),(-1,0),(0,1),(0,-1)]
+        dp = [[0 for j in range(m)] for i in range(n)]
+        def dfs(row, col):
+            if dp[row][col] > 0:
+                return dp[row][col]
+            for orien in oriens:
+                nxt_row = row + orien[0]
+                nxt_col = col + orien[1]
+                if nxt_row < 0 or nxt_row >= n:
+                    continue
+                if nxt_col < 0 or nxt_col >= m:
+                    continue
+                if matrix[nxt_row][nxt_col] <= matrix[row][col]:
+                    continue  
+                step = dfs(nxt_row, nxt_col) + 1
+                dp[row][col] = max(dp[row][col], step)
+            return dp[row][col]
+
+        result = 0
+        for i in range(n):
+            for j in range(m):
+                step = dfs(i, j) + 1
+                result = max(result, step)
+        return result
+```
+
 #### [120. 三角形最小路径和](https://leetcode-cn.com/problems/triangle/)
 遍历所有节点，更新全局变量self.min_path
 ```python
@@ -8155,6 +8198,33 @@ class Solution:
             head = cur
             k -= 1
         return head
+```
+```python
+class Solution:
+    def rotateRight(self, head: Optional[ListNode], k: int) -> Optional[ListNode]:
+        if not head:
+            return head
+        cnt = 0
+        node = head
+        while node:
+            node = node.next
+            cnt += 1
+        k %= cnt  
+        # corner case
+        if k == 0:
+            return head
+        slow = head
+        fast = head
+        while k > 0:
+            fast = fast.next
+            k -= 1
+        while fast.next:
+            fast = fast.next
+            slow = slow.next
+        new_node = slow.next
+        slow.next = None
+        fast.next = head
+        return new_node
 ```
 
 #### [86. 分隔链表](https://leetcode-cn.com/problems/partition-list/)
@@ -9925,6 +9995,25 @@ class Solution:
                 root = root.right
         return -1
 ```
+```python
+class Solution:
+    def kthSmallest(self, root: Optional[TreeNode], k: int) -> int:
+        self.k = k
+        def helper(root):
+            if not root:
+                return None
+            left = helper(root.left)
+            if left != None:
+                return left
+            self.k -= 1
+            if self.k == 0:
+                return root.val
+            right = helper(root.right)
+            if right != None:
+                return right
+            return None  
+        return helper(root)
+```
 
 #### [530. 二叉搜索树的最小绝对差](https://leetcode-cn.com/problems/minimum-absolute-difference-in-bst/)
 ```cpp
@@ -10826,23 +10915,6 @@ class Solution:
 
         a, b, c = dfs(root)
         return b
-```
-
-#### [152. 乘积最大子序列](https://leetcode-cn.com/problems/maximum-product-subarray/)
-```python
-class Solution:
-    def maxProduct(self, nums: List[int]) -> int:
-        curr_min = 1
-        curr_max = 1
-        max_value = max(nums)
-        for item in nums:
-            # 如果遇到负数，最大变最小，最小变最大
-            if item < 0:
-                curr_min, curr_max = curr_max, curr_min
-            curr_max = max(item, curr_max*item)  # 无负数阶段的当前最大值
-            curr_min = min(item, curr_min*item)  # 维护连乘最小值或者当前值
-            max_value = max(curr_max, max_value)
-        return max_value
 ```
 
 #### [139. 单词拆分](https://leetcode-cn.com/problems/word-break/)
@@ -15802,15 +15874,17 @@ partition 操作
 ```python
 class Solution:
     def exchange(self, nums: List[int]) -> List[int]:
-        pivot_i = 0
-        n = len(nums)
-        if n == 0: return []
-        for i in range(1, n):
-            if nums[i] & 1:
-                pivot_i += 1
-                nums[i], nums[pivot_i] = nums[pivot_i], nums[i]
-        if nums[0] & 1 == 0:
-            nums[0], nums[pivot_i] = nums[pivot_i], nums[0]
+        def partition(left, right, nums) -> None:
+            pivot_i = left
+            pivot_val = nums[pivot_i]
+            for i in range(left+1, right):
+                if nums[i] & 1:
+                    pivot_i += 1
+                    nums[pivot_i], nums[i] = nums[i], nums[pivot_i]
+            # pivot_i 最后一个奇数index
+            nums[left], nums[pivot_i] = nums[pivot_i], nums[left]
+        if len(nums) > 1:
+            partition(0, len(nums), nums)
         return nums
 ```
 
@@ -16427,21 +16501,24 @@ def cnt_num(nums):
 ```python
 class Solution:
     def treeToDoublyList(self, root: 'Node') -> 'Node':
-        self.prev, self.head = None, None
-        def helper(node):
-            if not node:
-                return
-            helper(node.left)
-            if not self.head:
-                self.head = node
-            if self.prev:
-                node.left, self.prev.right = self.prev, node
-            self.prev = node
-            helper(node.right)
+        self.last_node = None
+        self.head = None
+        def helper(root):
+            if not root:
+                return None
+            helper(root.left)
+            if self.last_node:
+                self.last_node.right = root  
+                root.left = self.last_node
+            else:
+                self.head = root
+            self.last_node = root
+            helper(root.right)
         if not root:
             return root
         helper(root)
-        self.head.left, self.prev.right = self.prev, self.head
+        self.head.left = self.last_node
+        self.last_node.right = self.head
         return self.head
 ```
 ```cpp
@@ -17867,4 +17944,61 @@ class Solution:
                 else:
                     p1 += 1
         return ""
+```
+
+#### [371. 两整数之和](https://leetcode-cn.com/problems/sum-of-two-integers/)
+```cpp
+class Solution {
+public:
+    int getSum(int a, int b) {
+        while (b != 0) {
+            unsigned int carry = (unsigned int)(a & b) << 1;
+            a = a ^ b;
+            b = carry;
+        }
+        return a;
+    }
+};
+```
+
+#### [python 深拷贝]
+```python
+def deepcopy(entry):
+  if isinstance(entry, dict):
+    return {k: deepcopy(v) for k, v in entry.items()}
+  elif isinstance(entry, list):
+    return [deepcopy(item) for item in entry]
+  elif isinstance(entry, tuple):
+    return (deepcopy(item) for item in entry)
+  else:
+    return entry
+```
+
+#### [179. 最大数](https://leetcode-cn.com/problems/largest-number/)
+```python
+import functools
+class Solution:
+    def largestNumber(self, nums: List[int]) -> str:
+        nums_str = map(str, nums)
+        cmp = lambda a, b: -1 if a+b > b+a else 1
+        nums_str = sorted(nums_str, key=functools.cmp_to_key(cmp))
+        index = 0
+        while index < len(nums_str) and nums_str[index] == '0':
+            index += 1
+        return "".join(nums_str[index:]) if index != len(nums_str) else '0'
+```
+
+#### [223. 矩形面积](https://leetcode-cn.com/problems/rectangle-area/)
+```python
+class Solution:
+    def computeArea(self, ax1: int, ay1: int, ax2: int, ay2: int, bx1: int, by1: int, bx2: int, by2: int) -> int:
+        area1 = (ax2 - ax1) * (ay2 - ay1)
+        area2 = (bx2 - bx1) * (by2 - by1)
+        lt_x = max(ax1, bx1)
+        lt_y = min(ay2, by2)
+        rb_x = min(ax2, bx2)
+        rb_y = max(ay1, by1)  
+        inter_area = max(0, (rb_x - lt_x)) * max(0, (lt_y - rb_y))
+        union_area = area1 + area2 - inter_area
+        return union_area
 ```
