@@ -4598,6 +4598,24 @@ class Solution:
 
         return countingSort(nums)
 ```
+```python
+class Solution:
+    def sortColors(self, nums: List[int]) -> None:
+        def countingSort(nums):
+            bucket_num = 3
+            bucket = [0 for i in range(bucket_num)]
+            for i in range(len(nums)):
+                bucket[nums[i]] += 1
+            index = 0
+            step = 0
+            while step < len(nums):
+                while bucket[index] == 0:
+                    index += 1
+                nums[step] = index
+                bucket[index] -= 1
+                step += 1
+        countingSort(nums)
+```
 2. 三路快排，空间复杂度O(logn)
 ```python
 class Solution:
@@ -5292,6 +5310,25 @@ class Solution:
 ```
 
 #### [14. 最长公共前缀](https://leetcode-cn.com/problems/longest-common-prefix/)
+单指针向前推进
+```python
+class Solution:
+    def longestCommonPrefix(self, strs: List[str]) -> str:
+        n = len(strs)
+        index = 0
+        while True:
+            char = None
+            for i in range(n):  
+                if index == len(strs[i]):
+                    return strs[0][:index]
+                if i == 0:
+                    char = strs[i][index]
+                else:
+                    if char != strs[i][index]:
+                        return strs[0][:index]
+            index += 1
+        return strs[0][:index]
+```
 ```python
 class Solution:
     def longestCommonPrefix(self, strs: List[str]) -> str:
@@ -11466,6 +11503,66 @@ public:
 ```
 
 #### [498. 对角线遍历](https://leetcode-cn.com/problems/diagonal-traverse/)
+```python
+from collections import deque
+class Solution:
+    def findDiagonalOrder(self, mat: List[List[int]]) -> List[int]:
+        m = len(mat)
+        if m == 0:
+            return []
+        n = len(mat[0])
+        if n == 0:
+            return []  
+        start_points = []
+        for j in range(n):
+            start_points.append((0, j))
+        for i in range(1, m):
+            start_points.append((i, n-1))
+        result = []
+        # 遍历对角线，偶数反转
+        for i, (row, col) in enumerate(start_points):
+            line = []
+            while col >= 0 and row < m:
+                line.append(mat[row][col])
+                row += 1
+                col -= 1
+            if i & 1 == 0:
+                line.reverse()
+            result.extend(line)
+        return result
+```
+层序遍历，特别小心：left/right是两个不同的节点，不能一个不符合把另一个也continue了
+```python
+from collections import deque
+class Solution:
+    def findDiagonalOrder(self, mat: List[List[int]]) -> List[int]:
+        m = len(mat)
+        if m == 0:
+            return []
+        n = len(mat[0])
+        if n == 0:
+            return []
+        queue = deque([(0,0)])
+        result = []
+        level = 0
+        while len(queue) > 0:
+            size = len(queue)
+            line = []
+            for i in range(size):
+                row, col = queue.pop()
+                line.append(mat[row][col])
+                left_row, left_col = row+1, col
+                right_row, right_col = row, col+1   
+                if right_row>=0 and right_row<m and right_col>=0 and right_col<n and (right_row, right_col) not in queue:
+                    queue.appendleft((right_row, right_col))
+                if left_row>=0 and left_row<m and left_col>=0 and left_col<n and (left_row, left_col) not in queue:
+                    queue.appendleft((left_row, left_col))
+            if level & 1 == 0:
+                line.reverse()
+            result.extend(line)
+            level += 1
+        return result
+```
 ```cpp
 class Solution {
 public:
@@ -14018,6 +14115,35 @@ public:
 ```
 
 #### [59. 螺旋矩阵 II](https://leetcode-cn.com/problems/spiral-matrix-ii/)
+```python
+class Solution:
+    def generateMatrix(self, n: int) -> List[List[int]]:
+        matrix = [[0 for j in range(n)] for i in range(n)]
+        t, b, l, r = 0, n, 0, n
+        num = 1
+        while t <= b:
+            for j in range(l, r):
+                matrix[t][j] = num
+                num += 1
+            t += 1
+            if t == b: break
+            for i in range(t, b):
+                matrix[i][r-1] = num
+                num += 1
+            r -= 1
+            if l == r: break
+            for j in range(r-1, l-1, -1):
+                matrix[b-1][j] = num
+                num += 1
+            b -= 1
+            if t == b: break
+            for i in range(b-1, t-1, -1):
+                matrix[i][l] = num
+                num += 1
+            l += 1
+            if l == r: break
+        return matrix
+```
 ```cpp
 class Solution {
 public:
@@ -18001,4 +18127,37 @@ class Solution:
         inter_area = max(0, (rb_x - lt_x)) * max(0, (lt_y - rb_y))
         union_area = area1 + area2 - inter_area
         return union_area
+```
+
+#### [224. 基本计算器](https://leetcode-cn.com/problems/basic-calculator/)
+```python
+class Solution:
+    def calculate(self, s: str) -> int:
+        ops = [1]
+        sign = 1
+        ret = 0
+        n = len(s)
+        i = 0
+        while i < n:
+            if s[i] == ' ':
+                i += 1
+            elif s[i] == '+':
+                sign = ops[-1]
+                i += 1
+            elif s[i] == '-':
+                sign = -ops[-1]
+                i += 1
+            elif s[i] == '(':
+                ops.append(sign)
+                i += 1
+            elif s[i] == ')':
+                ops.pop()
+                i += 1
+            else:
+                num = 0
+                while i < n and s[i].isdigit():
+                    num = num * 10 + ord(s[i]) - ord('0')
+                    i += 1
+                ret += num * sign
+        return ret
 ```
