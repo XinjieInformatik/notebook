@@ -1893,19 +1893,18 @@ class Solution:
 ```python
 class Solution:
     def trap(self, height: List[int]) -> int:
-        """单调栈"""
+        """单调递减stack"""
         stack = []
-        waters = 0
-        for i in range(len(height)):
-            while stack and height[stack[-1]] < height[i]:
-                curr_i = stack.pop()
-                curr_h = height[curr_i]
-                if len(stack) == 0: break
-                boundary = min(height[stack[-1]], height[i])
-                water = (boundary - curr_h) * (i - stack[-1] - 1)
-                waters += water
+        n = len(height)
+        total = 0
+        for i in range(n):
+            while len(stack) > 0 and height[stack[-1]] < height[i]:
+                index = stack.pop()
+                if len(stack) > 0:
+                    h = min(height[stack[-1]], height[i])
+                    total += (h - height[index]) * (i - stack[-1] - 1)
             stack.append(i)
-        return waters
+        return total
 ```
 
 ```python
@@ -2149,6 +2148,35 @@ class Solution:
                     nums[i], nums[idx] = nums[idx], nums[i]
                     break
             nums[idx+1:] = nums[idx+1:][::-1]
+```
+
+#### [670. 最大交换](https://leetcode-cn.com/problems/maximum-swap/)
+```python
+class Solution:
+    def maximumSwap(self, num: int) -> int:
+        nums = list(str(num))
+        n = len(nums)
+        index = n
+        # 寻找第一个nums[i]<nums[i+1]的位置
+        for i in range(n-1):
+            if nums[i] < nums[i+1]:
+                index = i + 1
+                break
+        if index == n:
+            return num
+        # 寻找index后最后一个最大的数
+        val = '0'
+        val_index = index  
+        for i in range(index, n):
+            if nums[i] >= val:
+                val = nums[i]
+                val_index = i
+        # 寻找可交换位置进行一次交换
+        for i in range(index):
+            if nums[i] < val:
+                nums[i], nums[val_index] = nums[val_index], nums[i]
+                break
+        return int("".join(nums))
 ```
 
 #### [901. 股票价格跨度](https://leetcode-cn.com/problems/online-stock-span/)
@@ -4300,20 +4328,17 @@ class Solution:
 ```python
 class Solution:
     def maxArea(self, height: List[int]) -> int:
-        p0 = 0
-        p1 = len(height) - 1
-        if p0 == p1: return 0
-        max_area = 0
-
-        while (p0 != p1):
-            area = (p1 - p0) * min(height[p0], height[p1])
-            print(area)
-            max_area = max(area, max_area)
-            if height[p0] < height[p1]:
-                p0 += 1
-            else: p1 -= 1
-
-        return max_area
+        left = 0
+        right = len(height) - 1
+        result = 0
+        while left < right:
+            curr = min(height[left], height[right]) * (right - left)
+            result = max(result, curr)
+            if height[left] < height[right]:
+                left += 1
+            else:
+                right -= 1
+        return result
 ```
 
 
@@ -13968,6 +13993,30 @@ public:
         return ans;
     }
 };
+```
+
+#### [16. 最接近的三数之和](https://leetcode-cn.com/problems/3sum-closest/)
+```python
+class Solution:
+    def threeSumClosest(self, nums: List[int], target: int) -> int:
+        """ 该题只有唯一答案 """
+        n = len(nums)
+        nums.sort()
+        result = float('inf')
+        for i in range(n):
+            left = i+1
+            right = n-1
+            while left < right:
+                val = nums[i] + nums[left] + nums[right]
+                if abs(val-target) < abs(result-target):
+                    result = val
+                if val < target:
+                    left += 1
+                elif val > target:
+                    right -= 1
+                else:
+                    return val
+        return result
 ```
 
 #### [18. 四数之和](https://leetcode-cn.com/problems/4sum/)
