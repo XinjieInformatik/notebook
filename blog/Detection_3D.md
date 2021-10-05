@@ -10,10 +10,10 @@ $$ \begin{bmatrix} u\\v\\1 \end{bmatrix} = \frac{1}{Z_c} * K *
 \begin{bmatrix} X_o\\Y_o\\Z_o\\1 \end{bmatrix} $$
 
 进一步描述外参 R, T
-$$ \begin{bmatrix} u\\v\\1 \end{bmatrix} = \frac{1}{Z_c} * K *
+$$ \begin{bmatrix} u\\v\\1 \end{bmatrix} = \frac{1}{Z_c} * K * (
 \begin{bmatrix} cos\theta&0&sin\theta \\ 0&1&0 \\ -sin\theta&0&cos\theta \end{bmatrix} *
 \begin{bmatrix} X_o\\Y_o\\Z_o \end{bmatrix} +
-\begin{bmatrix} X_c\\Y_c\\Z_c \end{bmatrix} $$
+\begin{bmatrix} X_c\\Y_c\\Z_c \end{bmatrix}) $$
 
 像素坐标系: $u, v$
 物体坐标系: $X_o, Y_o, Z_o (l, w, h)$

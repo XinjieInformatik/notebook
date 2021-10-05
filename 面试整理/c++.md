@@ -230,9 +230,10 @@ string a;
 a = "1234adf"
 a[]
 #### 两种include方式
+```cpp
 #include <iostream> 搜索系统函数库
 #include "max.h" 先搜索当前目录，再搜索系统函数库
-
+```
 #### vector 扩容
 1.寻找新的比当前capacity大两倍的地址 2.将当前元素复制过去 3.释放原空间。
 
@@ -247,4 +248,4 @@ a[]
 ### 头文件与cpp的说明
 https://www.runoob.com/w3cnote/cpp-header.html
 
-# 设计模式
+## 设计模式

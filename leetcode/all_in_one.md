@@ -244,8 +244,6 @@ public:
     }
 };
 ```
-```
-
 #### [190. 颠倒二进制位](https://leetcode-cn.com/problems/reverse-bits/)
 颠倒给定的 32 位无符号整数的二进制位
 一共32位，先16，16交换，再8，8交换，再4，4交换，再2，2交换，再1，1交换。
@@ -1394,6 +1392,45 @@ class Solution:
             result = max(result, prev_max)
         return result
 ```
+#### [560. 和为 K 的子数组](https://leetcode-cn.com/problems/subarray-sum-equals-k/)
+```python
+from collections import defaultdict
+class Solution:
+    def subarraySum(self, nums: List[int], k: int) -> int:
+        stat = defaultdict(int)
+        stat[0] = 1
+        presum = 0
+        cnt = 0
+        for i in range(len(nums)):
+            presum += nums[i]
+            if presum - k in stat:
+                cnt += stat[presum-k]
+            stat[presum] += 1
+        return cnt
+```
+
+#### [862. 和至少为 K 的最短子数组](https://leetcode-cn.com/problems/shortest-subarray-with-sum-at-least-k/)
+```python
+from collections import deque
+class Solution:
+    def shortestSubarray(self, nums: List[int], k: int) -> int:
+        n = len(nums)
+        prefix = [0]
+        for i in range(n):
+            prefix.append(prefix[-1]+nums[i])
+        queue = deque([])
+        ans = float('inf')
+        for i in range(n+1):
+            # pop维护queue单调递减
+            while len(queue)>0 and prefix[i] <= prefix[queue[-1]]:
+                queue.pop()
+            # popleft寻找最短
+            while len(queue)>0 and prefix[i] - prefix[queue[0]] >= k:
+                ans = min(ans, i-queue[0])
+                queue.popleft()
+            queue.append(i)
+        return ans if ans != float('inf') else -1
+```
 
 #### [300. 最长上升子序列](https://leetcode-cn.com/problems/longest-increasing-subsequence/)
 ```
@@ -2095,7 +2132,27 @@ class Solution:
 - 从第一个非逆序的数往后找到第一个大于它的数(可以用二分查找优化)
 - 交换位置，第一个数往后逆序排序，因为已经使用栈，因此不用再逆序了
 见官方题解动画 https://leetcode-cn.com/problems/next-greater-element-iii/solution/xia-yi-ge-geng-da-yuan-su-iii-by-leetcode/
-
+```python
+class Solution:
+    def nextGreaterElement(self, n: int) -> int:
+        nums = list(str(n))
+        index = len(nums) - 1
+        stack = []
+        last_index = None
+        while index >= 0:
+            while len(stack)>0 and nums[stack[-1]] > nums[index]:  
+                last_index = stack.pop()
+            if last_index != None:
+                break
+            stack.append(index)
+            index -= 1  
+        if last_index == None:
+            return -1
+        nums[index], nums[last_index] = nums[last_index], nums[index]
+        nums[index+1:] = sorted(nums[index+1:])
+        res = int("".join(nums))
+        return -1 if res >= (1<<31) else res
+```
 ```python
 class Solution:
     def nextGreaterElement(self, n: int) -> int:
@@ -4056,6 +4113,15 @@ class Solution:
         n = len(nums)
         k = k % n
         nums[:] = nums[n-k:] + nums[:n-k]
+```
+```python
+class Solution:
+    def rotate(self, nums: List[int], k: int) -> None:
+        # nums[:] = sorted(nums)
+        k %= len(nums)
+        nums.reverse()
+        nums[:k] = nums[:k][::-1]
+        nums[k:] = nums[k:][::-1]
 ```
 ```cpp
 class Solution {
@@ -6030,6 +6096,19 @@ public:
 ```python
 class Solution:
     def wordBreak(self, s: str, wordDict: List[str]) -> bool:
+        """ 动态规划，dp[i]表示s[:i]是否可以由word组成 """
+        n = len(s)
+        dp = [False for i in range(n+1)]
+        dp[0] = True
+        for i in range(n+1):
+            for j in range(i):
+                if dp[j] and s[j:i] in wordDict:
+                    dp[i] = True
+        return dp[-1]
+```
+```python
+class Solution:
+    def wordBreak(self, s: str, wordDict: List[str]) -> bool:
         """ 1. 先把总体思路写出来，有时候多余的剪枝，反而导致程序更慢
         2. set, dict 的查询比 list 快
         3. 从上到下的回溯，把尝试的结果记录下来，便于后面提前退出递归 """
@@ -7514,22 +7593,47 @@ class Twitter:
 
 #### [91. 解码方法](https://leetcode-cn.com/problems/decode-ways/)
 ```python
+import functools
 class Solution:
     def numDecodings(self, s: str) -> int:
-        ac_list = range(1,27)
         n = len(s)
-        import functools
         @functools.lru_cache(None)
         def helper(index):
             if index == n:
                 return 1
-            ans = 0
-            if int(s[index]) in ac_list:
-                ans += helper(index+1)
-            else: return 0 # becareful
-            if index+2 <= n and int(s[index:index+2]) in ac_list:
-                ans += helper(index+2)
-            return ans
+            if s[index] == '0':
+                return 0
+            res = 0
+            for i in range(1, 3):
+                sub = s[index:index+i]
+                val = int(sub)
+                if val >= 1 and val <= 26 and index+i <= n:
+                    res += helper(index+i)
+            return res
+
+        return helper(0)
+```
+```python
+class Solution:
+    def numDecodings(self, s: str) -> int:
+        n = len(s)
+        dp = [0 for i in range(n)]
+        def helper(index):
+            if index == n:
+                return 1
+            if s[index] == '0':
+                return 0
+            if dp[index] > 0:
+                return dp[index]
+            res = 0
+            for i in range(1, 3):
+                sub = s[index:index+i]
+                val = int(sub)
+                if val >= 1 and val <= 26 and index+i <= n:
+                    res += helper(index+i)
+            dp[index] = res
+            return res
+
         return helper(0)
 ```
 
@@ -7751,23 +7855,23 @@ public:
 
 #### [328. 奇偶链表](https://leetcode-cn.com/problems/odd-even-linked-list/)
 ```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
 class Solution:
-  def oddEvenList(self, head: ListNode) -> ListNode:
-      if head==None or head.next==None:
-          return head
-      odd = head
-      even = head.next
-      odd_head = odd
-      even_head = even
-      while even and even.next:
-          # becareful, odd first, even second
-          odd.next = odd.next.next
-          odd = odd.next
-          even.next = even.next.next
-          even = even.next
-
-      odd.next = even_head
-      return odd_head
+    def oddEvenList(self, head: ListNode) -> ListNode:
+        if not head: return head
+        dummy1 = odd = head
+        dummy2 = even = head.next
+        while even and even.next:
+            odd.next = odd.next.next
+            odd = odd.next
+            even.next = even.next.next
+            even = even.next
+        odd.next = dummy2
+        return dummy1
 ```
 
 #### [奇偶链表]
@@ -10828,7 +10932,27 @@ class Solution:
                 if max_step >= n-1:
                     return True
             else:
-              return False
+                return False
+```
+贪心模拟，在当前index，下一个跳跃点位是下一步可到达点位中能跳的最远的
+```python
+class Solution:
+    def canJump(self, nums: List[int]) -> bool:  
+        index = 0
+        n = len(nums)
+        while index < n-1:
+            step = nums[index]
+            if step == 0:
+                return False
+            max_val = 0
+            max_index = index
+            for i in range(index+1, min(index+step+1, n)):
+                reach_index = i + nums[i]
+                if reach_index >= max_val:
+                    max_val = reach_index
+                    max_index = i
+            index = max_index
+        return index >= n-1
 ```
 
 #### [45. 跳跃游戏 II](https://leetcode-cn.com/problems/jump-game-ii/)
@@ -10858,6 +10982,30 @@ class Solution:
         #         min_step = min(min_step, step)
         #     return min_step
         # return helper(0)
+```
+贪心模拟最优策略
+```python
+class Solution:
+    def jump(self, nums: List[int]) -> int:
+        cnt = 0
+        index = 0
+        n = len(nums)
+        while index < n-1:
+            max_val = 0
+            max_index = index
+            step = nums[index]
+            if index + step >= n-1:
+                return cnt + 1
+            if step == 0:
+                return -1
+            for i in range(index+1, min(index+step+1, n)):
+                reach_index = i + nums[i]
+                if reach_index >= max_val:
+                    max_val = reach_index
+                    max_index = i
+            index = max_index  
+            cnt += 1
+        return cnt
 ```
 #### [198. 打家劫舍](https://leetcode-cn.com/problems/house-robber)
 状态转移方程 cur_max = max(pprev_max + nums[i], prev_max)
@@ -10910,6 +11058,28 @@ class Solution:
             return dp[-1]
 
         return max(helper(nums[1:]), helper(nums[:-1]))
+```
+```python
+class Solution:
+    def rob(self, nums: List[int]) -> int:
+        n = len(nums)
+        if n == 0:
+            return 0
+        if n <= 3:
+            return max(nums)
+        def helper(nums):
+            pprev = 0
+            prev = 0
+            curr = 0
+            # 注意要从0开始
+            for i in range(n-1):
+                curr = max(pprev+nums[i], prev)
+                pprev = prev
+                prev = curr
+            return curr
+
+        result = max(helper(nums[1:]), helper(nums[:-1]))
+        return result
 ```
 
 #### [337. 打家劫舍 III](https://leetcode-cn.com/problems/house-robber-iii/submissions/)
@@ -10977,48 +11147,6 @@ class Solution:
 
         a, b, c = dfs(root)
         return b
-```
-
-#### [139. 单词拆分](https://leetcode-cn.com/problems/word-break/)
-对于给定的字符串（s）可以被拆分成子问题 s1 和 s2, 如果这些子问题都可以独立地被拆分成符合要求的子问题，那么整个问题 s 也可以满足.
-```python
-class Solution:
-    def wordBreak(self, s: str, wordDict: List[str]) -> bool:
-        dp = [1] + [0] * len(s)
-        for i in range(1, len(s)+1):
-            for j in range(i):
-                if dp[j] and s[j:i] in wordDict:
-                    dp[i] = True
-        return dp[len(s)]
-
-class Solution:
-    def wordBreak(self, s: str, wordDict: List[str]) -> bool:
-        dp = [0]
-        for i in range(len(s)):
-            for index in dp:
-                if s[index:i+1] in wordDict and (i+1) not in dp:
-                    dp.append(i+1)
-        if dp[-1] == len(s): return True
-        else: return False
-```
-```python
-import functools
-class Solution:
-    def wordBreak(self, s: str, wordDict: List[str]) -> bool:
-        lenths = [len(item) for item in wordDict]
-        lenths = set(lenths)
-        wordDict = set(wordDict)
-        n = len(s)
-        @functools.lru_cache(None)
-        def helper(index):
-            if index == n:
-                return True
-            for lenth in lenths:
-                if index+lenth <= n and s[index:index+lenth] in wordDict:
-                    if helper(index+lenth):
-                        return True
-            return False
-        return helper(0)
 ```
 
 #### [面试题 08.11. 硬币](https://leetcode-cn.com/problems/coin-lcci/)
@@ -12415,64 +12543,34 @@ class Solution:
 ```
 
 #### [445. 两数相加 II](https://leetcode-cn.com/problems/add-two-numbers-ii/)
+先都reverse，再链表相加，再都reverse
 ```python
-# Definition for singly-linked list.
-# class ListNode:
-#     def __init__(self, x):
-#         self.val = x
-#         self.next = None
-
 class Solution:
-    def reverse(self, head: ListNode):
-        pre_node = None
-        node = head
-        while node:
-            next_node = node.next
-            node.next = pre_node
-            pre_node = node
-            node = next_node
-        return pre_node
-
     def addTwoNumbers(self, l1: ListNode, l2: ListNode) -> ListNode:
-        l1 = self.reverse(l1)
-        l2 = self.reverse(l2)
-
-        node1, node2 = l1, l2
+        def reverse_list(head):
+            prev = None
+            curr = head
+            while curr:
+                nxt = curr.next
+                curr.next = prev
+                prev = curr
+                curr = nxt
+            return prev
+        l1_rev = reverse_list(l1)
+        l2_rev = reverse_list(l2)
         carry = 0
-        ans = None
-        while node1 or node2 or carry!=0:
-            node1_val = node1.val if node1 else 0
-            node2_val = node2.val if node2 else 0
-            value = node1_val + node2_val + carry
-            carry = value // 10
-            node3 = ListNode(value%10)
-            # 头插法
-            node3.next = ans
-            ans = node3
-            if node1: node1 = node1.next
-            if node2: node2 = node2.next
-
-        return ans
-
-    def addTwoNumbers(self, l1: ListNode, l2: ListNode) -> ListNode:
-        s1, s2 = [], []
-        while l1:
-            s1.append(l1.val)
-            l1 = l1.next
-        while l2:
-            s2.append(l2.val)
-            l2 = l2.next
-        ans = None
-        carry = 0
-        while s1 or s2 or carry != 0:
-            a = 0 if not s1 else s1.pop()
-            b = 0 if not s2 else s2.pop()
-            cur = a + b + carry
-            carry = cur // 10
-            cur %= 10
-            curnode = ListNode(cur)
-            curnode.next = ans
-            ans = curnode
+        new_head = new_dummy = ListNode(-1)
+        while l1_rev or l2_rev or carry:
+            l1_val = l1_rev.val if l1_rev else 0
+            l2_val = l2_rev.val if l2_rev else 0
+            val = l1_val + l2_val + carry
+            carry, val = divmod(val, 10)
+            new_node = ListNode(val)
+            new_dummy.next = new_node
+            new_dummy = new_dummy.next
+            l1_rev = l1_rev.next if l1_rev else l1_rev
+            l2_rev = l2_rev.next if l2_rev else l2_rev
+        ans = reverse_list(new_head.next)
         return ans
 ```
 #### [959. 由斜杠划分区域](https://leetcode-cn.com/problems/regions-cut-by-slashes/)
@@ -12944,7 +13042,7 @@ class Solution:
 
 #### [69. x 的平方根](https://leetcode-cn.com/problems/sqrtx/)
 sqrt x
-```python
+``` python
 class Solution:
     def mySqrt(self, ａ: int) -> int:
         """牛顿法核心: 迭代后的x' = 迭代前x - delta x
@@ -13350,57 +13448,26 @@ class Solution:
         return result
 ```
 #### [443. 压缩字符串](https://leetcode-cn.com/problems/string-compression/)
+三个指针，p1/p2负责寻找重复字符迭代，pw负责写
 ```python
 class Solution:
     def compress(self, chars: List[str]) -> int:
-        count = 1
-        temp = chars[0]
-        read = 1
-        while (read < len(chars)):
-            if chars[read] == temp:
-                count += 1
-                chars.pop(read)
-                read -= 1
-            else:
-                if count != 1:
-                    for item in str(count):
-                        chars.insert(read, item)
-                        read += 1
-                count = 1
-                temp = chars[read]
-            read += 1
-        if count != 1:
-            for item in str(count):
-                chars.insert(read, item)
-                read += 1
-        return len(chars)
-
-class Solution:
-    def compress(self, chars: List[str]) -> int:
-        if len(chars) <= 1: return len(chars)
-        count = 1
-        pointer = 0
-        dynamic_boundary = len(chars)
-        while (pointer < dynamic_boundary-1):
-            next_char = chars[pointer+1]
-            curr_char = chars[pointer]
-            if next_char == curr_char:
-                count += 1
-                chars.pop(pointer)
-                dynamic_boundary -= 1
-            else:
-                pointer += 1
-                if count > 1:
-                    for item in str(count):
-                        chars.insert(pointer, item)
-                        dynamic_boundary += 1
-                        pointer += 1
-                    count = 1
-        if count > 1:
-            for item in str(count):
-                chars.insert(pointer+1, item)
-                pointer += 1
-        return len(chars)
+        # 三指针
+        p1, p2, pw = 0, 0, 0
+        n = len(chars)
+        while p1 < n:
+            while p2 < n and chars[p1] == chars[p2]:
+                p2 += 1
+            chars[pw] = chars[p1]
+            pw += 1
+            length = p2 - p1
+            if length > 1:
+                str_length = str(length)
+                for c in str_length:
+                    chars[pw] = c
+                    pw += 1
+            p1 = p2
+        return pw
 ```
 
 #### [6. Z 字形变换](https://leetcode-cn.com/problems/zigzag-conversion/)
@@ -14577,6 +14644,34 @@ logn + logm 两次二分查找, 注意边界
 ```python
 class Solution:
     def searchMatrix(self, matrix: List[List[int]], target: int) -> bool:
+        def search (matrix, left, right, target, index, func):
+            while left < right:
+                mid = left + (right - left) // 2
+                if func(matrix, mid, index, target):
+                    left = mid + 1
+                else:
+                    right = mid
+            return left
+
+        n = len(matrix)
+        if n == 0:
+            return False
+        m = len(matrix[0])
+        if m == 0:
+            return False
+        func1 = lambda matrix, m, col, t: matrix[m][col] < target
+        func2 = lambda matrix, m, row, t: matrix[row][m] < target  
+        row = search(matrix, 0, n, target, 0, func=func1)
+        if row < n and matrix[row][0] == target:
+            return True
+        col = search(matrix, 0, m, target, row-1, func=func2)
+        if col == m:
+            return False  
+        return matrix[row-1][col] == target
+```
+```python
+class Solution:
+    def searchMatrix(self, matrix: List[List[int]], target: int) -> bool:
         t, b = 0, len(matrix)
         if b == 0: return False
         l, r = 0, len(matrix[0])
@@ -15064,8 +15159,8 @@ class LRUCache:
 
 get操作：如果key在cache中，取出node，freq+1后放入哈希表2 key为freq+1的DLinkedList头部，同时维护min_freq
 put操作：如果key已存在，更新node.val，freq+1后放入哈希表2 key为freq+1的DLinkedList头部，同时维护min_freq
-        如果key不存在，新建node，放入哈希表2 key为1的DLinkedList头部，更新min_freq为1。
-        如果超过容量，移除哈希表2 min_freq对应DLinkedList中的尾节点，并移除哈希表1中key对应的节点。
+如果key不存在，新建node，放入哈希表2 key为1的DLinkedList头部，更新min_freq为1。
+如果超过容量，移除哈希表2 min_freq对应DLinkedList中的尾节点，并移除哈希表1中key对应的节点。
 ```python
 class Node:
     def __init__(self, key=-1, val=-1):
@@ -15599,25 +15694,17 @@ public:
 ```python
 class Solution:
     def findRepeatNumber(self, nums: List[int]) -> int:
-        """时间, 空间O(n)"""
-        visited = set()
-        for num in nums:
-            if num in visited:
-                return num
-            else:
-                visited.add(num)
-        return -1
-
-        """利用条件数字在[0,n-1], 利用哈希冲突的思想, 时间O(n), 空间O(1)"""
-        n = len(nums)
-        for i in range(n):
-            index = nums[i]
-            if i == nums[i]:
+        index = 0
+        while index < len(nums):
+            # 如果数字本来就在正确位置，跳过
+            if nums[index] == index:
+                index += 1
                 continue
-            if nums[i] != nums[index]:
-                nums[i], nums[index] = nums[index], nums[i]
-            else:
-                return nums[i]
+            # 如果数字不在本来位置&本来位置就是该数字，说明重复了
+            if nums[nums[index]] == nums[index]:
+                return nums[index]
+            # 只要不命中上面两个条件，就一直交换
+            nums[nums[index]], nums[index] = nums[index], nums[nums[index]]
         return -1
 ```
 ```cpp
@@ -16956,27 +17043,23 @@ class Solution:
 ```
 
 #### [剑指 Offer 61. 扑克牌中的顺子](https://leetcode-cn.com/problems/bu-ke-pai-zhong-de-shun-zi-lcof/)
+遍历保证非0牌不重复，然后max-min<5的花剩下的可以由0补全
 ```python
 class Solution:
     def isStraight(self, nums: List[int]) -> bool:
-        """sort"""
-        joker = 0
-        nums.sort() # 数组排序
-        for i in range(4):
-            if nums[i] == 0: joker += 1 # 统计大小王数量
-            elif nums[i] == nums[i + 1]: return False # 若有重复，提前返回 false
-        return nums[4] - nums[joker] < 5 # 最大牌 - 最小牌 < 5 则可构成顺子
-
-        """hashmap"""
-        repeat = set()
-        ma, mi = 0, 14
-        for num in nums:
-            if num == 0: continue # 跳过大小王
-            ma = max(ma, num) # 最大牌
-            mi = min(mi, num) # 最小牌
-            if num in repeat: return False # 若有重复，提前返回 false
-            repeat.add(num) # 添加牌至 Set
-        return ma - mi < 5 # 最大牌 - 最小牌 < 5 则可构成顺子
+        n = len(nums)
+        max_val = 0
+        min_val = 13
+        visited = set()
+        for i in range(n):
+            if nums[i] == 0:
+                continue
+            if nums[i] in visited:
+                return False
+            visited.add(nums[i])
+            max_val = max(max_val, nums[i])
+            min_val = min(min_val, nums[i])
+        return max_val - min_val < 5
 ```
 
 #### [剑指 Offer 62. 圆圈中最后剩下的数字](https://leetcode-cn.com/problems/yuan-quan-zhong-zui-hou-sheng-xia-de-shu-zi-lcof/)
@@ -18179,34 +18262,123 @@ class Solution:
 ```
 
 #### [224. 基本计算器](https://leetcode-cn.com/problems/basic-calculator/)
+#### [227. 基本计算器 II](https://leetcode-cn.com/problems/basic-calculator-ii/)
+通用解法， 运算符OP 数字NUM 双栈
 ```python
 class Solution:
     def calculate(self, s: str) -> int:
-        ops = [1]
-        sign = 1
-        ret = 0
+        def calc(num_stack, ops_stack):
+            if len(num_stack) == 0 or len(num_stack) < 2:
+                return
+            if len(ops_stack) == 0:
+                return
+            b = num_stack.pop()
+            a = num_stack.pop()
+            op = ops_stack.pop()
+            ans = 0
+            if op == '+':
+                ans = a + b
+            elif op == '-':
+                ans = a - b
+            elif op == '*':
+                ans = a * b
+            elif op == '/':
+                ans = a // b
+            elif op == '^':
+                ans = a^b
+            elif op == '%':
+                ans = a % b
+            num_stack.append(ans)
+
+        priority = {
+            '+': 1,
+            '-': 1,
+            '*': 2,
+            '/': 2,
+            '%': 2,
+            '^': 3
+        }
+        s = s.strip()
+        s_list = list(s)
         n = len(s)
+        num_stack = [0]
+        ops_stack = []
         i = 0
         while i < n:
-            if s[i] == ' ':
+            char = s_list[i]
+            if char == ' ':
                 i += 1
-            elif s[i] == '+':
-                sign = ops[-1]
-                i += 1
-            elif s[i] == '-':
-                sign = -ops[-1]
-                i += 1
-            elif s[i] == '(':
-                ops.append(sign)
-                i += 1
-            elif s[i] == ')':
-                ops.pop()
-                i += 1
+                continue
+            if char == '(':
+                ops_stack.append(char)
+            elif char ==')':
+                while len(ops_stack) > 0:
+                    if ops_stack[-1] != '(':
+                        calc(num_stack, ops_stack)
+                    else:
+                        ops_stack.pop()
+                        break
             else:
-                num = 0
-                while i < n and s[i].isdigit():
-                    num = num * 10 + ord(s[i]) - ord('0')
-                    i += 1
-                ret += num * sign
-        return ret
+                if char.isdigit():
+                    num = 0
+                    index = i
+                    while index < n and s_list[index].isdigit():
+                        num = num * 10 + int(s_list[index])
+                        index += 1
+                    num_stack.append(num)
+                    i = index - 1
+                else:
+                    if (i > 0 and (s_list[i-1] == '(' or s_list[i-1] == '+' or s_list[i-1]=='-')):
+                        num_stack.append(0)
+                    while len(ops_stack) > 0 and ops_stack[-1] != '(':
+                        prev = ops_stack[-1]
+                        if priority[prev] >= priority[char]:
+                            calc(num_stack, ops_stack)
+                        else:
+                            break
+                    ops_stack.append(char)
+            i += 1
+        while len(ops_stack) > 0:
+            calc(num_stack, ops_stack)
+        return num_stack[-1]
+```
+#### [482. 密钥格式化](https://leetcode-cn.com/problems/license-key-formatting/)
+```python
+class Solution:
+    def licenseKeyFormatting(self, s: str, k: int) -> str:
+        n = len(s)
+        result = []
+        cnt = 0
+        for i in range(n-1, -1, -1):
+            if s[i] == '-':
+                continue
+            result.append(s[i].upper())
+            cnt += 1
+            if cnt % k == 0:
+                result.append('-')
+        ans = "".join(result[::-1])
+        return ans[1:] if len(ans) > 0 and ans[0] == '-' else ans
+```
+
+#### [135. 分发糖果](https://leetcode-cn.com/problems/candy/)
+```python
+class Solution:
+    def candy(self, ratings: List[int]) -> int:
+        n = len(ratings)
+        # 保证每个人至少有一个
+        left = [1 for i in range(n)]
+        right = [1 for i in range(n)]
+        # 从左到右保证满足评分高，糖果多
+        for i in range(n-1):
+            if ratings[i] < ratings[i+1]:
+                left[i+1] = left[i] + 1
+        # 从右到左保证满足评分高，糖果多
+        for i in range(n-1, 0, -1):
+            if ratings[i] < ratings[i-1]:
+                right[i-1] = right[i] + 1
+        # 同时满足左向和右向，取max
+        cnt = 0
+        for i in range(n):
+            cnt += max(left[i], right[i])
+        return cnt
 ```

@@ -30,8 +30,6 @@ v3: 只用wh用的 l2 loss, 其他均为sigmoid BCE loss, 引入了bbox scale lo
 3. SSH layer, 融合3x3, 5x5, 7x7的特征,实际实现中用的两次,三次卷积代替5x5,7x7卷积
 4. cls loss采用sampling的办法, 取topk个CE loss
 
-
-
 ## 目标检测
 目标检测的目的是输出待检测物体bbox的位置(x1,x2,y1,y2)及其分类。
 ![20200420_170516_55](assets/20200420_170516_55.png)
@@ -162,7 +160,7 @@ torch.nn.init.constant_(layer.bias, 0)
 ```python
 xy_loss = object_mask * box_loss_scale * K.binary_crossentropy(raw_true_xy, raw_pred[...,0:2], from_logits=True)
 wh_loss = object_mask * box_loss_scale * 0.5 * K.square(raw_true_wh-raw_pred[...,2:4])
-confidence_loss = object_mask * K.binary_crossentropy(object_mask, raw_pred[...,4:5], from_logits=True)+ \
+confidence_loss = object_mask * K.binary_crossentropy(object_mask, raw_pred[...,4:5], from_logits=True) + \
     (1-object_mask) * K.binary_crossentropy(object_mask, raw_pred[...,4:5], from_logits=True) * ignore_mask
 class_loss = object_mask * K.binary_crossentropy(true_class_probs, raw_pred[...,5:], from_logits=True)
 loss = xy_loss + wh_loss + confidence_loss + class_loss

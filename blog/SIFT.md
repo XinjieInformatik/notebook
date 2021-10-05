@@ -1,6 +1,7 @@
 # SIFT
 整理下 Scale Invariant Feature Transform (SIFT)
 论文: https://www.cs.ubc.ca/~lowe/papers/ijcv04.pdf
+
 ## SIFT 算法流程
 1. 尺度空间极值检测
 不同高斯核sigma滤波，构建不同模糊程度的图像金字塔.对相邻层求差分.如果该点灰度值大于或小于周围全部26个点,则定义该点为关键点.
