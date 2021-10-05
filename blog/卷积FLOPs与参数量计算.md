@@ -109,6 +109,7 @@ def conv_forward(feature, filter, bias, conv_param):
     cache = (feature, filter, bias, conv_param)
     return feature_out, cache
 ```
+### 卷积优化
 ```python
 feature_ori = np.zeros((Ho, Wo, 3))
 feature = np.zeros((Ho+2*p, Wo+2*p, 3))
