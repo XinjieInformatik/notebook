@@ -46,9 +46,20 @@ MSE, MAE, SMOOTH L1, CE, Hinge Loss
 - batch norm: channel 维度 norm
 - layer norm: sample 维度 norm
 - instance norm: channel & sample 维度 norm
-- group norm: sample 维度 & channel分group norm 
+- group norm: sample 维度 & channel分group norm
 
 ![20211006_185932_92](assets/20211006_185932_92.png)
+
+#### nms与soft nms区别
+NMS删除IOU大于阈值的其他检测框，而Soft-NMS通过iou得到权重，来降低其他检测框原有的置信度。对于有重叠的框，iou越大，置信度衰减越严重。
+
+#### GIOU
+bbox回归中常用L1,L2loss，自然可以想到用评估指标iou本身作为距离函数，iou本身还有个问题就是当A，B没有交集时候，iou=0，没办法衡量他们之间到达相距多远，因此GIoU中引入了C。（A，B是两个检测框矩形，C是A，B的最小包围框）
+
+![20211008_000348_24](assets/20211008_000348_24.png)
+$$ IoU=\frac{|A \cap B|}{|A \cup B|} $$
+$$ GIoU=IoU-\frac{|C - A \cup B|}{|C|} $$
+$$ GIoU_{loss} = 1 - GIoU $$
 
 #### 特征工程
 https://www.zhihu.com/question/29316149
