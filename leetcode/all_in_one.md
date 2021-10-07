@@ -1481,6 +1481,34 @@ class Solution:
 
         return len(dp)
 ```
+#### [673. 最长递增子序列的个数](https://leetcode-cn.com/problems/number-of-longest-increasing-subsequence/)
+给定一个未排序的整数数组，找到最长递增子序列的个数。
+```python
+class Solution:
+    def findNumberOfLIS(self, nums: List[int]) -> int:
+        """dp[i]以nums[i]结尾的最长上升子序列长度，
+           cnt[i]以nums[i]结尾的最长上升子序列个数，
+           状态转移：dp[i] = max(dp[j]) + 1 """
+        n, max_len, ans = len(nums), 0, 0
+        dp = [0] * n
+        cnt = [0] * n
+        for i, x in enumerate(nums):
+            dp[i] = 1
+            cnt[i] = 1
+            for j in range(i):
+                if x > nums[j]:
+                    if dp[j] + 1 > dp[i]:
+                        dp[i] = dp[j] + 1
+                        cnt[i] = cnt[j]  # 重置计数
+                    elif dp[j] + 1 == dp[i]:
+                        cnt[i] += cnt[j]
+            if dp[i] > max_len:
+                max_len = dp[i]
+                ans = cnt[i]  # 重置计数
+            elif dp[i] == max_len:
+                ans += cnt[i]
+        return ans
+```
 
 #### [674. 最长连续递增序列](https://leetcode-cn.com/problems/longest-continuous-increasing-subsequence/)
 ```
@@ -2321,10 +2349,12 @@ class Solution:
             if comsum in prefix:
                 if i - prefix[comsum] >= 2:
                     return True
+            # 注意：如果comsum已经出现过在了就不用再更新index了
             else:
                 prefix[comsum] = i
         return False
 ```
+
 #### [1109. 航班预订统计](https://leetcode-cn.com/problems/corporate-flight-bookings/)
 巧妙的前缀和, 构造一个prefix在头和尾部分别加上减去val, 然后求前缀和
 ```python
@@ -2575,23 +2605,24 @@ class Solution:
 
 ### 滑动窗口
 #### [3. 无重复字符的最长子串](https://leetcode-cn.com/problems/longest-substring-without-repeating-characters/)
+不重复字符的最长子串
 ```python
 class Solution:
     def lengthOfLongestSubstring(self, s: str) -> int:
         window = set()
-        left = 0
+        l = 0
         n = len(s)
-        max_len = 0
-        for right in range(n):
-            if s[right] not in window:
-                window.add(s[right])
-                max_len = max(max_len, right-left+1)
+        ans = 0
+        for r in range(n):
+            if s[r] not in window:
+                window.add(s[r])
+                ans = max(ans, r-l+1)
             else:
-                while s[left] != s[right]:
-                    window.remove(s[left])
-                    left += 1
-                left += 1
-        return max_len
+                while s[r] in window:
+                    window.remove(s[l])
+                    l += 1
+                window.add(s[r])
+        return ans
 ```
 ```cpp
 class Solution {
@@ -4091,6 +4122,22 @@ class Solution:
                 nums[l] = nums[r]
         return l+1
 ```
+三指针模拟法 pr/index 读指针和index负责循环，pw负责写
+```python
+class Solution:
+    def removeDuplicates(self, nums: List[int]) -> int:
+        pw, pr, index = 0, 0, 0
+        n = len(nums)
+        while index < n:
+            pr = index
+            while pr < n and nums[pr] == nums[index]:
+                pr += 1
+            nums[pw] = nums[index]
+            pw += 1
+            index = pr
+        return pw
+```
+
 ##### [80. 删除排序数组中的重复项 II](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array-ii/)
 该解法可拓展为删除有序数组的k重复项，同样可解决 leetcode 26。
 
@@ -4105,6 +4152,24 @@ class Solution:
                 nums[i] = num
                 i += 1
         return i
+```
+三指针模拟法, 注意pw要一路写
+```python
+class Solution:
+    def removeDuplicates(self, nums: List[int]) -> int:
+        pw, pr, index = 0, 0, 0
+        n = len(nums)
+        while index < n:
+            pr = index
+            cnt = 0
+            while pr < n and nums[pr] == nums[index]:
+                pr += 1
+                cnt += 1
+            for i in range(pw, pw+min(cnt,2)):
+                nums[pw] = nums[index]
+                pw += 1
+            index = pr
+        return pw
 ```
 ##### [189. 旋转数组](https://leetcode-cn.com/problems/rotate-array/)
 ```python
@@ -10205,7 +10270,7 @@ public:
 
 #### [96. 不同的二叉搜索树](https://leetcode-cn.com/problems/unique-binary-search-trees/)
 给定一个整数 n，求以 1 ... n 为节点组成的二叉搜索树有多少种？
-
+二叉搜索树的个数
 ![20200512_202526_67](assets/20200512_202526_67.png)
 相同长度的序列具有相同数目的二叉搜索树
 ![20200512_202604_95](assets/20200512_202604_95.png)
@@ -10708,7 +10773,7 @@ public:
 ```
 .
 #### [295. 数据流的中位数](https://leetcode-cn.com/problems/find-median-from-data-stream/)
-维护1个大顶堆（小于中位数的数），1个小顶堆（大于中位数的数），保持大顶堆大小 == 小顶堆 or 大顶堆 == 小顶堆+1.
+维护1个大顶堆（小于中位数的数），1个小顶堆（大于中位数的数）。新进来的数如果小于大顶堆堆顶，入大顶堆，否则金小顶堆。通过heappop保持大顶堆大小 == 小顶堆 or 大顶堆 == 小顶堆+1.
 注意heapq默认是小顶堆，构造大顶堆时添加负号，取数时候均要记得还原。
 
 ```python
@@ -13700,7 +13765,22 @@ class Solution:
             index = p
         return result
 ```
-### 次方
+
+#### [1893. 检查是否区域内所有整数都被覆盖](https://leetcode-cn.com/problems/check-if-all-the-integers-in-a-range-are-covered/)
+```python
+class Solution:
+    def isCovered(self, ranges: List[List[int]], left: int, right: int) -> bool:
+        ranges = sorted(ranges, key=lambda x:x[0])
+        n = len(ranges)
+        for i in range(n):
+            while left >= ranges[i][0] and left <= ranges[i][1]:
+                left += 1
+                if left == right + 1:
+                    return True
+        return False
+```
+
+#### 次方
 ```python
 class Solution:
     def myPow(self, x: float, n: int) -> float:
@@ -15000,6 +15080,7 @@ class Solution:
             n1, n2 = len(left), len(right)
             p1, p2 = 0, 0
             while p1 < n1 or p2 < n2:
+                # 谁放在前面整体小，先append谁
                 if p2 == n2 or (p1 < n1 and left[p1] + right[p2] < right[p2] + left[p1]):
                     result.append(left[p1])
                     p1 += 1
@@ -15077,7 +15158,8 @@ public:
 ```
 
 #### [146. LRU缓存机制](https://leetcode-cn.com/problems/lru-cache/solution/lruhuan-cun-ji-zhi-by-leetcode-solution/)
-用 双端链表节点DLinkedNode，哈希表(key:node) 实现 LRU。
+最近最少使用的缓存机制
+用双端链表节点DLinkedNode，哈希表(key:node) 实现 LRU。
 如果超出容量，移除尾部节点，如果访问该节点，将该节点移动至头部。
 - DLinkedNode 是每个(key:value)的基本单元，同时具有前后指针，方便在LRU中的移动。
 - 哈希表(key:node) 实现cache通过key访问node的机制。
@@ -15150,8 +15232,9 @@ class LRUCache:
 ```
 
 #### [460. LFU缓存](https://leetcode-cn.com/problems/lfu-cache/)
-用 带freq值的节点Node，双端链表DLinkedList，哈希表1(key:node)，哈希表2(freq:DLinkedList)，维护min_freq 实现 LFU。
-如果超出容量，移除min_freq对应双端链表的尾节点。如果访问，对应node freq+1，并更新其在哈希表2中的位置。
+最不经常使用缓存
+用带freq值的节点Node，双端链表DLinkedList，哈希表1(key:node)，哈希表2(freq:DLinkedList)，维护min_freq 实现 LFU。
+如果超出容量，移除min_freq对应双端链表的尾节点（使最不经常使用的项无效，当两个或更多个键具有相同使用频率时，应该去除最近最久未使用的键）。如果访问，对应node freq+1，并更新其在哈希表2中的位置。
 - class Node 是每个(key:value)的基本单元，同时具有freq与前后指针。
 - class DLinkedList 实现 addToHead, removeNode, removeTail 操作，类似LRU管理node节点，使得最经常访问的node在头部，不经常在尾部。
 - 哈希表1(key:node) 实现cache通过key访问node的机制。
@@ -16945,6 +17028,7 @@ class Solution:
 ```
 
 #### [剑指 Offer 49. 丑数](https://leetcode-cn.com/problems/chou-shu-lcof/)
+#### [264. 丑数 II](https://leetcode-cn.com/problems/ugly-number-ii/)
 ```
 只包含质因子 2、3 和 5 的数称作丑数（Ugly Number）。求按从小到大的顺序的第 n 个丑数。
 ```
@@ -18381,4 +18465,54 @@ class Solution:
         for i in range(n):
             cnt += max(left[i], right[i])
         return cnt
+```
+
+#### [400. 第 N 位数字](https://leetcode-cn.com/problems/nth-digit/)
+```python
+class Solution:
+    def findNthDigit(self, n: int) -> int:
+        section_cnt = 9     # 当前的数字长度，区间的数字个数
+        num_len = 1         # 数字的长度
+        while section_cnt * num_len < n:
+            n -= section_cnt * num_len  # 减去当前这个长度所占的位数
+            num_len += 1
+            section_cnt *= 10
+        # print(n, num_len, section_cnt)
+        section_cnt //= 9       # 比如是10000
+        target_num = section_cnt + (n - 1) // num_len   # 第n位所在的那个数字
+        idx = (n - 1) % num_len                         # 第n为是在那个数字的第idx位
+        # print(section_cnt, target_num, idx)
+        return int(str(target_num)[idx])
+```
+
+#### [8. 字符串转换整数 (atoi)](https://leetcode-cn.com/problems/string-to-integer-atoi/)
+```python
+class Solution:
+    def myAtoi(self, s: str) -> int:
+        num = ''
+        s = s.strip()
+        n = len(s)
+        if n == 0:
+            return 0
+        sign = ''
+        for i in range(n):
+            if s[i] == '+' or s[i] == '-':
+                # 如果sign出现过，并且num还是空
+                if sign and len(num) == 0:
+                    return 0
+                # 如果sign出现前已有num
+                if len(num) > 0:
+                    break   
+                sign = s[i]
+            elif s[i].isdigit():
+                num += s[i]
+            else:
+                break  
+        if len(num) == 0:
+            return 0
+        num = sign + num  
+        res = int(num) if len(num) > 0 else 0
+        res = (1<<31)-1 if res >= (1<<31) else res
+        res = -(1<<31) if res < -(1<<31) else res
+        return res
 ```

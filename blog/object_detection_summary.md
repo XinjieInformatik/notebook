@@ -39,8 +39,7 @@ v3: 只用wh用的 l2 loss, 其他均为sigmoid BCE loss, 引入了bbox scale lo
 - Anchor Based Network：Faster-RCNN, RetinaNet, SSD,
 - Anchor Free Network: CornetNet, CenterNet, FCOS ...
 
-2018年开始有许多Anchor Free的论文，与anchor based网络相比，Anchor free 网络更简单，
-真值GT的定义更直接。但是基于个人实际经验(在CenterNet上的实验)，anchor free的网络在
+2018年开始有许多Anchor Free的论文，与anchor based网络相比，Anchor free 网络更简单，真值GT的定义更直接。但是基于个人实际经验(在CenterNet上的实验)，anchor free的网络在
 test set 与 train set有较明显的domain gap的时候表现不如anchor based的网络稳定，
 False positive 的检测偏多。
 

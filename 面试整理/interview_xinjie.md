@@ -39,6 +39,16 @@ $$ C=sum(A^2,axis=1)∗ones((1,3))+ones((2,1))∗sum(B^2,axis=1)^T − 2AB^T $$
 https://zhuanlan.zhihu.com/p/77686118
 MSE, MAE, SMOOTH L1, CE, Hinge Loss
 
+#### dropout
+训练时留下的神经元除以(1 - dropout rate)，预测时不做处理
+
+#### batch norm, layer norm, instance norm, group norm
+- batch norm: channel 维度 norm
+- layer norm: sample 维度 norm
+- instance norm: channel & sample 维度 norm
+- group norm: sample 维度 & channel分group norm 
+
+![20211006_185932_92](assets/20211006_185932_92.png)
 
 #### 特征工程
 https://www.zhihu.com/question/29316149
@@ -106,7 +116,7 @@ U是一个𝑚×𝑚的矩阵，Σ是一个𝑚×𝑛的矩阵，除了主对角
 在PCA降维中，右奇异矩阵可以用于列数即特征维度的压缩.PCA中需要找到样本协方差矩阵$𝑋^𝑇𝑋$的最大的d个特征向量，然后用这最大的d个特征向量张成的矩阵来做低维投影降维。多样本多特征数的时候，计算量很大。
 注意这个过程其实就是SVD中求解右奇异矩阵.有一些SVD的实现算法不用求出协方差矩阵$𝑋^𝑇𝑋$，也能求出右奇异矩阵𝑉。也就是说，PCA算法可以不用做特征分解，而是做SVD来完成。这个方法在样本量很大的时候很有效。实际上，scikit-learn的PCA算法的背后真正的实现就是用的SVD，而不是我们我们认为的暴力特征分解。
 另一方面，注意到PCA仅仅使用了我们SVD的右奇异矩阵V，没有使用左奇异矩阵U，那么左奇异矩阵有什么用呢？假设我们的样本是𝑚×𝑛的矩阵X，如果我们通过SVD找到了矩阵$𝑋^𝑇𝑋$最大的d个特征向量张成的𝑚×𝑑维矩阵U，则我们如果进行如下处理：
-$$ 𝑋c_{𝑑×𝑛}=𝑈^𝑇_{𝑑×𝑚}𝑋_{𝑚×𝑛} $$
+$$ Xc_{𝑑×𝑛}=𝑈^𝑇_{𝑑×𝑚}𝑋_{𝑚×𝑛} $$
 可以得到一个𝑑×𝑛的矩阵Xc,这个矩阵和我们原来的𝑚×𝑛维样本矩阵X相比，行数从m减到了d，可见对行数进行了压缩。也就是说，左奇异矩阵可以用于行数的压缩。相对的，右奇异矩阵可以用于列数即特征维度的压缩，也就是我们的PCA降维。　　　
 
 #### 拟牛顿法的原理
@@ -602,6 +612,7 @@ Spatial Pyramid Pooling（空间金字塔池化）
 #### ROI Align
 解决ROI Pooling中的两次量化，第一次是将原图的候选框映射到特征图上时，会除以32，得到一个浮点数，此时会进行取整操作。第二次是在pooling时，将特征图映射为7*7的大小，此时也是除不尽的，要进行取整操作。就会对边框位置产生影响。
 ROI Align通过对浮点数的位置进行双线性插值，得到这个点的值。对于pooling中的每个格子，取固定的4个点进行双线性插值，然后取maxpooling，作为这个格子的输出。
+https://zhuanlan.zhihu.com/p/161540817
 
 #### rpn的loss
 分类的loss为交叉熵cross_entroy,回归的loss为smooth L1 loss.
@@ -619,7 +630,8 @@ Smooth L1完美地避开了 L1 和 L2 损失的缺陷，在 损失 较小时，�
 权值共享大大降低了网络的训练难度，一个Filter只提取一个特征，在整个图片（或者语音／文本） 中进行卷积
 池化操作与多层次结构一起，实现了数据的降维，将低层次的局部特征组合成为较高层次的特征，从而对整个图片进行表示。
 
-#### 解决梯度消失和梯度爆炸问题，常用的有以下几个方案：
+#### 解决梯度消失和梯度爆炸问题
+常用的有以下几个方案：
 预训练模型 + 微调
 梯度剪切 + 正则化
 relu、leakrelu、relu等激活函数
@@ -635,7 +647,7 @@ CNN中的残差结构
 True Positive(真正例, TP)：将正类预测为正类数.
 True Negative(真负例, TN)：将负类预测为负类数.
 False Positive(假正例, FP)：将负类预测为正类数 → 误报 (Type I error).
-False Negative(假负例子, FN)：将正类预测为负类数 → 漏报 (Type II error).
+False Negative(假负例, FN)：将正类预测为负类数 → 漏报 (Type II error).
 
 #### mAP指标解释
 precision = TP / (TP+FP)
