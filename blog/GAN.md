@@ -6,6 +6,7 @@ https://arxiv.org/pdf/1806.02920.pdf
 ## 基础知识
 https://www.bilibili.com/video/BV1eE411g7xc?p=3
 
+![20211008_115324_66](assets/20211008_115324_66.png)
 
 Pg(x ; theta_g)
 
