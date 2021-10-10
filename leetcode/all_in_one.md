@@ -2138,18 +2138,21 @@ class Solution:
         return result
 ```
 #### [503. 下一个更大元素 II](https://leetcode-cn.com/problems/next-greater-element-ii/)
+1. nums扩容两倍，因为是循环数组
+2. stack存储单调递减栈的index
+3. 当前最新num如果大于之前index对应的值，弹出并给result赋值
 ```python
 class Solution:
     def nextGreaterElements(self, nums: List[int]) -> List[int]:
         stack = []
-        n0 = len(nums)
-        result = [-1 for i in range(n0)]
-        nums = nums * 2
-        for i, num in enumerate(nums):
-            while stack and num > nums[stack[-1]]:
+        n = len(nums)
+        result = [-1 for i in range(n)]
+        nums = nums + nums
+        for i in range(len(nums)):
+            while len(stack)>0 and nums[i] > nums[stack[-1]]:
                 index = stack.pop()
-                if index < n0:
-                    result[index] = num
+                if index < n:
+                    result[index] = nums[i]
             stack.append(i)
         return result
 ```
@@ -4308,27 +4311,47 @@ class Solution:
 ```
 
 ##### [134. 加油站](https://leetcode-cn.com/problems/gas-station/)
-1. if sum of gas is more than sum of cost, then there must be a solution.
-2. The tank should never be negative, so restart whenever there is a negative number.
+核心思路：如果SUM(RES) >= 0，那么一定有解，再遍历一遍去找这个解即可
 ```python
 class Solution:
     def canCompleteCircuit(self, gas: List[int], cost: List[int]) -> int:
         n = len(gas)
-
-        total_tank, curr_tank = 0, 0
-        starting_station = 0
+        res = []
         for i in range(n):
-            total_tank += gas[i] - cost[i]
-            curr_tank += gas[i] - cost[i]
-            # If one couldn't get here,
-            if curr_tank < 0:
-                # Pick up the next station as the starting one.
-                starting_station = i + 1
-                # Start with an empty tank.
-                curr_tank = 0
-
-        return starting_station if total_tank >= 0 else -1
+            res.append(gas[i]-cost[i])
+        total = sum(res)
+        if total < 0:
+            return -1
+        index = 0
+        curr = 0
+        for i in range(n):
+            curr += res[i]
+            if curr < 0:
+                index = i + 1
+                curr = 0
+        return index
 ```
+```python
+class Solution:
+    def canCompleteCircuit(self, gas: List[int], cost: List[int]) -> int:
+        n = len(gas)
+        res = []
+        for i in range(n):
+            res.append(gas[i]-cost[i])
+        for index in range(n):
+            if res[index] >= 0:
+                total = res[index]
+                nxt = (index + 1) % n
+                while nxt != index and total >= 0:
+                    total += res[nxt]
+                    nxt = (nxt + 1) % n
+                if nxt == index and total >= 0:
+                    return index
+        return -1
+```
+
+
+
 
 ##### [118. 杨辉三角](https://leetcode-cn.com/problems/pascals-triangle/)
 ```python
@@ -5671,29 +5694,22 @@ class Solution:
 
 #### [125. 验证回文串](https://leetcode-cn.com/problems/valid-palindrome/)
 .isdigit()判断是否是数字 .isalpha()判断是否是字母 .lower()转化为小写 .upper()转化为大写
-中心展开分奇数偶数讨论
+
 ```python
 class Solution:
     def isPalindrome(self, s: str) -> bool:
-        # filter and lower
-        s_new = ""
-        for str_ in s:
-            if str_.isdigit() or str_.isalpha():
-                s_new += str_.lower()
-        # 中心展开
-        center = len(s_new) // 2
-        i = 0
-        while (center+i) < len(s_new):
-            if len(s_new)%2 == 0:
-                if s_new[center-1-i] == s_new[center+i]:
-                    i += 1
-                else:
-                    return False
+        left = 0
+        right = len(s) - 1
+        while left < right:
+            if not(s[left].isdigit() or s[left].isalpha()):
+                left += 1
+            elif not(s[right].isdigit() or s[right].isalpha()):
+                right -= 1
+            elif s[left].lower() == s[right].lower():
+                left += 1
+                right -= 1
             else:
-                if s_new[center-i] == s_new[center+i]:
-                    i += 1
-                else:
-                    return False
+                return False
         return True
 ```
 ```cpp
@@ -8283,6 +8299,8 @@ public:
 ```
 
 #### [160. 相交链表](https://leetcode-cn.com/problems/intersection-of-two-linked-lists/)
+[剑指 Offer 52. 两个链表的第一个公共节点](https://leetcode-cn.com/problems/liang-ge-lian-biao-de-di-yi-ge-gong-gong-jie-dian-lcof/)
+没有公共节点时候，会None == None跳出，return None
 ```python
 class Solution:
     def getIntersectionNode(self, headA: ListNode, headB: ListNode) -> ListNode:
@@ -8291,38 +8309,6 @@ class Solution:
             nodeA = nodeA.next if nodeA else headB
             nodeB = nodeB.next if nodeB else headA
         return nodeA
-```
-```python
-class Solution:
-    def getIntersectionNode(self, headA: ListNode, headB: ListNode) -> ListNode:
-        def forward(node, step):
-            while node:
-                node = node.next
-                step += 1
-            return step
-
-        def forward2(node, step):
-            while step:
-                node = node.next
-                step -= 1
-            return node
-
-        nodeA, nodeB = headA, headB
-        stepA = forward(nodeA, 0)
-        stepB = forward(nodeB, 0)
-        nodeA, nodeB = headB, headA
-
-        if stepA < stepB:
-            nodeA = forward2(nodeA, stepB-stepA)
-        else:
-            nodeB = forward2(nodeB, stepA-stepB)
-
-        while nodeA and nodeB:
-            if nodeA == nodeB:
-                return nodeA
-            nodeA = nodeA.next
-            nodeB = nodeB.next
-        return None
 ```
 #### [21. 合并两个有序链表](https://leetcode-cn.com/problems/merge-two-sorted-lists/)
 ```python
@@ -8459,25 +8445,23 @@ class Solution:
 ```
 
 #### [86. 分隔链表](https://leetcode-cn.com/problems/partition-list/)
-链表partition
+链表partition，链表新建从dummy开始修改地址间的连接是常规操作
 ```python
 class Solution:
     def partition(self, head: ListNode, x: int) -> ListNode:
-        """linkedlist partition"""
-        before_head = dummy_before = ListNode(-1)
-        after_head = dummy_after = ListNode(-1)
-        node = head
-        while node:
-            if node.val < x:
-                dummy_before.next = node
+        dummy_head = dummy_before = ListNode(-1)
+        dummy = dummy_after = ListNode(-1)
+        while head:
+            if head.val < x:
+                dummy_before.next = head
                 dummy_before = dummy_before.next
             else:
-                dummy_after.next = node
+                dummy_after.next = head
                 dummy_after = dummy_after.next
-            node = node.next
-        dummy_before.next = after_head.next
-        dummy_after.next = None # important, end the linkedlist
-        return before_head.next
+            head = head.next
+        dummy_before.next = dummy.next
+        dummy_after.next = None
+        return dummy_head.next
 ```
 ```cpp
 /**
@@ -10687,41 +10671,140 @@ class Solution:
         return ans
 ```
 
+#### [215. 数组中的第K个最大元素](https://leetcode-cn.com/problems/kth-largest-element-in-an-array/)
+```python
+class Solution:
+    def findKthLargest(self, nums: List[int], k: int) -> int:
+        """ 堆排序，k个最大，小顶堆，heapq默认是小顶堆 """
+        def sift_down(arr, root, k):
+            """ root i, l 2i, r 2i+1 """
+            val = arr[root]
+            while root << 1 < k:
+                child = root << 1
+                if child|1 < k and arr[child|1] < arr[child]:
+                    child |= 1
+                if arr[child] < val:
+                    arr[root] = arr[child]
+                    root = child
+                else:
+                    break
+            arr[root] = val
+
+        def sift_up(arr, k):
+            child, val = k-1, arr[k-1]
+            while child > 1 and arr[child>>1] > val:
+                root = child >> 1
+                arr[child] = arr[root]
+                child = root
+            arr[child] = val
+
+        heap = [0]
+        for i in range(k):
+            heap.append(nums[i])
+            sift_up(heap, len(heap))
+        for i in range(k, len(nums)):
+            if nums[i] > heap[1]:
+                heap[1] = nums[i]
+                sift_down(heap, 1, len(heap))
+        return heap[1]
+```
+```python
+        import heapq
+        heap = []
+        for i in range(k):
+            heapq.heappush(heap, nums[i])
+        n = len(nums)
+        for i in range(k, n):
+            if nums[i] > heap[0]:
+                heapq.heappop(heap)
+                heapq.heappush(heap, nums[i])
+        return heap[0]
+```
+2. partition 直到 pivot_index = n-k, 可保证左边均小于pivot, 右边均大于等于pivot
+快速选择可以用于查找中位数，任意第k大的数
+在输出的数组中，pivot_index达到其合适位置。所有小于pivot_index的元素都在其左侧，所有大于或等于的元素都在其右侧。如果是快速排序算法，会在这里递归地对两部分进行快速排序，时间复杂度为 O(NlogN)。快速选择由于知道要找的第 N - k 小的元素在哪部分中，不需要对两部分都做处理，这样就将平均时间复杂度下降到 O(N)。
+3. 注意输入的nums数组是被修改过的
+```python
+class Solution:
+    def findKthLargest(self, nums: List[int], k: int) -> int:
+        import random
+        def qselect(arr, l, r, k_smallest):
+            def partition(arr, l, r):
+                i = random.randint(l, r-1)
+                arr[l], arr[i] = arr[i], arr[l]
+                pivot, val = l, arr[l]
+                for i in range(l+1, r):
+                    if arr[i] < val:
+                        pivot += 1
+                        arr[i], arr[pivot] = arr[pivot], arr[i]
+                arr[l], arr[pivot] = arr[pivot], arr[l]
+                return pivot
+            def partition2(arr, left, right):
+                i = random.randint(left, right-1)
+                arr[left], arr[i] = arr[i], arr[left]
+                val = arr[left]
+                l = left + 1
+                r = right - 1
+                while l <= r:
+                    while l < right and arr[l] <= val:
+                        l += 1
+                    while r > left and arr[r] >= val:
+                        r -= 1
+                    if l < r:
+                        arr[l], arr[r] = arr[r], arr[l]
+                arr[left], arr[r] = arr[r], arr[left]
+                return r
+
+            while l < r:
+                pivot = partition(arr, l, r)
+                if pivot < k_smallest:
+                    l = pivot + 1
+                else:
+                    r = pivot
+            return l
+        n = len(nums)
+        index = qselect(nums, 0, n, n-k)
+        return nums[index]
+```
+
 #### [面试题40. 最小的k个数](https://leetcode-cn.com/problems/zui-xiao-de-kge-shu-lcof/)
 ```python
 class Solution:
     def getLeastNumbers(self, arr: List[int], k: int) -> List[int]:
-        def sift_up(arr, k):
-            new_index, new_val = k-1, arr[k-1]
-            while (new_index>0 and arr[(new_index-1)//2]<new_val):
-                arr[new_index] = arr[(new_index-1)//2]
-                new_index = (new_index-1)//2
-            arr[new_index] = new_val
-
+        """最小k个数大顶堆，最大k个数小顶堆，heapq默认是小顶堆"""
         def sift_down(arr, root, k):
-            root_val = arr[root]
-            while (2*root+1 < k):
-                child = 2*root+1
-                if child+1 < k and arr[child] < arr[child+1]:
-                    child += 1
-                if root_val < arr[child]:
+            """ root i, l 2i, r 2i+1 """
+            val = arr[root]
+            while root << 1 < k:
+                child = root << 1
+                if child|1 < k and arr[child|1] > arr[child]:
+                    child |= 1
+                if arr[child] > val:
                     arr[root] = arr[child]
                     root = child
-                else: break
-            arr[root] = root_val
+                else:
+                    break
+            arr[root] = val
 
-        if k == 0: return []
-        max_heap = []
+        def sift_up(arr, k):
+            child, val = k-1, arr[k-1]
+            while child > 1 and arr[child>>1] < val:
+                root = child >> 1
+                arr[child] = arr[root]
+                child = root
+            arr[child] = val
+
+        if k == 0:
+            return []
+        heap = [0]
         for i in range(k):
-            max_heap.append(arr[i])
-            sift_up(max_heap, i+1)
-
-        for item in arr[k:]:
-            if item < max_heap[0]:
-                max_heap[0] = item
-                sift_down(max_heap, 0, k)
-
-        return max_heap
+            heap.append(arr[i])
+            sift_up(heap, len(heap))
+        for i in range(k, len(arr)):
+            if arr[i] < heap[1]:
+                heap[1] = arr[i]
+                sift_down(heap, 1, len(heap))
+        return heap[1:]
 ```
 ```cpp
 class Solution {
@@ -10878,106 +10961,6 @@ class MedianFinder:
         median = self.max_heap.heap[0] if len(self.max_heap) > len(self.min_heap) else (self.max_heap.heap[0]+self.min_heap.heap[0])/2
         return median
 ```
-
-#### [215. 数组中的第K个最大元素](https://leetcode-cn.com/problems/kth-largest-element-in-an-array/)
-1. 规模为k的小顶堆
-```python
-class Solution:
-    def findKthLargest(self, nums: List[int], k: int) -> int:
-        def sift_down(arr, root, k):
-            """ root i, l 2i, r 2i+1 """
-            val = arr[root]
-            while root << 1 < k:
-                child = root << 1
-                if child|1 < k and arr[child|1] < arr[child]:
-                    child |= 1
-                if arr[child] < val:
-                    arr[root] = arr[child]
-                    root = child
-                else:
-                    break
-            arr[root] = val
-
-        def sift_up(arr, k):
-            child, val = k-1, arr[k-1]
-            while child > 1 and arr[child>>1] > val:
-                root = child >> 1
-                arr[child] = arr[root]
-                child = root
-            arr[child] = val
-
-        heap = [0]
-        for i in range(k):
-            heap.append(nums[i])
-            sift_up(heap, len(heap))
-        for i in range(k, len(nums)):
-            if nums[i] > heap[1]:
-                heap[1] = nums[i]
-                sift_down(heap, 1, len(heap))
-        return heap[1]
-```
-```python
-        import heapq
-        heap = []
-        for i in range(k):
-            heapq.heappush(heap, nums[i])
-        n = len(nums)
-        for i in range(k, n):
-            if nums[i] > heap[0]:
-                heapq.heappop(heap)
-                heapq.heappush(heap, nums[i])
-        return heap[0]
-```
-2. partition 直到 pivot_index = n-k, 可保证左边均小于pivot, 右边均大于等于pivot
-快速选择可以用于查找中位数，任意第k大的数
-在输出的数组中，pivot_index达到其合适位置。所有小于pivot_index的元素都在其左侧，所有大于或等于的元素都在其右侧。如果是快速排序算法，会在这里递归地对两部分进行快速排序，时间复杂度为 O(NlogN)。快速选择由于知道要找的第 N - k 小的元素在哪部分中，不需要对两部分都做处理，这样就将平均时间复杂度下降到 O(N)。
-3. 注意输入的nums数组是被修改过的
-```python
-class Solution:
-    def findKthLargest(self, nums: List[int], k: int) -> int:
-        import random
-        def qselect(arr, l, r, k_smallest):
-            def partition(arr, l, r):
-                i = random.randint(l, r-1)
-                arr[l], arr[i] = arr[i], arr[l]
-                pivot, val = l, arr[l]
-                for i in range(l+1, r):
-                    if arr[i] < val:
-                        pivot += 1
-                        arr[i], arr[pivot] = arr[pivot], arr[i]
-                arr[l], arr[pivot] = arr[pivot], arr[l]
-                return pivot
-            def partition2(arr, left, right):
-                i = random.randint(left, right-1)
-                arr[left], arr[i] = arr[i], arr[left]
-                val = arr[left]
-                l = left + 1
-                r = right - 1
-                while l <= r:
-                    while l < right and arr[l] <= val:
-                        l += 1
-                    while r > left and arr[r] >= val:
-                        r -= 1
-                    if l < r:
-                        arr[l], arr[r] = arr[r], arr[l]
-                arr[left], arr[r] = arr[r], arr[left]
-                return r
-
-            while l < r:
-                pivot = partition(arr, l, r)
-                if pivot < k_smallest:
-                    l = pivot + 1
-                else:
-                    r = pivot
-            return l
-        n = len(nums)
-        index = qselect(nums, 0, n, n-k)
-        return nums[index]
-```
-
-
-## 队列
-### 双向队列
 
 ## 动态规划
 用额外的空间，存储子问题的最优解，找到状态转移方程，不断推出当前最优解。
@@ -11265,24 +11248,23 @@ class Solution:
 ```python
 class Solution:
     def validPalindrome(self, s: str) -> bool:
-        def check(l, r):
-            while l < r:
-                if s[l] == s[r]:
-                    l += 1
-                    r -= 1
+        def check(left, right, s):
+            while left < right:
+                if s[left] == s[right]:
+                    left += 1
+                    right -= 1
                 else:
                     return False
             return True
 
-        if s == s[::-1]: return True
-        l, r = 0, len(s)-1
-        while l < r:
-            if s[l] == s[r]:
-                l += 1
-                r -= 1
+        left = 0
+        right = len(s) - 1
+        while left < right:
+            if s[left] == s[right]:
+                left += 1
+                right -= 1
             else:
-                # if s[l+1:r+1] == s[l+1:r+1][::-1] or s[l:r] == s[l:r][::-1]:
-                if check(l+1, r) or check(l, r-1):
+                if check(left+1, right, s) or check(left, right-1, s):
                     return True
                 else:
                     return False
@@ -13147,36 +13129,30 @@ class Solution:
 #### [441. 排列硬币](https://leetcode-cn.com/problems/arranging-coins/solution/er-fen-fa-by-xxinjiee/)
 可以直接用数学公式求解，也可以通过二分法求解数学公式 类似[69. x的平方根](https://leetcode-cn.com/problems/sqrtx/)
 
-这里使用二分查找求解的核心是
-1. 定义左右边界，r 初始值限定为 n // 2 + 1，缩小范围
-2. m为层数，循环中每次用l, r的中点更新
-3. 定义target = m * (m + 1) / 2 待求解公式
-4. 如果target < n - m (m 同时也是最后一层的个数)，更新查找范围下限l
-5. 否则更新查找范围上限r，最后r = l 退出while loop，返回其中一个即可
-
 ```python
 class Solution:
     def arrangeCoins(self, n: int) -> int:
-        # 解方程 m(m+1) / 2 = n
-        l = 0; r = n // 2 + 1
-        while(l < r):
-            m = l + (r - l) // 2
-            target = m * (m + 1) / 2
-            if target < n - m: l = m + 1
-            else: r = m
-        return l
-```
+        # 牛顿法 x' = x - f(x)/f'(x)
+        prev = 0
+        curr = n  
+        while abs(curr - prev) > 1e-1:
+            prev = curr
+            curr = prev - (prev**2 + prev - 2*n) / (2*prev + 1)
+        return int(curr)
 
-附上二分查找的low_bound(),该题的主要区别就是定义target，替换low_bound()中的array[m]与被查找值的比较
-
-```python
-def low_bound(array, l, r, o):
-    # 返回区间内第一个 >= o 的值, o 为被查找值
-    while l < r:
-        m = l + (r - l) // 2
-        # l, r 的赋值规则也要符合左闭右开
-        if array[m] < o: l = m + 1
-        else: r = m
+        # 二分尝试法
+        left = 0
+        right = n + 1
+        while left < right:
+            mid = left + (right-left) // 2
+            trail = mid * (mid+1) / 2
+            if trail < n:
+                left = mid + 1
+            elif trail > n:
+                right = mid
+            else:
+                return mid
+        return left - 1
 ```
 
 #### [33. 搜索旋转排序数组](https://leetcode-cn.com/problems/search-in-rotated-sorted-array/)
@@ -15815,26 +15791,27 @@ public:
 ```
 
 #### [剑指 Offer 04. 二维数组中的查找](https://leetcode-cn.com/problems/er-wei-shu-zu-zhong-de-cha-zhao-lcof/)
-把字符串 s 中的每个空格替换成"%20"
+从左下角开始向右上方寻找
 ```python
 class Solution:
     def findNumberIn2DArray(self, matrix: List[List[int]], target: int) -> bool:
-        """时间 O(n+m) 空间 O(1)"""
         n = len(matrix)
         if n == 0:
             return False
         m = len(matrix[0])
-        row, col = n-1, 0
+        if m == 0:
+            return False
+        row = n - 1
+        col = 0
         while row >= 0 and col < m:
-            if matrix[row][col] == target:
-                return True
+            if matrix[row][col] > target:
+                row -= 1
             elif matrix[row][col] < target:
                 col += 1
             else:
-                row -= 1
+                return True
         return False
 ```
-
 ```cpp
 class Solution {
 public:
@@ -16635,29 +16612,24 @@ public:
 ```python
 class Solution:
     def verifyPostorder(self, postorder: List[int]) -> bool:
-        def recur(i, j):
-            if i >= j: return True
-            p = i
-            while postorder[p] < postorder[j]:
-                p += 1
-            m = p
-            while postorder[p] > postorder[j]:
-                p += 1
-            if p != j:
-                return False
-            else:
-                return recur(i, m - 1) and recur(m, j - 1)
+        # 二叉搜索树后续遍历，最right是根节点，right前的数一定一部分小于根，剩下大于根
+        def helper(nums, left, right):
+            # 注意终点判断
+            if left == right:
+                return True
+            root = nums[right-1]
+            index = left
+            while index < right and nums[index] < root:
+                index += 1
+            mid = index
+            while index < right and nums[index] >= root:
+                index += 1
+            if index < right:
+                return False  
+            # 注意根节点不用再检查
+            return helper(nums, left, mid) and helper(nums, mid, right-1)
 
-        return recur(0, len(postorder) - 1)
-
-        # stack, root = [], float("inf")
-        # for i in range(len(postorder) - 1, -1, -1):
-        #     if postorder[i] > root:
-        #         return False
-        #     while(stack and postorder[i] < stack[-1]):
-        #         root = stack.pop()
-        #     stack.append(postorder[i])
-        # return True
+        return helper(postorder, 0, len(postorder))
 ```
 一定要注意边界！后序遍历根节点是right，左子树[left,m-1]，右子树[m,right-1]
 ```cpp
@@ -17045,33 +17017,25 @@ class Solution:
         return dp[-1]
 ```
 #### [剑指 Offer 53 - I. 在排序数组中查找数字 I](https://leetcode-cn.com/problems/zai-pai-xu-shu-zu-zhong-cha-zhao-shu-zi-lcof/)
-两次二分, logn
+两次二分, logn. low_bound第一个>=target, upper_bound第一个>target
 ```python
 class Solution:
     def search(self, nums: List[int], target: int) -> int:
-        def low_bound(l, r, target):
-            while l < r:
-                m = l + (r-l) // 2
-                if nums[m] < target:
-                    l = m + 1
+        def search(left, right, nums, target, func):
+            while left < right:
+                mid = left + (right - left) // 2
+                if func(nums[mid], target):
+                    left = mid + 1
                 else:
-                    r = m
-            return l
-        def up_bound(l, r, target):
-            while l < r:
-                m = l + (r-l) // 2
-                if nums[m] <= target:
-                    l = m + 1
-                else:
-                    r = m
-            return l
+                    right = mid
+            return left
 
         n = len(nums)
-        index = low_bound(0, n, target)
-        if index == n or nums[index] != target:
+        l_index = search(0, n, nums, target, lambda x1, x2: x1 < x2)
+        if l_index == n or nums[l_index] != target:
             return 0
-        index2 = up_bound(0, n, target)
-        return index2 - index
+        r_index = search(0, n, nums, target, lambda x1, x2: x1 <= x2)
+        return r_index - l_index
 ```
 
 #### [剑指 Offer 53 - II. 0～n-1中缺失的数字](https://leetcode-cn.com/problems/que-shi-de-shu-zi-lcof/)
@@ -18188,7 +18152,6 @@ class Solution:
         for i in range(1, n):
             self.presum.append(self.presum[-1]+w[i])
 
-
     def low_bound(self, nums, target):
         left = 0
         right = len(nums)
@@ -18515,4 +18478,23 @@ class Solution:
         res = (1<<31)-1 if res >= (1<<31) else res
         res = -(1<<31) if res < -(1<<31) else res
         return res
+```
+
+#### [187. 重复的DNA序列](https://leetcode-cn.com/problems/repeated-dna-sequences/)
+```python
+from collections import defaultdict
+class Solution:
+    def findRepeatedDnaSequences(self, s: str) -> List[str]:
+        n = len(s)
+        if n <= 10:
+            return []
+        result = []
+        stat = defaultdict(int)
+        for i in range(n-9):
+            word = s[i:i+10]
+            stat[word] += 1
+        for word in stat:
+            if stat[word] > 1:
+                result.append(word)
+        return result
 ```
