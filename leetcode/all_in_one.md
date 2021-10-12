@@ -9496,43 +9496,53 @@ public:
 };
 ```
 
-#### [863. 二叉树中所有距离为 K 的结点](https://leetcode-cn.com/problems/all-nodes-distance-k-in-binary-tree/)
-建图 bfs, 注意bfs添加visited
+#### [863. 二叉树中所有距离为K的结点](https://leetcode-cn.com/problems/all-nodes-distance-k-in-binary-tree/)
 ```python  
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
 from collections import deque
 class Solution:
     def distanceK(self, root: TreeNode, target: TreeNode, k: int) -> List[int]:
+        if not root:
+            return []
         lookup = {}
         def helper(root):
             if not root:
                 return None
             if root.left:
-                lookup[root.left] = root
+                lookup[root.left.val] = root
             if root.right:
-                lookup[root.right] = root
+                lookup[root.right.val] = root
             helper(root.left)
             helper(root.right)
+        # 建图，建立子节点到父节点的索引
         helper(root)
 
-        queue = deque()
-        queue.appendleft([target, 0])
+        # bfs，每次left, right, top三个node入队列，设置为visited
+        queue = deque([(target, 0)])
+        visited = set([target.val])
         result = []
-        visited = set()
-        visited.add(target)
-        while len(queue) > 0:
-            top, step = queue.pop()  
-            if step == k:
-                result.append(top.val)
-                continue
-            if top.left and top.left not in visited:
-                queue.appendleft([top.left, step+1])
-                visited.add(top.left)
-            if top.right and top.right not in visited:
-                queue.appendleft([top.right, step+1])
-                visited.add(top.right)
-            if top in lookup and lookup[top] not in visited:
-                queue.appendleft([lookup[top], step+1])
-                visited.add(lookup[top])
+        while queue:
+            n = len(queue)
+            for _ in range(n):
+                node, step = queue.pop()
+                if step == k:
+                    result.append(node.val)
+                    continue
+                if node.left and not node.left.val in visited:
+                    visited.add(node.left.val)
+                    queue.appendleft((node.left, step+1))
+                if node.right and not node.right.val in visited:
+                    visited.add(node.right.val)
+                    queue.appendleft((node.right, step+1))
+                if node.val in lookup and not lookup[node.val].val in visited:
+                    visited.add(lookup[node.val].val)
+                    queue.appendleft((lookup[node.val], step+1))
         return result
 ```
 #### [1104. 二叉树寻路](https://leetcode-cn.com/problems/path-in-zigzag-labelled-binary-tree/)
@@ -13511,22 +13521,23 @@ class Solution:
         return pw
 ```
 
-#### [6. Z 字形变换](https://leetcode-cn.com/problems/zigzag-conversion/)
+#### [6. Z字形变换](https://leetcode-cn.com/problems/zigzag-conversion/)
+准备好numRows行，控制row的增长+=step, 遇到边界掉头，注意边界条件
 ```python
 class Solution:
     def convert(self, s: str, numRows: int) -> str:
         if numRows == 1:
             return s
-        result = ["" for _ in range(numRows)]
-        revFalg = -1
-        i = 0
-        for c in s:
-            result[i] += c
-            if i == 0 or i == numRows-1:
-                revFalg *= -1
-            i += revFalg
-
-        return ''.join(result)
+        lines = [[] for i in range(numRows)]
+        step = 1
+        n = len(s)
+        row = 0
+        for i in range(n):
+            lines[row].append(s[i])
+            row += step
+            if row == numRows-1 or (row == 0 and i != 0):
+                step *= -1
+        return "".join(["".join(word) for word in lines])
 ```
 
 #### [541. 反转字符串 II](https://leetcode-cn.com/problems/reverse-string-ii/)
@@ -13587,124 +13598,57 @@ class Solution:
         return total
 ```
 
-#### [438. 找到字符串中所有字母异位词](https://leetcode-cn.com/problems/find-all-anagrams-in-a-string)、
-方法一，通过双重for找到第一个满足的后，往后依次遍历。最直观但是超时
-```python
+#### [438. 找到字符串中所有字母异位词](https://leetcode-cn.com/problems/find-all-anagrams-in-a-string)
+1. stat统计p字符频率 2. 双指针，不符合条件时，left收缩 3. 判断left,right之间的长度是否等于p，确保是连续字串
+```PYTHON
+from collections import defaultdict
 class Solution:
     def findAnagrams(self, s: str, p: str) -> List[int]:
-        # TODO： 超时方法 ！！
-        p_dict = {}
-        for item in p:
-            if item in p_dict:
-                p_dict[item] += 1
-            else:
-                p_dict[item] = 1
-
-        p1 = 0
+        stat = defaultdict(int)
+        for char in p:
+            stat[char] += 1
+        cnt = len(stat)
+        left, right = 0, 0
+        n = len(s)
         result = []
-        temp_dict = p_dict.copy() # 共享内存,修改temp,p_dict也跟着变!
-        while (p1 < len(s) - len(p) + 1):
-            if len(s) - p1 >= len(p):
-                if s[p1] in temp_dict:
-                    temp_dict[s[p1]] -= 1
-                    p2 = p1 + 1
-                    for i in range(p2, p2+len(p)-1):
-                        if s[i] in temp_dict:
-                            temp_dict[s[i]] -= 1
-                            if min(temp_dict.values()) < 0:
-                                break
-                        else:
-                            break
-                    if max(temp_dict.values()) == 0:
-                        result.append(p1)
-                    temp_dict = p_dict.copy()
-                p1 += 1
-            else: break
-        return result
-```
-方法二三，构造被检索子串字典，构造临时字典，双指针维护临时字典.
-```python
-class Solution:
-    def findAnagrams(self, s: str, p: str) -> List[int]:
-        res = []
-        window = {}
-        for item in p:
-            if item not in window:
-                window[item] = 1
-            else: window[item] += 1
-
-        search_area = {}
-        for key in window.keys():
-            search_area[key] = 0
-
-        pointer = 0
-        while (pointer < len(s)):
-            self.flag = 1 # 注意flag初始化位置
-            if s[pointer] in window.keys():
-                search_area[s[pointer]] += 1
-            for key in window.keys():
-                if search_area[key] != window[key]:
-                    self.flag = 0
-                    break
-            if self.flag: res.append(pointer - len(p) + 1)
-            pointer += 1
-            if pointer > len(p) - 1:
-                if s[pointer-len(p)] in search_area.keys():
-                    search_area[s[pointer-len(p)]] -= 1
-        return res
-
-class Solution:
-    def findAnagrams(self, s: str, p: str) -> List[int]:
-        p_dict = {}
-        for item in p:
-            if item in p_dict:
-                p_dict[item] += 1
-            else:
-                p_dict[item] = 1
-
-        p1 = 0
-        result = []
-        temp_dict = {}
-        for key in p_dict:
-            temp_dict[key] = 0
-        while (p1 < len(s)):
-            if s[p1] in temp_dict:
-                temp_dict[s[p1]] += 1
-            flag = True
-            for key in temp_dict:
-                if temp_dict[key] != p_dict[key]:
-                    flag = False
-            if flag:
-                result.append(p1 - len(p) + 1)
-            p1 += 1
-
-            if p1 > len(p) - 1:
-                if s[p1-len(p)] in temp_dict:
-                    temp_dict[s[p1-len(p)]] -= 1
-
-        if temp_dict == p_dict:
-            result.append(p1 - len(p) + 1)
-
+        for right in range(n):
+            if s[right] in stat:
+                stat[s[right]] -= 1
+                if stat[s[right]] == 0:
+                    cnt -= 1
+                    if cnt == 0:
+                        while cnt == 0 and left <= right:
+                            if s[left] in stat:
+                                stat[s[left]] += 1
+                                if stat[s[left]] == 1:
+                                    cnt += 1
+                            left += 1
+                        if right - left + 2 == len(p):
+                            result.append(left-1)
         return result
 ```
 
 #### [977. 有序数组的平方](https://leetcode-cn.com/problems/squares-of-a-sorted-array/)
+双指针+写指针，最大值一定出现在有序数组的两端
 ```python
 class Solution:
-    def sortedSquares(self, A: List[int]) -> List[int]:
-        n = len(A)
-        ans = [0] * n
-        left, right = 0, n-1
-        p = n-1
-        while (p >= 0):
-            if abs(A[left]) > abs(A[right]):
-                ans[p] = A[left] ** 2
+    def sortedSquares(self, nums: List[int]) -> List[int]:
+        n = len(nums)
+        left = 0
+        right = n - 1
+        index = n - 1
+        result = [0 for i in range(n)]
+        while left <= right:
+            val1 = nums[left] * nums[left]
+            val2 = nums[right] * nums[right]
+            if val1 > val2:
+                result[index] = val1
                 left += 1
             else:
-                ans[p] = A[right] ** 2
+                result[index] = val2
                 right -= 1
-            p -= 1
-        return ans
+            index -= 1
+        return result
 ```
 
 ## 递归算法复杂度分析 -- 主定理
@@ -18497,4 +18441,40 @@ class Solution:
             if stat[word] > 1:
                 result.append(word)
         return result
+```
+
+#### [273. 整数转换英文表示](https://leetcode-cn.com/problems/integer-to-english-words/)
+```python
+singles = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"]
+teens = ["Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"]
+tens = ["", "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"]
+thousands = ["", "Thousand", "Million", "Billion"]
+
+class Solution:
+    def numberToWords(self, num):
+        if num == 0:
+            return "Zero"
+        def recursion(num):
+            s = ""
+            if num == 0:
+                return s
+            elif num < 10:
+                s += singles[num] + " "
+            elif num < 20:
+                s += teens[num-10] + " "
+            elif num < 100:
+                s += tens[num//10] + " " + recursion(num%10)
+            else:
+                s += singles[num//100] +  " Hundred " + recursion(num%100)
+            return s
+
+        s = ""
+        unit = int(1e9)
+        for i in range(3, -1, -1):
+            curNum = num // unit
+            if curNum:
+                num -= curNum * unit
+                s += recursion(curNum) + thousands[i] + " "
+            unit //= 1000
+        return s.strip()
 ```
