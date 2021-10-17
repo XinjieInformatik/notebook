@@ -667,6 +667,8 @@ precision_curve = accumulate TP / (accumulate(TP+FP))
 recall_curve = accumulate TP / n_GT
 AP计算: 置信度从大到小排序, 插值precision_curve, recall_curve 计算
 
+#### GELU
+
 
 #### 常用数据增强方法
 仿射变化: 旋转,缩放,平移
@@ -679,7 +681,7 @@ mixup, cutout
 
 #### GAN
 
-![20211008_115429_84](assets/20211008_115429_84.png) 
+![20211008_115429_84](assets/20211008_115429_84.png)
 
 #### 什么是凸优化
 最小二乘, 线性规划 均属于凸优化问题
