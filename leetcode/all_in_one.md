@@ -1372,13 +1372,13 @@ class Solution:
     def maxSubArray(self, nums: List[int]) -> int:
         n = len(nums)
         if n == 0:
-            return -1
-        prev_max = nums[0]
-        result = nums[0]
+            return 0
+        val = nums[0]
+        max_val = nums[0]
         for i in range(1, n):
-            prev_max = max(prev_max+nums[i], nums[i])
-            result = max(result, prev_max)
-        return result
+            val = max(nums[i], val+nums[i])
+            max_val = max(max_val, val)
+        return max_val
 ```
 #### [560. 和为 K 的子数组](https://leetcode-cn.com/problems/subarray-sum-equals-k/)
 ```python
@@ -3819,7 +3819,6 @@ class Solution:
 ```
 
 ## 链表
-### 反转链表
 #### [206. 反转链表](https://leetcode-cn.com/problems/reverse-linked-list/)
 ```python
 class ListNode:
@@ -3842,10 +3841,10 @@ class Solution:
     def reverseList(self, head: ListNode) -> ListNode:
         if(head==None or head.next==None):
             return head
-		    cur = self.reverseList(head.next)
-		    head.next.next = head
-		    head.next = None
-		    return cur
+	    cur = self.reverseList(head.next)
+	    head.next.next = head
+	    head.next = None
+	    return cur
 ```
 
 ```cpp
@@ -3902,19 +3901,50 @@ int main() {
 ```
 ```python
 class Solution:
-    def reverseBetween(self, head: ListNode, m: int, n: int) -> ListNode:
-        dummy = ListNode(-1)
+    def reverseBetween(self, head: ListNode, left: int, right: int) -> ListNode:
+        dummy_head = dummy = ListNode(-1)
+        dummy_head.next = head
         dummy.next = head
-        pre = dummy
-        for i in range(1, m):
-            pre = pre.next
-        curr = pre.next
-        for i in range(m, n):
+        for i in range(1, left):
+            dummy = dummy.next
+        curr = dummy.next
+        for i in range(left, right):
             nxt = curr.next
             curr.next = nxt.next
-            nxt.next = pre.next
-            pre.next = nxt
-        return dummy.next
+            nxt.next = dummy.next
+            dummy.next = nxt
+        return dummy_head.next
+```
+```PYTHON
+class Solution:
+    def reverseBetween(self, head: ListNode, left: int, right: int) -> ListNode:
+        def reverse_list(head):
+            prev = None
+            curr = head
+            while curr:
+                nxt = curr.next
+                curr.next = prev
+                prev = curr
+                curr = nxt
+            return prev, head
+
+        dummy_head = dummy = ListNode(-1)
+        dummy_head.next = head
+        dummy.next = head
+        for i in range(left-1):
+            dummy = dummy.next
+        prev = dummy
+        inv_head = dummy.next
+        dummy.next = None
+        dummy = inv_head
+        for i in range(right-left):
+            dummy = dummy.next
+        nxt = dummy.next
+        dummy.next = None
+        rev_head, rev_tail = reverse_list(inv_head)
+        prev.next = rev_head
+        rev_tail.next = nxt
+        return dummy_head.next
 ```
 ```python
 # Definition for singly-linked list.
@@ -3957,10 +3987,9 @@ class Solution:
 ```
 
 #### [25. K个一组翻转链表](https://leetcode-cn.com/problems/reverse-nodes-in-k-group/)
-1. 反转链表
-2. 走k步，切断，反转链表返回反转后的头节点，尾节点
-3. 链表链接 tail.next = nx, prev.next = head
-4. 节点移动，prev = tail, head = nxt
+1. 走k步，切断，反转链表返回反转后的头节点，尾节点
+2. 链表链接 tail.next = nx, prev.next = head
+3. 节点移动，prev = tail, head = nxt
 ```python
 class Solution:
     def reverseKGroup(self, head: ListNode, k: int) -> ListNode:
@@ -4700,6 +4729,20 @@ class Solution:
                 p3 -= 1
                 p1 -= 1
 ```
+```PYTHON
+class Solution:
+    def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:
+        p1, p2, pw = m-1, n-1, m+n-1
+        while pw >= 0:
+            if p1 < 0 or (p2 >= 0 and nums2[p2] >= nums1[p1]):
+                nums1[pw] = nums2[p2]
+                p2 -= 1
+                pw -= 1
+            else:
+                nums1[pw] = nums1[p1]
+                p1 -= 1
+                pw -= 1
+```
 
 #### [面试题 10.01. 合并排序的数组](https://leetcode-cn.com/problems/sorted-merge-lcci/)
 从后往前遍历，更利于数组的修改 O(n+m)
@@ -4927,31 +4970,33 @@ class Solution:
 1. 用len(nums)-1, left <= right 的写法
 2. 与当前中点nums[m]与右边界比较，确定中点处于前还是后一段上升数组
 3. 如果nums[m]==nums[right]，则无法确定中点在哪一段，则收缩右边界
-4. 中点与target确定如何收缩左右边界，注意target用大于（小于）等于
+4. 如果mid处于后半段，如果target处于后半段的后半段，收缩left，否则right
+5. 如果mid处于前半段，如果target处于前半段的前半段，收缩right，否则left
+6. 中点与target确定如何收缩左右边界，注意target用大于（小于）等于
 
 ```python
 class Solution:
-    def search(self, nums: List[int], target: int) -> bool:
-        def low_bound(nums, left, right, target):
-            while (left <= right):
-                m = left + (right - left) // 2
-                if (nums[m] == target):
-                    return True
-                if (nums[m] > nums[right]):
-                    if (nums[m] > target and target >= nums[left]):
-                        right = m
+    def search(self, nums: List[int], target: int) -> int:
+        def low_bound(left, right, nums, target):
+            while left <= right:
+                mid = left + (right-left) // 2
+                if nums[mid] == target:
+                    return mid
+                if nums[mid] < nums[right]:
+                    if nums[mid] < target <= nums[right]:
+                        left = mid + 1
                     else:
-                        left = m + 1
-                elif (nums[m] < nums[right]):
-                    if (nums[m] < target and target <= nums[right]):
-                        left = m + 1
+                        right = mid
+                elif nums[mid] > nums[right]:
+                    if nums[left] <= target < nums[mid]:
+                        right = mid
                     else:
-                        right = m
+                        left = mid + 1
                 else:
                     right -= 1
-            return False
+            return -1
 
-        return low_bound(nums, 0, len(nums)-1, target)
+        return low_bound(0, len(nums)-1, nums, target)
 ```
 ```cpp
 class Solution {
@@ -7799,6 +7844,7 @@ public:
 ```
 
 #### [142. 环形链表 II](https://leetcode-cn.com/problems/linked-list-cycle-ii/)
+第一入环的节点：相遇后选一个指针归零
 ```python
 class Solution:
     def detectCycle(self, head: ListNode) -> ListNode:
@@ -8479,6 +8525,42 @@ public:
 ```
 
 #### [23. 合并K个排序链表](https://mail.ipa.fraunhofer.de/OWA/?bO=1#path=/mail)
+合并k个升序链表
+归并有序链表排序
+```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def mergeKLists(self, lists: List[ListNode]) -> ListNode:
+        def mergeSort(l, r, nums):
+            def merge(left, right):
+                dummy_head = dummy = ListNode(-1)
+                while left and right:
+                    if left.val < right.val:
+                        dummy.next = left
+                        left = left.next
+                    else:
+                        dummy.next = right
+                        right = right.next
+                    dummy = dummy.next
+                dummy.next = left if left else right
+                return dummy_head.next
+
+            if l == r - 1:
+                return lists[l]
+            mid = l + (r - l) // 2
+            left = mergeSort(l, mid, nums)
+            right = mergeSort(mid, r, nums)
+            return merge(left, right)
+
+        if len(lists) == 0:
+            return None
+        return mergeSort(0, len(lists), lists)
+```
+
 ```python
 import heapq
 class Solution:
@@ -8497,34 +8579,6 @@ class Solution:
                 heapq.heappush(heap, (lists[i].val, i))
                 lists[i] = lists[i].next
         return dummy_head.next
-```
-归并有序链表排序
-```python
-class Solution:
-    def mergeKLists(self, lists: List[ListNode]) -> ListNode:
-        def merge(l, r):
-            dummy = head = ListNode(-1)
-            while l and r:
-                if l.val < r.val:
-                    dummy.next = l
-                    l = l.next
-                else:
-                    dummy.next = r
-                    r = r.next
-                dummy = dummy.next
-            dummy.next = l if l else r
-            return head.next
-
-        def helper(left, right):
-            if left == right - 1:
-                return lists[left]
-            mid = left + (right-left) // 2
-            l_node = helper(left, mid)
-            r_node = helper(mid, right)
-            return merge(l_node, r_node)
-
-        if len(lists) == 0: return []
-        return helper(0, len(lists))
 ```
 
 #### [147. 对链表进行插入排序](https://leetcode-cn.com/problems/insertion-sort-list/)
@@ -12536,22 +12590,19 @@ class Solution:
 ```
 
 #### [66. 加一](https://leetcode-cn.com/problems/plus-one)
+模拟题，一开始carry=1方便写代码
 ```python
 class Solution:
     def plusOne(self, digits: List[int]) -> List[int]:
-        if digits[-1] < 9:
-            digits[-1] += 1
-            return digits
-
-        digits[-1] += 1
-        for i in range(len(digits)-1, 0, -1):
-            if digits[i] == 10:
-                digits[i] = 0
-                digits[i-1] += 1
-        if digits[0] == 10:
-            digits[0] = 0
-            digits.insert(0,1)
-
+        n = len(digits)
+        p = n - 1
+        carry = 1
+        while p >= 0 and carry:
+            carry, res = divmod(carry+digits[p], 10)
+            digits[p] = res
+            p -= 1
+        if carry > 0:
+            digits.insert(0, carry)
         return digits
 ```
 
@@ -13144,30 +13195,6 @@ class Solution:
         return left - 1
 ```
 
-#### [33. 搜索旋转排序数组](https://leetcode-cn.com/problems/search-in-rotated-sorted-array/)
-在两个排序数组中使用二分搜索查找， 注意区间缩小的判断
-```python
-class Solution:
-    def search(self, nums: List[int], target: int) -> int:
-        left, right = 0, len(nums)
-        while left < right:
-            mid = left + (right - left) // 2
-            if nums[mid] == target:
-                return mid
-            elif nums[left] < nums[mid]:
-                if nums[mid] < target < nums[left]:
-                    left = mid + 1
-                else:
-                    right = mid
-            else:
-                if nums[mid] < target < nums[left]:
-                    left = mid + 1
-                else:
-                    right = mid
-        return -1
-```
-
-## 字符串
 #### [208. 实现 Trie (前缀树)](https://leetcode-cn.com/problems/implement-trie-prefix-tree/)
 key是字符，value是node， class node 基本是个字典，有着判断是否结束的属性
 ```python
@@ -15230,7 +15257,7 @@ class LFUCache:
             self.min_freq = 1
 ```
 
-#### [378. 有序矩阵中第K小的元素](https://leetcode-cn.com/problems/kth-smallest-element-in-a-sorted-matrix/)
+#### [378. 有序矩阵中第k小的元素](https://leetcode-cn.com/problems/kth-smallest-element-in-a-sorted-matrix/)
 矩阵堆排序
 ```python
 class Solution:
@@ -15272,6 +15299,7 @@ class Solution:
                 return num
             if len(heap) > 1:
                 sift_down(heap, 1, len(heap))
+            # 保证每行都有在堆中
             if col+1 < n:
                 heap.append((matrix[row][col+1], row, col+1))
                 sift_up(heap, len(heap)-1)
@@ -15661,10 +15689,6 @@ public:
 };
 ```
 
-
-
-
-
 ## 递归复杂度分析
 递归时间复杂度分析
 假设递归深度, 递归调用数量为h, 递归内每次计算量O(s), 时间复杂度 O(hs)
@@ -15678,8 +15702,6 @@ public:
 尾递归的好处是，它可以避免递归调用期间栈空间开销的累积
 
 ## 剑指offer系列
-
-
 #### [剑指 Offer 03. 数组中重复的数字](https://leetcode-cn.com/problems/shu-zu-zhong-zhong-fu-de-shu-zi-lcof/)
 ```在一个长度为 n 的数组 nums 里的所有数字都在 0～n-1 的范围内。数组中某些数字是重复的，但不知道有几个数字重复了，也不知道每个数字重复了几次。请找出数组中任意一个重复的数字。
 ```
@@ -18577,4 +18599,18 @@ class Solution:
             if newLine and not inBlock: #如果新行有数据，且当前不在注释中，则更新到结果
                 res.append("".join(newLine))
         return res
+```
+
+#### [476. 数字的补数](https://leetcode-cn.com/problems/number-complement/)
+找到num的最高位置，做异或
+```python
+class Solution:
+    def findComplement(self, num: int) -> int:
+        cnt = 0
+        num_ori = num
+        while num > 0:
+            num >>= 1
+            cnt += 1
+        val = (1<<cnt) - 1
+        return val ^ num_ori
 ```
