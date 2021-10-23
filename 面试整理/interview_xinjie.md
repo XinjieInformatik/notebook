@@ -1,28 +1,44 @@
 # 面试问答整理
 ### 机器学习知识点
+
 #### 欠拟合,过拟合
 - 欠拟合: 高偏差, 低方差. 增加模型复杂度, 增加训练时长
 - 过拟合: 低偏差, 高方差. 数据增强, 提前结束训练, 正则化
-#### SGD, Adam 区别
+
+#### 优化器 SGD, Adam, AdamW
 SGD为随机梯度下降,每一次迭代计算数据集的mini-batch的梯度,然后对参数进行更新。
 Momentum参考了动量的概念,前几次的梯度也会参与到当前的计算中,但是前几轮的梯度叠加在当前计算中会有一定的衰减。
 Adagard在训练的过程中可以自动变更学习的速率,设置一个全局的学习率,而实际的学习率与以往的参数模和的开方成反比。
 Adam利用梯度的一阶矩估计和二阶矩估计动态调整每个参数的学习率,使得参数更新较为平稳。
+AdamW在Adam基础上引入weight decay, 相当于加上L2正则项
 
 SGD: W = W - lr * grad
+
 Adam:
-![20200622_233509_51](assets/20200622_233509_51.png)
+![20211023_175030_48](assets/20211023_175030_48.png)
 前两行对梯度和梯度的平方进行滑动平均
 中间两行对初期滑动平均偏差的修正，当t越来越大时，分母都趋近于 1
 最后一行是参数更新公式. 每个参数的梯度都是不同的，每个参数的学习率即使在同一轮也不一样.
+
+AdamW:
+weight decay $\lambda$ 一般取0.01, $\beta_1$取0.9, $\beta_2$取0.999, $\beta_1^t$取$\beta_1^{iter}$, $\beta_1^t$取$\beta_2^{iter}$
+
+![20211023_175050_91](assets/20211023_175050_91.png)
+
+
 <!--
-$$ m_t = \beta_1 m_{t-1} + (1 - \beta_1) g_t $$
-$$ v_t = \beta_2 v_{t-1} + (1 - \beta_2) g_t^2 $$
-$$ \hat{m_t} = \frac{m_t}{1 - \beta_1^t} $$
-$$ \hat{v_t} = \frac{v_t}{1 - \beta_2^t} $$
-$$ W_{t+1} = W_t - \frac{lr}{\sqrt{\hat{v_t}}+\varepsilon }\hat{m_t} $$
+$$ m_t = \beta_1 m_{t-1} + (1 - \beta_1) g_t \\
+   v_t = \beta_2 v_{t-1} + (1 - \beta_2) g_t^2 \\
+   \hat{m_t} = \frac{m_t}{1 - \beta_1^t} \\
+   \hat{v_t} = \frac{v_t}{1 - \beta_2^t} \\
+   \theta_{t+1} = \theta_t - \frac{\hat{m_t}}{\sqrt{\hat{v_t}}+\varepsilon } lr $$
+
+$$ m_t = \beta_1 m_{t-1} + (1 - \beta_1) g_t \\
+   v_t = \beta_2 v_{t-1} + (1 - \beta_2) g_t^2 \\
+   \hat{m_t} = \frac{m_t}{1 - \beta_1^t} \\
+   \hat{v_t} = \frac{v_t}{1 - \beta_2^t} \\
+   \theta_{t+1} = \theta_t -  (\frac{\hat{m_t}}{\sqrt{\hat{v_t}}+\varepsilon } + \lambda \theta_t) lr $$
 -->
-参考: https://www.cnblogs.com/wuliytTaotao/p/11101652.html
 
 #### 向量与矩阵的欧几里得距离计算
 参考: https://blog.csdn.net/Autism_/article/details/88360483
@@ -641,14 +657,6 @@ Smooth L1完美地避开了 L1 和 L2 损失的缺陷，在 损失 较小时，�
 权值共享大大降低了网络的训练难度，一个Filter只提取一个特征，在整个图片（或者语音／文本） 中进行卷积
 池化操作与多层次结构一起，实现了数据的降维，将低层次的局部特征组合成为较高层次的特征，从而对整个图片进行表示。
 
-#### 解决梯度消失和梯度爆炸问题
-常用的有以下几个方案：
-预训练模型 + 微调
-梯度剪切 + 正则化
-relu、leakrelu、relu等激活函数
-BN批归一化
-CNN中的残差结构
-
 #### 1x1卷积作用
 1. 改变通道数
 2. 融合通道间特征,任意输入形状
@@ -669,15 +677,6 @@ AP计算: 置信度从大到小排序, 插值precision_curve, recall_curve 计�
 
 #### GELU
 
-
-#### 常用数据增强方法
-仿射变化: 旋转,缩放,平移
-剪裁,翻转
-添加噪声,滤波(中值,均值,高斯)
-亮度,对比度增强,锐化
-添加光斑,颜色扰动
-GAN
-mixup, cutout
 
 #### GAN
 

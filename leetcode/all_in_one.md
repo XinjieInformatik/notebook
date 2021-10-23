@@ -8113,21 +8113,46 @@ class Solution:
 ```
 
 #### [82. 删除排序链表中的重复元素 II](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list-ii/)
-排序链表中重复的节点,均删除不保留.引入dummy节点是为了避免head就是重复元素,无法删除链表重复节点. slow, fast一前一后双指针
+排序链表中重复的节点,均删除不保留.引入dummy节点是为了避免head就是重复元素,无法删除链表重复节点. slow, fast一前一后双指针, 快指针前进
 ```python
 class Solution:
     def deleteDuplicates(self, head: ListNode) -> ListNode:
-        if not head: return head
         dummy = ListNode(-1)
         dummy.next = head
-        slow, fast = dummy, dummy.next
+        slow = dummy
+        fast = dummy.next
         while fast:
             if fast.next and fast.val == fast.next.val:
-                temp = fast.val
-                while fast and fast.val == temp:
+                start = fast.val
+                while fast and fast.val == start:
                     fast = fast.next
                 slow.next = fast
             else:
+                slow = fast
+                fast = fast.next
+        return dummy.next
+```
+三指针
+```python
+class Solution:
+    def deleteDuplicates(self, head: ListNode) -> ListNode:
+        if not head:
+            return head
+        dummy = ListNode(-1)
+        dummy.next = head
+        prev = dummy
+        fast, slow = head.next, head
+        while fast:
+            if fast.val == slow.val:
+                while fast and fast.val == slow.val:
+                    fast = fast.next
+                prev.next = fast
+                if not fast:
+                    break
+                slow = fast
+                fast = fast.next
+            else:
+                prev = slow
                 slow = fast
                 fast = fast.next
         return dummy.next
@@ -13139,16 +13164,18 @@ class Solution:
         f'(x) = 2x
         x' = x - (x^2-a) / 2x
            = x - x/2-a/(2x)
-           = (x - a/x) / 2
+           = (x + a/x) / 2
         """
-        if a == 0:
-            return 0
-        curr = a
-        while True:
-            prev = curr
-            curr = (curr + a/curr) / 2
-            if abs(curr - prev) < 1e-1:
-                return int(curr)
+        def newton(x):
+            esp = 1e-1
+            prev = 1
+            while True:
+                curr = (prev*prev + x) / (2*prev)
+                if abs(curr-prev) < esp:
+                    return int(curr)
+                prev = curr
+            return - 1
+        return newton(x)
 
     def mySqrt(self, x: int) -> int:
         """二分法,小心边界"""
@@ -13672,22 +13699,23 @@ T(n) = 2T(n/2) + O(n) --> T(n) = O(nlogn)
 T(n) = T(n/2) + O(1) --> T(n) = O(logn)
 
 #### [56. 合并区间](https://leetcode-cn.com/problems/merge-intervals/)
+1. 按照x[0] sort intervals
+2. 
 ```python
 class Solution:
     def merge(self, intervals: List[List[int]]) -> List[List[int]]:
         intervals = sorted(intervals, key=lambda x: x[0])
-        result = []
         index = 0
         n = len(intervals)
+        result = []
         while index < n:
-            pivot = intervals[index]
-            p = index + 1
-            right_bound = pivot[1]
-            while p < n and intervals[p][0]<=right_bound:
-                right_bound = max(right_bound, intervals[p][1])
-                p += 1
-            result.append([pivot[0], right_bound])
-            index = p
+            right = index + 1
+            bound = intervals[index][1]
+            while right < n and bound >= intervals[right][0]:
+                bound = max(bound, intervals[right][1])
+                right += 1
+            result.append([intervals[index][0], bound])
+            index = right
         return result
 ```
 
