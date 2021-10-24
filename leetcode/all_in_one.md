@@ -2206,24 +2206,23 @@ class Solution:
 class Solution:
     def nextPermutation(self, nums: List[int]) -> None:
         """
-        1. 从后往前，找到第一个非逆序的index
-        2. 从后往前，找到第一个大于nums[idx]的元素，交换
-        3. 反转原来逆序的数组为正序
+        1. 逆序遍历，维护单调递增stack，stack储存index
+        2. 记录第一个下降的index，和最后一个pop出的index
+        3. 交换数字并且sort之后的数组
         """
+        stack = []
         n = len(nums)
-        idx = -1
-        for i in range(n-1, 0, -1):
-            if nums[i] > nums[i-1]:
-                idx = i - 1
+        p = n - 1
+        index = -1
+        while p >= 0:
+            while len(stack) > 0 and nums[p] < nums[stack[-1]]:
+                index = stack.pop()
+            if index != -1:
                 break
-        if idx == -1:
-            nums[:] = nums[::-1]
-        else:
-            for i in range(n-1, idx, -1):
-                if nums[i] > nums[idx]:
-                    nums[i], nums[idx] = nums[idx], nums[i]
-                    break
-            nums[idx+1:] = nums[idx+1:][::-1]
+            stack.append(p)
+            p -= 1
+        nums[p], nums[index] = nums[index], nums[p]
+        nums[p+1:] = sorted(nums[p+1:])
 ```
 
 #### [670. 最大交换](https://leetcode-cn.com/problems/maximum-swap/)
@@ -4608,6 +4607,22 @@ class Solution:
             return helper(nums1, nums2, k1)
         else:
             return (helper(nums1, nums2, k1) + helper(nums1, nums2, k2)) / 2
+```
+```PYTHON
+class Solution:
+    def findMedianSortedArrays(self, nums1: List[int], nums2: List[int]) -> float:
+        arr = []
+        n1, n2 = len(nums1), len(nums2)
+        p1, p2 = 0, 0
+        while p1 < n1 or p2 < n2:
+            if p2 == n2 or (p1 < n1 and nums1[p1] < nums2[p2]):
+                arr.append(nums1[p1])
+                p1 += 1
+            else:
+                arr.append(nums2[p2])
+                p2 += 1  
+        pivot = (n1+n2)//2
+        return arr[pivot] if (n1+n2)&1 else (arr[pivot]+arr[pivot-1]) / 2
 ```
 
 #### [1013. 将数组分成和相等的三个部分](https://leetcode-cn.com/problems/partition-array-into-three-parts-with-equal-sum/)
@@ -9193,6 +9208,7 @@ class Solution:
 ```
 
 #### [129. 求根到叶子节点数字之和](https://leetcode-cn.com/problems/sum-root-to-leaf-numbers/)
+129. 求根节点到叶节点数字之和
 和路径之和112，113一样
 ```python
 class Solution:
@@ -13700,7 +13716,7 @@ T(n) = T(n/2) + O(1) --> T(n) = O(logn)
 
 #### [56. 合并区间](https://leetcode-cn.com/problems/merge-intervals/)
 1. 按照x[0] sort intervals
-2. 
+2.
 ```python
 class Solution:
     def merge(self, intervals: List[List[int]]) -> List[List[int]]:
@@ -18641,4 +18657,28 @@ class Solution:
             cnt += 1
         val = (1<<cnt) - 1
         return val ^ num_ori
+```
+
+#### [151. 翻转字符串里的单词](https://leetcode-cn.com/problems/reverse-words-in-a-string/)
+```python
+class Solution:
+    def reverseWords(self, s: str) -> str:
+        # s = s.strip()
+        # return " ".join(s.split()[::-1])
+
+        s = s.strip()
+        s += ' '
+        rev_s = ''
+        n = len(s)
+        word = ''
+        for i in range(n):
+            if s[i] == ' ' and len(word) > 0:
+                if len(rev_s) > 0:
+                    word += ' '
+                rev_s = word + rev_s
+                word = ''
+            else:
+                if s[i] != ' ':
+                    word += s[i]
+        return rev_s
 ```
