@@ -1,4 +1,38 @@
-# 面试问答整理
+<!-- TOC titleSize:2 tabSpaces:4 depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 skip:0 title:1 charForUnorderedList:* -->
+## Table of Contents
+* [python 知识点](#python-)
+    * [深拷贝,浅拷贝](#)
+    * [GIL](#gil)
+    * [*args, **kwargs](#args-kwargs)
+    * [装饰器](#)
+    * [生成器](#)
+    * [迭代器](#)
+    * [python 内存管理](#python-)
+        * [内存池机制](#)
+        * [垃圾回收机制](#)
+            * [1 引用计数](#1-)
+            * [2 标记清除](#2-)
+            * [3 分代回收](#3-)
+    * [list 底层](#list-)
+    * [dict 底层实现](#dict-)
+    * [+ 与 join 的区别](#--join-)
+    * [is 与 == 区别](#is---)
+    * [type, isinstance 区别](#type-isinstance-)
+    * [单例模式](#)
+    * [静态方法(staticmethod),类方法(classmethod),实例方法,普通方法](#staticmethodclassmethod)
+    * [类变量,实例变量](#)
+    * [Python中单下划线和双下划线](#python)
+    * [Python中的作用域](#python)
+    * [面向对象](#)
+    * [python 解释器原理](#python-)
+    * [MVC](#mvc)
+* [传统图像](#)
+    * [色彩空间](#)
+    * [霍夫变换](#)
+    * [HOG](#hog)
+    * [LBP](#lbp)
+<!-- /TOC -->
+
 ### python 知识点
 #### 深拷贝,浅拷贝
 直接赋值：为对象取别名,两个对象的id相同. a=1, b=a
@@ -337,7 +371,8 @@ Python是一种解释型语言，它的源代码不需要编译，可以直接�
 - 模型（Model） - 程序员编写程序应有的功能（实现算法等等）、数据库专家进行数据管理和数据库设计(可以实现具体的功能)。
 - 视图（View） - 界面设计人员进行图形界面设计。
 - 控制器（Controller）- 负责转发请求，对请求进行处理。
- 
+
+## 传统图像
 #### 色彩空间
 HSV(色相, 饱和度, 明度), HSL(色相, 饱和度, 亮度), LAB(亮度, 绿到红, 蓝到黄)
 
