@@ -542,7 +542,8 @@ class Solution:
 ```python
 class Solution:
     def backPackIV(self, nums, target):
-        """状态转移: 到i,j为止的组合数 = 不使用该硬币组合数 + 使用该硬币组合数"""
+        """dp[i][j] 在i状态j容量下，可装满j的组合数
+        状态转移: 到i,j为止的组合数 = 不使用该硬币组合数 + 使用该硬币组合数"""
         # 1. 初始化dp
         n = len(nums)+1
         m = target+1
@@ -556,6 +557,7 @@ class Solution:
                 if j - nums[i-1] < 0:
                     dp[i][j] = dp[i-1][j]
                 else:
+                    # dp[i]因为一个物体可以多次使用
                     dp[i][j] = dp[i-1][j] + dp[i][j-nums[i-1]]
         # 4. 输出最终状态
         return dp[-1][-1]
@@ -631,31 +633,56 @@ class Solution:
         return -1
 
         """dp搜索,记忆化枚举所有状态,对于符合条件返回的状态取最小值"""
-        @functools.lru_cache(None)
-        def helper(amount):
-            if amount == 0:
+        # 注意不要用helper(val,cnt)，只使用val即可，把维度压缩到一维
+        dp = [0 for i in range(amount+1)]
+        n = len(coins)
+        def helper(val):
+            if val == amount:
                 return 0
-            if amount < 0:
-                return None
-            res = 0xffffffff
+            if dp[val] > 0:
+                return dp[val]
+            ans = float('inf')
             for coin in coins:
-                ans = helper(amount-coin)
-                if ans != None:
-                    res = min(ans+1, res)
-            return res
+                if val + coin > amount:
+                    continue
+                res = helper(val+coin) + 1
+                ans = min(ans, res)
+            dp[val] = ans
+            return ans
 
-        ans = helper(amount)
-        if ans == 0xffffffff: ans = -1
-        return ans
+        ans = helper(0)
+        return ans if ans != float('inf') else -1
 
         """dp数组, dp[i]定义为组成金额i所需最少的硬币数"""
-        dp = [0xffffffff for i in range(amount+1)]
+        n = len(coins)
+        dp = [float('inf') for i in range(amount+1)]
         dp[0] = 0
-        for coin in coins:
-            for i in range(coin, amount+1):
-                dp[i] = min(dp[i], dp[i-coin]+1)
-        # print(dp)
-        return dp[-1] if dp[-1] != 0xffffffff else -1
+        for i in range(n):
+            for j in range(coins[i], amount+1):
+                dp[j] = min(dp[j], dp[j-coins[i]]+1)
+        return dp[-1] if dp[-1] != float('inf') else -1
+```
+```python
+class Solution:
+    def coinChange(self, coins: List[int], amount: int) -> int:
+        n = len(coins)
+        dp = [[0 for j in range(amount+1)] for i in range(n+1)]
+        def helper(index, val):
+            if val == amount:
+                return 0
+            if index == n:
+                return float('inf')
+            if dp[index][val] > 0:
+                return dp[index][val]
+            ans = float('inf')
+            for i in range(index, n):
+                if val + coins[i] <= amount:
+                    res = helper(i, val+coins[i]) + 1
+                    ans = min(ans, res)
+            dp[index][val] = ans
+            return ans
+        ans = helper(0, 0)
+        return -1 if ans == float('inf') else ans
 ```
 
 #### [70. 爬楼梯](https://leetcode-cn.com/problems/climbing-stairs/)
@@ -1216,11 +1243,9 @@ def sameStr(A, B):
                 dp[i][j] = dp[i-1][j-1] + 1
                 if dp[i][j] >= ans:
                     ans = dp[i][j]
-                    print(i, j, ans)
                     res = A[i-ans:i+1]
             else:
                 dp[i][j] = 0
-    print(res)
     return ans
 ```
 
@@ -2110,19 +2135,34 @@ nums1 中数字 x 的下一个更大元素是指 x 在 nums2 中对应位置的�
 ```python
 class Solution:
     def nextGreaterElement(self, nums1: List[int], nums2: List[int]) -> List[int]:
-        """基于nums2构造单调递减栈,构造hashmap"""
+        lookup = {nums2[i]: i for i in range(len(nums2))}
+        result = []
+        for i in range(len(nums1)):
+            index = lookup[nums1[i]]
+            res = -1
+            for j in range(index+1, len(nums2)):
+                if nums2[j] > nums1[i]:
+                    res = nums2[j]
+                    break
+            result.append(res)
+        return result
+```
+可以优化的地方在于nums1是nums2的子集，在nums2确定排序关系，构造单调递减stack，nums1查找即可
+```python
+class Solution:
+    def nextGreaterElement(self, nums1: List[int], nums2: List[int]) -> List[int]:
         stack = []
-        mapping = {}
+        lookup = {}
         for i in range(len(nums2)):
-            while stack and nums2[i] > stack[-1]:
+            while len(stack) > 0 and nums2[i] > stack[-1]:
                 val = stack.pop()
-                mapping[val] = nums2[i]
+                lookup[val] = nums2[i]
             stack.append(nums2[i])
 
         result = [-1 for i in range(len(nums1))]
-        for i, num in enumerate(nums1):
-            if num in mapping:
-                result[i] = mapping[num]
+        for i in range(len(nums1)):
+            if nums1[i] in lookup:
+                result[i] = lookup[nums1[i]]
         return result
 ```
 #### [503. 下一个更大元素 II](https://leetcode-cn.com/problems/next-greater-element-ii/)
@@ -4232,14 +4272,15 @@ public:
 ```python
 class Solution:
     def firstMissingPositive(self, nums: List[int]) -> int:
-        def swap(nums, index1, index2):
+        def swap(index1, index2):
             nums[index1], nums[index2] = nums[index2], nums[index1]
+
         n = len(nums)
         for i in range(n):
-            # 把在[1,n]数值范围但是不在正确位置的数s交换到正确位置
-            while 1 <= nums[i] <= n and nums[i] != nums[nums[i]-1]:
-                swap(nums, i, nums[i]-1)
-
+            # 把在[1,n]数值范围但是不在正确位置的数交换到正确位置
+            while 1 <= nums[i] <= n and nums[nums[i]-1] != nums[i]:
+                swap(nums[i]-1, i)
+        # 正序遍历，找到第一个缺失的正数
         for i in range(1, n+1):
             if nums[i-1] != i:
                 return i
@@ -5910,23 +5951,23 @@ class Solution:
 ```
 
 #### [32. 最长有效括号](https://leetcode-cn.com/problems/longest-valid-parentheses/)
-还需要再好好理解一下
+stack储存index, 遇到'('入栈，遇到')'出栈记录到上一个有效起点的距离，len(stack)==0 更新有效起点
 ```python
 class Solution:
     def longestValidParentheses(self, s: str) -> int:
-        """用stack记录index"""
         stack = [-1]
+        n = len(s)
         max_len = 0
-        for i, item in enumerate(s):
-            if item == "(":
-                stack.append(i)
-            else:
-                stack.pop()
+        for i in range(n):
+            if s[i] == ')':  
+                index = stack.pop()
+                # 连续有效的起点
                 if len(stack) == 0:
                     stack.append(i)
                 else:
-                    len_ = i - stack[-1]
-                    max_len = max(len_, max_len)
+                    max_len = max(max_len, i-stack[-1])
+                continue
+            stack.append(i)
         return max_len
 ```
 
@@ -5974,48 +6015,6 @@ class Solution:
                     queue.appendleft(status+(cnt+1,))
         return -1
 ```
-
-#### [301. 删除无效的括号](https://leetcode-cn.com/problems/remove-invalid-parentheses/)
-枚举+bfs搜索
-```python
-class Solution:
-    def removeInvalidParentheses(self, s: str) -> List[str]:
-        def is_valid(str_):
-            stack = []
-            flag = 0
-            for item in str_:
-                if stack and stack[-1] == "(" and item ==")":
-                    stack.pop()
-                elif item in ["(", ")"]:
-                    stack.append(item)
-                    flag = 1
-            return True if len(stack)==0 and flag else False
-
-        result = set()
-        from collections import deque
-        queue = deque([s])
-        seen = set()
-
-        while(queue):
-            for _ in range(len(queue)):
-                str_ = queue.pop()
-                if is_valid(str_):
-                    result.add(str_)
-                    return list(result)
-                for i in range(len(str_)):
-                    left = str_[:i] + str_[i+1:]
-                    if is_valid(left):
-                        result.add(left)
-                    else:
-                        if left not in seen:
-                            queue.appendleft(left)
-                            seen.add(left) # must prune
-            if len(result)>0:
-                return list(result)
-
-        return ["".join([item for item in s if item not in ["(",")"]])]
-```
-TODO: 好好练练递归，再把种树作一遍
 
 #### [392. 判断子序列](https://leetcode-cn.com/problems/is-subsequence/)
 ```python
@@ -8394,33 +8393,36 @@ class Solution:
         return head.next
 ```
 #### [234. 回文链表](https://leetcode-cn.com/problems/palindrome-linked-list/)
-快慢指针找到中点切断，翻转后半个链表，再逐一比较前后两个半个链表
+快慢指针找到中点切断，翻转长的那个链表，再逐一比较前后两个半个链表
 ```python
 class Solution:
     def isPalindrome(self, head: ListNode) -> bool:
-        slow = head
-        fast = head
-        # look up middle point
-        while fast:
-            if fast.next == None:
-                break
-            fast = fast.next.next
+        def rev_list(head):
+            curr = head
+            prev = None
+            while curr:
+                nxt = curr.next
+                curr.next = prev
+                prev = curr
+                curr = nxt
+            return prev
+
+        dummy = ListNode(-1)
+        dummy.next = head
+        slow = dummy
+        fast = dummy.next
+        while fast and fast.next:
             slow = slow.next
-        # reverse fast linkedlist
-        prev = None
-        cur = slow
-        while cur:
-            nxt = cur.next
-            cur.next = prev
-            prev = cur
-            cur = nxt
-        # compare reversed and head linkedlist
-        while head and prev:
-            if head.val != prev.val:
+            fast = fast.next.next
+        # 一个技巧，翻转长的那个
+        nxt = slow.next
+        slow.next = None
+        rev_nxt = rev_list(nxt)  
+        while head:
+            if head.val != rev_nxt.val:
                 return False
             head = head.next
-            prev = prev.next
-
+            rev_nxt = rev_nxt.next
         return True
 ```
 
@@ -8815,7 +8817,7 @@ public:
 ```
 
 #### [98. 验证二叉搜索树](https://leetcode-cn.com/problems/validate-binary-search-tree/)
-递归写法
+用minval, maxval限制搜索树的上下界
 ```python
 # Definition for a binary tree node.
 # class TreeNode:
@@ -9137,25 +9139,25 @@ public:
 ```
 
 #### [113. 路径总和 II](https://leetcode-cn.com/problems/path-sum-ii/)
-注意 if not root: return [] 的判断，注意 res += [node.val]。
+注意 if not root: return [] 的判断
 ```python
 class Solution:
-    def pathSum(self, root: TreeNode, sum_: int) -> List[List[int]]:
-        paths = []
-        def helper(node, res):
-            if node.left == None and node.right == None:
-                res += [node.val]
-                if sum(res) == sum_:
-                    paths.append(res)
+    def pathSum(self, root: Optional[TreeNode], targetSum: int) -> List[List[int]]:
+        if not root:
+            return []
+        result = []
+        def helper(root, path):
+            if not root.left and not root.right:
+                path.append(root.val)
+                if sum(path) == targetSum:
+                    result.append(path)
                 return
-            if node.left:
-                helper(node.left, res+[node.val])
-            if node.right:
-                helper(node.right, res+[node.val])
-
-        if not root: return []
+            if root.left:
+                helper(root.left, path+[root.val])
+            if root.right:
+                helper(root.right, path+[root.val])
         helper(root, [])
-        return paths
+        return result
 ```
 ```cpp
 class Solution {
@@ -10557,6 +10559,75 @@ class Solution:
         return "".join(stack)
 ```
 
+#### [301. 删除无效的括号](https://leetcode-cn.com/problems/remove-invalid-parentheses/)
+枚举+bfs搜索, BFS中每次删除一个括号，如果没有访问过加入queue，注意判断括号合法和删除括号要过滤alpha
+```python
+from collections import deque
+class Solution:
+    def removeInvalidParentheses(self, s: str) -> List[str]:
+        def is_valid(s):
+            stack = []
+            n = len(s)
+            for i in range(n):
+                if s[i].isalpha():
+                    continue
+                if s[i] == ')':
+                    if len(stack) > 0 and stack[-1] == '(':
+                        stack.pop()
+                        continue
+                    else:
+                        return False  
+                stack.append(s[i])
+            return len(stack) == 0
+
+        queue = deque([s])
+        visited = set([s])
+        result = []
+        is_find = False
+        while len(queue) > 0:
+            n = len(queue)
+            for _ in range(n):
+                top = queue.pop()
+                if is_valid(top):
+                    result.append(top)
+                    is_find = True
+                    continue  
+                for i in range(len(top)):
+                    if top[i].isalpha():
+                        continue
+                    rest = top[:i] + top[i+1:]
+                    if rest in visited:
+                        continue
+                    visited.add(rest)
+                    queue.appendleft(rest)
+            if is_find:
+                break
+        return result
+```
+
+#### [155. 最小栈](https://leetcode-cn.com/problems/min-stack/)
+```PYTHON
+class MinStack:
+    def __init__(self):
+        self.stack = []
+        self.minstack = []
+
+    def push(self, val: int) -> None:
+        self.stack.append(val)
+        if len(self.minstack) == 0 or (len(self.minstack) > 0 and val <= self.minstack[-1]):
+            self.minstack.append(val)
+
+    def pop(self) -> None:
+        val = self.stack.pop()
+        if val == self.minstack[-1]:
+            self.minstack.pop()
+
+    def top(self) -> int:
+        return self.stack[-1]
+
+    def getMin(self) -> int:
+        return self.minstack[-1]
+```
 
 ## 堆
 #### [347. 前 K 个高频元素](https://leetcode-cn.com/problems/top-k-frequent-elements)
@@ -12154,53 +12225,24 @@ class Solution:
 ```
 
 #### [543. 二叉树的直径](https://leetcode-cn.com/problems/diameter-of-binary-tree)
-注意理解递归，通过dsf遍历得到每个当前节点的直径，保存最大直径
-重点理解递归的 return, 二叉树遍历的退出,很好的练习
+二叉树直径 通过dfs遍历得到每个当前节点的直径，保存最大直径
 
 ```python
 class Solution:
     def diameterOfBinaryTree(self, root: TreeNode) -> int:
-        self.max_diam = 0
-        def traversal(node):
-            # 递归到底部，返回基础值
-            if node == None:
+        self.max_val = 0
+        def helper(root):
+            if not root:
                 return 0
-            # 从底部归上来，每层如何处理，返回中间值
-            else:
-                L = traversal(node.left)
-                R = traversal(node.right)
-                self.max_diam = max(self.max_diam, L+R)
-                return max(L, R) + 1
-        _ = traversal(root)
-        return self.max_diam
+            left = helper(root.left)
+            right = helper(root.right)
+            self.max_val = max(self.max_val, left+right)
+            return max(left, right) + 1
+        helper(root)
+        return self.max_val
 ```
 
 ### 图
-#### [743. 网络延迟时间](https://leetcode-cn.com/problems/network-delay-time/)
-Dijkstra 算法
-```python
-class Solution:
-    def networkDelayTime(self, times: List[List[int]], n: int, k: int) -> int:
-        graph = [[float('inf') for j in range(n)] for i in range(n)]
-        for u, v, w in times:
-            graph[u-1][v-1] = w
-        dist = [float('inf') for i in range(n)]
-        dist[k-1] = 0
-        used = [0 for i in range(n)]
-        for i in range(n):
-            index_min = -1
-            # 从未标记为最优路径的节点中选取最近节点
-            for index, is_used in enumerate(used):
-                if not is_used and (index_min==-1 or dist[index]<dist[index_min]):
-                    index_min = index
-            used[index_min] = True
-            # 更新最近节点能到达节点距离源节点的最短路径
-            for index, time in enumerate(graph[index_min]):
-                dist[index] = min(dist[index], dist[index_min]+time)
-        # 每个节点到源节点的最短路径取max
-        ans = max(dist)
-        return ans if ans < float('inf') else -1
-```
 #### [399. 除法求值](https://leetcode-cn.com/problems/evaluate-division/)
 ```python
 from collections import defaultdict, deque
