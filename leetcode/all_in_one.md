@@ -7640,20 +7640,20 @@ class Solution:
 ```python
 class Solution:
     def maximalSquare(self, matrix: List[List[str]]) -> int:
-        rows = len(matrix)
-        if rows == 0: return 0
-        cols = len(matrix[0])
-        dp = [[0] * cols for _ in range(rows)]
-        max_area = 0
-        for row in range(rows):
-            for col in range(cols):
-                if matrix[row][col] == "1":
-                    left_top = dp[row-1][col-1] if (row-1)>=0 and (col-1)>=0 else 0
-                    top = dp[row-1][col] if (row-1)>=0 else 0
-                    left = dp[row][col-1] if (col-1)>=0 else 0
-                    dp[row][col] = min(left_top, top, left) + 1
-                    max_area = max(max_area, dp[row][col]**2)
-        return max_area
+        n = len(matrix)
+        if n == 0:
+            return 0
+        m = len(matrix[0])
+        if m == 0:
+            return 0
+        max_len = 0
+        dp = [[0 for j in range(m+1)] for i in range(n+1)]
+        for i in range(1, n+1):
+            for j in range(1, m+1):
+                if matrix[i-1][j-1] == '1':
+                    dp[i][j] = min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]) + 1
+                    max_len = max(max_len, dp[i][j])
+        return max_len ** 2
 ```
 
 #### [355. 设计推特](https://leetcode-cn.com/problems/design-twitter/)
@@ -14697,6 +14697,45 @@ class Solution:
 
         helper(0, [], 0)
         return result
+```
+
+#### [468. 验证IP地址](https://leetcode-cn.com/problems/validate-ip-address/)
+```python
+class Solution:
+    def validIPAddress(self, IP: str) -> str:
+        def is_ip4(ip):
+            ip = ip.split('.')
+            if len(ip) != 4:
+                return False
+            for s in ip:
+                if len(s) == 0 or (len(s)>1 and s[0]=='0') or len(s) > 3:
+                    return False
+                for c in s:
+                    if not c.isdigit():
+                        return False
+                digit = int(s)
+                if digit < 0 or digit > 255:
+                    return False
+            return True
+
+        def is_ip6(ip):
+            ip = ip.split(':')
+            if len(ip) != 8:
+                return False
+            for s in ip:
+                if len(s) == 0 or len(s) > 4:
+                    return False
+                for c in s:
+                    if c<'0' or c>'9' and c<'A' or c>'F' and c<'a' or c>'f':
+                        return False
+            return True
+
+        if is_ip4(IP):
+            return "IPv4"
+        elif is_ip6(IP):
+            return "IPv6"
+        else:
+            return "Neither"
 ```
 #### [二叉树的锯齿形层次遍历](https://leetcode-cn.com/problems/binary-tree-zigzag-level-order-traversal/)
 [剑指 Offer 32 - III. 从上到下打印二叉树 III](https://leetcode-cn.com/problems/cong-shang-dao-xia-da-yin-er-cha-shu-iii-lcof/)
