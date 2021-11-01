@@ -5600,31 +5600,25 @@ class Solution:
 class Solution:
     def longestCommonPrefix(self, strs: List[str]) -> str:
         n = len(strs)
-        index = 0
-        while True:
-            char = None
-            for i in range(n):  
-                if index == len(strs[i]):
-                    return strs[0][:index]
-                if i == 0:
-                    char = strs[i][index]
-                else:
-                    if char != strs[i][index]:
-                        return strs[0][:index]
-            index += 1
-        return strs[0][:index]
-```
-```python
-class Solution:
-    def longestCommonPrefix(self, strs: List[str]) -> str:
-        """水平遍历"""
-        if len(strs) == 0: return ""
-        p = strs[0]
-        for i in range(1, len(strs)):
-            while (strs[i].find(p) != 0): # 最长公共前缀
-                p = p[:-1]
-        return p
-```
+        if n == 0:
+            return ""
+        m = float('inf')
+        for i in range(n):
+            word = strs[i]
+            m = min(m, len(word))
+        p = 0
+        while p < m:
+            char = strs[0][p]
+            is_not_same = False
+            for i in range(1, n):
+                if strs[i][p] != char:
+                    is_not_same = True
+                    break
+            if is_not_same:
+                break
+            p += 1
+        return strs[0][:p]
+``` 
 二分归并
 ```python
 class Solution:
@@ -9419,25 +9413,27 @@ class Solution:
 ```
 
 #### [958. 二叉树的完全性检验](https://leetcode-cn.com/problems/check-completeness-of-a-binary-tree/)
-index从1开始,父节点为i,则左孩子2*i,右孩子2*i+1
-遍历完每层,检查最后的index==已遍历节点数cnt.即可完成对完全二叉树的判断.
+index从0开始, 父节点为i, 则左孩子2*i, 右孩子2*i+1
+检查index+1==已遍历节点数cnt, 即可完成对完全二叉树的判断.
 ```python
 from collections import deque
 class Solution:
     def isCompleteTree(self, root: TreeNode) -> bool:
-        if root == None: return True
-        queue = deque([(root, 1)])
-        last, cnt = 0, 0
-        while queue:
-            for _ in range(len(queue)):
+        if not root:
+            return True
+        queue = deque([(root, 0)])
+        cnt = 0
+        while len(queue) > 0:
+            n = len(queue)
+            for i in range(n):
                 top, index = queue.pop()
                 cnt += 1
-                last = index
+                if index + 1 != cnt:
+                    return False
                 if top.left:
-                    queue.appendleft((top.left, 2*index))
+                    queue.appendleft((top.left, 2*index+1))
                 if top.right:
-                    queue.appendleft((top.right, 2*index+1))
-            if last != cnt: return False
+                    queue.appendleft((top.right, 2*index+2))
         return True
 ```
 
@@ -14399,19 +14395,20 @@ class Solution:
 ```
 
 #### [448. 找到所有数组中消失的数字](https://leetcode-cn.com/problems/find-all-numbers-disappeared-in-an-array/)
-找到所有在 [1, n] 范围之间没有出现在数组中的数字
 ```python
 class Solution:
     def findDisappearedNumbers(self, nums: List[int]) -> List[int]:
-        """把 abs(nums[i])-1 索引位置的元素标记为负数, 表示i+1对应的元素出现过"""
+        def swap(index1, index2):
+            nums[index1], nums[index2] = nums[index2], nums[index1]
+
         n = len(nums)
         for i in range(n):
-            index = abs(nums[i])-1
-            if nums[index] > 0:
-                nums[index] *= -1
+            while nums[i] >= 1 and nums[i] <= n and nums[i] != nums[nums[i]-1]:
+                # 写出swap函数传参，不然嵌套引用很容易出错
+                swap(i, nums[i]-1)
         result = []
         for i in range(n):
-            if nums[i] > 0:
+            if nums[i] != i+1:
                 result.append(i+1)
         return result
 ```
@@ -14737,6 +14734,7 @@ class Solution:
         else:
             return "Neither"
 ```
+
 #### [二叉树的锯齿形层次遍历](https://leetcode-cn.com/problems/binary-tree-zigzag-level-order-traversal/)
 [剑指 Offer 32 - III. 从上到下打印二叉树 III](https://leetcode-cn.com/problems/cong-shang-dao-xia-da-yin-er-cha-shu-iii-lcof/)
 双栈stack(left,right), stack_inv(right,left)
@@ -18762,4 +18760,13 @@ class Solution:
                 if s[i] != ' ':
                     word += s[i]
         return rev_s
+```
+
+#### [575. 分糖果](https://leetcode-cn.com/problems/distribute-candies/)
+```python
+class Solution:
+    def distributeCandies(self, candyType: List[int]) -> int:
+        candy = set(candyType)
+        n = len(candyType)
+        return min(n//2, len(candy))
 ```
