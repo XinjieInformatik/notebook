@@ -4904,16 +4904,15 @@ class Solution:
 ```python
 class Solution:
     def moveZeroes(self, nums: List[int]) -> None:
-      p1, p2 = 0, 0
         n = len(nums)
+        p1, p2 = 0, 0
         while p2 < n:
             if nums[p2] != 0:
                 nums[p1] = nums[p2]
                 p1 += 1
             p2 += 1
-        while p1 < n:
-            nums[p1] = 0
-            p1 += 1
+        for i in range(p1, n):
+            nums[i] = 0
 ```
 
 #### [324. 摆动排序 II](https://leetcode-cn.com/problems/wiggle-sort-ii/)
@@ -5618,7 +5617,7 @@ class Solution:
                 break
             p += 1
         return strs[0][:p]
-``` 
+```
 二分归并
 ```python
 class Solution:
@@ -10510,48 +10509,25 @@ class Solution:
 ```python
 class Solution:
     def decodeString(self, s: str) -> str:
-        n = len(s)
         stack = []
-        res = ""
-        num = 0
+        n = len(s)
         for i in range(n):
-            if "0" <= s[i] <= "9":
-                num = num * 10 + int(s[i])
-            elif s[i] == "[":
-                stack.append((num, res))
-                num = 0
+            if s[i] == ']':
                 res = ""
-            elif s[i] == "]":
-                prev_num, prev_res = stack.pop()
-                res = prev_res + max(1, prev_num) * res
-            else:
-                res += s[i]
-        return res
-```
-```python
-class Solution:
-    def decodeString(self, s: str) -> str:
-        stack = []
-        n = len(s)
-        num = 0
-        res = ""
-        for i in range(n):
-            char = s[i]
-            if char == ']':
-                sub_s = ""
                 while len(stack)>0 and stack[-1] != '[':
-                    sub_s += stack.pop()
+                    char = stack.pop()
+                    res = char + res
                 stack.pop()
                 num = ""
                 while len(stack)>0 and stack[-1].isdigit():
-                    c = stack.pop()
-                    num = c + num
+                    val = stack.pop()
+                    num = val + num
                 num = int(num)
-                sub_s *= num  
-                for i in range(len(sub_s)-1, -1, -1):
-                    stack.append(sub_s[i])
-                continue
-            stack.append(char)
+                res *= num
+                for char in res:
+                    stack.append(char)
+            else:
+                stack.append(s[i])
         return "".join(stack)
 ```
 
@@ -16803,6 +16779,7 @@ public:
 ```
 
 #### [剑指 Offer 35. 复杂链表的复制](https://leetcode-cn.com/problems/fu-za-lian-biao-de-fu-zhi-lcof/)
+[138. 复制带随机指针的链表](https://leetcode-cn.com/problems/copy-list-with-random-pointer/)
 链表复制,有随机指针
 ```python
 """
@@ -16813,20 +16790,21 @@ class Node:
         self.next = next
         self.random = random
 """
+
 class Solution:
     def copyRandomList(self, head: 'Node') -> 'Node':
-        visited = {}
-        def dfs(node):
+        copy = {}
+        def helper(node):
             if not node:
-                return
-            if node in visited:
-                return visited[node]
-            copy = Node(node.val, None, None)
-            visited[node] = copy
-            copy.next = dfs(node.next)
-            copy.random = dfs(node.random)
-            return copy
-        return dfs(head)
+                return None
+            if node in copy:
+                return copy[node]
+            new_node = Node(node.val)
+            copy[node] = new_node
+            new_node.next = helper(node.next)
+            new_node.random = helper(node.random)
+            return new_node
+        return helper(head)
 ```
 ```cpp
 /*
