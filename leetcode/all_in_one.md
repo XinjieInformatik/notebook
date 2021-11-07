@@ -544,22 +544,18 @@ class Solution:
     def backPackIV(self, nums, target):
         """dp[i][j] 在i状态j容量下，可装满j的组合数
         状态转移: 到i,j为止的组合数 = 不使用该硬币组合数 + 使用该硬币组合数"""
-        # 1. 初始化dp
-        n = len(nums)+1
-        m = target+1
-        dp = [[0 for j in range(m)] for i in range(n)]
-        for i in range(n):
+        n = len(coins)
+        dp = [[0 for j in range(amount+1)] for i in range(n+1)]
+        for i in range(n+1):
             dp[i][0] = 1
-        # 2. 按规则遍历dp填表
-        for i in range(1, n):
-            for j in range(1, m):
-                # 3. 状态转移
-                if j - nums[i-1] < 0:
+        for i in range(1, n+1):
+            for j in range(1, amount+1):
+                if j < coins[i-1]:
+                    # 完全背包要有装不下时的 if-else
                     dp[i][j] = dp[i-1][j]
                 else:
                     # dp[i]因为一个物体可以多次使用
-                    dp[i][j] = dp[i-1][j] + dp[i][j-nums[i-1]]
-        # 4. 输出最终状态
+                    dp[i][j] = dp[i][j-coins[i-1]] + dp[i-1][j]
         return dp[-1][-1]
 ```
 ```python
@@ -1879,22 +1875,24 @@ Leetcode: 402, 316, 42, 84, 739, 496, 503, 901
 ```python
 class Solution:
     def removeKdigits(self, num: str, k: int) -> str:
-        """ 单调递增stack """
+        # 单调递增stack，有k次pop机会，要把k次机会用完，去除前置0
+        n = len(num)
         stack = []
-        for char in num:
-            while len(stack) > 0 and char < stack[-1] and k > 0:
+        for i in range(n):
+            while len(stack)>0 and stack[-1] > num[i] and k > 0:
                 stack.pop()
                 k -= 1
-            stack.append(char)
-        # 去除前导0
+            stack.append(num[i])
+        # 把k次机会用完
+        if k > 0:
+            stack = stack[:-k]
+        # 去除前置0
         index = 0
         while index < len(stack) and stack[index] == '0':
             index += 1
-        # 如果k还没用完
-        up_bound = len(stack) - k
-        res = stack[index:up_bound]
-        return "".join(res) if len(res) > 0 else '0'
+        return '0' if index == len(stack) else "".join(stack[index:])
 ```
+
 #### [456. 132模式](https://leetcode-cn.com/problems/132-pattern/)
 ```python
 class Solution:
@@ -2008,6 +2006,53 @@ class Solution:
             water = boundary-curr_height
             waters += water
         return waters
+```
+#### [407. 接雨水 II](https://leetcode-cn.com/problems/trapping-rain-water-ii/)
+```python
+from heapq import *
+class Solution:
+    def trapRainWater(self, heightMap: List[List[int]]) -> int:
+        """
+        水从高出往低处流，某个位置储水量取决于四周最低高度，从最外层向里层包抄，用小顶堆动态找到未访问位置最小的高度
+        """
+        if not heightMap:
+            return 0
+        imax = float('-inf')
+        ans = 0
+        heap = []
+        visited = set()
+        row = len(heightMap)
+        col = len(heightMap[0])
+        # 将最外层放入小顶堆
+        # 第一行和最后一行
+        for j in range(col):
+            # 将该位置的高度、横纵坐标插入堆
+            heappush(heap, [heightMap[0][j], 0, j])  
+            heappush(heap, [heightMap[row - 1][j], row - 1, j])
+            visited.add((0, j))
+            visited.add((row - 1, j))
+        # 第一列和最后一列
+        for i in range(row):
+            heappush(heap, [heightMap[i][0], i, 0])
+            heappush(heap, [heightMap[i][col - 1], i, col - 1])
+            visited.add((i, 0))
+            visited.add((i, col - 1))
+        while heap:
+            h, i, j = heappop(heap)
+            # 之前最低高度的四周已经探索过了，所以要更新为次低高度开始探索
+            imax = max(imax, h)  
+            # 从堆顶元素出发，探索四周储水位置
+            for x, y in [[0, 1], [1, 0], [0, -1], [-1, 0]]:
+                tmp_x = x + i
+                tmp_y = y + j
+                # 是否到达边界
+                if tmp_x < 0 or tmp_y < 0 or tmp_x >= row or tmp_y >= col or (tmp_x, tmp_y) in visited:
+                    continue
+                visited.add((tmp_x, tmp_y))
+                if heightMap[tmp_x][tmp_y] < imax:
+                    ans += imax - heightMap[tmp_x][tmp_y]
+                heappush(heap, [heightMap[tmp_x][tmp_y], tmp_x, tmp_y])
+        return ans
 ```
 
 #### [84. 柱状图中最大的矩形](https://leetcode-cn.com/problems/largest-rectangle-in-histogram/)
@@ -2319,30 +2364,17 @@ class StockSpanner:
 输入:nums = [1,1,1], k = 2  输出: 2 , [1,1] 与 [1,1] 为两种不同的情况。
 ```
 ```python
+from collections import defaultdict
 class Solution:
     def subarraySum(self, nums: List[int], k: int) -> int:
-        """O(n^2)"""
-        # i, j = 0, 1
-        # n = len(nums)
-        # prefixsum = [0] * (n+1)
-        # for i in range(n):
-        #     prefixsum[i+1] = prefixsum[i] + nums[i]
-        # cnt = 0
-        # for i in range(n+1):
-        #     for j in range(i+1, n+1):
-        #         if prefixsum[j] - prefixsum[i] == k:
-        #             cnt += 1
-        # return cnt
-
-        """O(n)前缀和 + memo, memo存储"""
-        prefix = {0: 1}
-        comsum = 0
+        stat = defaultdict(int)
+        stat[0] = 1
+        presum = 0
         cnt = 0
         for num in nums:
-            comsum += num
-            if comsum - k in prefix:
-                cnt += prefix[comsum-k]
-            prefix[comsum] = prefix[comsum] + 1 if comsum in prefix else 1
+            presum += num
+            cnt += stat[presum-k]
+            stat[presum] += 1
         return cnt
 ```
 
@@ -2405,6 +2437,7 @@ class Solution:
 ```
 
 #### [1477. 找两个和为目标值且不重叠的子数组](https://leetcode-cn.com/problems/find-two-non-overlapping-sub-arrays-each-with-target-sum/)
+两个和为k的子数组
 ```
 给你一个整数数组 arr 和一个整数值 target 。
 请你在 arr 中找 两个互不重叠的子数组 且它们的和都等于 target 。可能会有多种方案，请你返回满足要求的两个子数组长度和的 最小值 。
@@ -4295,6 +4328,21 @@ class Solution:
             i += 1
         return i
 ```
+
+#### [268. 丢失的数字](https://leetcode-cn.com/problems/missing-number/)
+index+[n] 范围是[0, n], nums范围是[0,n]缺一个数, 异或后可找到
+```python
+class Solution:
+    def missingNumber(self, nums: List[int]) -> int:
+        """ i [0, n-1], nums [0, n]  """
+        val = 0
+        n = len(nums)
+        for i in range(n):
+            val ^= i
+            val ^= nums[i]
+        return val ^ n
+```
+
 #### [面试题 01.07. 旋转矩阵](https://leetcode-cn.com/problems/rotate-matrix-lcci/)
 ```python
 class Solution:
@@ -7517,6 +7565,36 @@ class Solution:
         return -1
 ```
 
+#### [367. 有效的完全平方数](https://leetcode-cn.com/problems/valid-perfect-square/)
+```python
+class Solution:
+    def isPerfectSquare(self, num: int) -> bool:
+        index = 1
+        squre = 1
+        while squre <= num:
+            if squre == num:
+                return True
+            index += 1
+            squre = index * index
+        return False
+```
+```python
+class Solution:
+    def isPerfectSquare(self, num: int) -> bool:
+        left = 0
+        right = num + 1
+        while left < right:
+            mid = left + (right - left) // 2
+            squre = mid * mid
+            if squre < num:
+                left = mid + 1
+            elif squre > num:
+                right = mid
+            else:
+                return True
+        return False
+```
+
 #### [64. 最小路径和](https://leetcode-cn.com/problems/minimum-path-sum/)
 ```python
 class Solution:
@@ -7969,6 +8047,7 @@ public:
 ```
 
 #### [328. 奇偶链表](https://leetcode-cn.com/problems/odd-even-linked-list/)
+odd_dummy, even_dummy 穿针引线, 然后再连起来
 ```python
 # Definition for singly-linked list.
 # class ListNode:
@@ -7977,16 +8056,22 @@ public:
 #         self.next = next
 class Solution:
     def oddEvenList(self, head: ListNode) -> ListNode:
-        if not head: return head
-        dummy1 = odd = head
-        dummy2 = even = head.next
-        while even and even.next:
-            odd.next = odd.next.next
-            odd = odd.next
-            even.next = even.next.next
-            even = even.next
-        odd.next = dummy2
-        return dummy1
+        odd_dummy_head = odd_dummy = ListNode(-1)
+        even_dummy_head = even_dummy = ListNode(-1)
+        node = head
+        cnt = 1
+        while node:
+            if cnt & 1:
+                odd_dummy.next = node
+                odd_dummy = odd_dummy.next
+            else:
+                even_dummy.next = node
+                even_dummy = even_dummy.next
+            node = node.next
+            cnt += 1
+        odd_dummy.next = even_dummy_head.next  
+        even_dummy.next = None
+        return odd_dummy_head.next
 ```
 
 #### [奇偶链表]
@@ -8457,53 +8542,33 @@ class Solution:
 
 #### [61. 旋转链表](https://leetcode-cn.com/problems/rotate-list/)
 ```python
-class Solution:
-    def rotateRight(self, head: ListNode, k: int) -> ListNode:
-        if head==None or head.next==None: return head
-        lenth = 0
-        node = head
-        while node:
-            node = node.next
-            lenth += 1
-        k = k % lenth
-        while k > 0:
-            prev, cur = ListNode(-1), head
-            prev.next = head
-            while cur.next:
-                prev = prev.next
-                cur = cur.next
-            prev.next = None
-            cur.next = head
-            head = cur
-            k -= 1
-        return head
-```
-```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
 class Solution:
     def rotateRight(self, head: Optional[ListNode], k: int) -> Optional[ListNode]:
-        if not head:
-            return head
-        cnt = 0
-        node = head
-        while node:
-            node = node.next
-            cnt += 1
-        k %= cnt  
-        # corner case
-        if k == 0:
-            return head
-        slow = head
-        fast = head
-        while k > 0:
-            fast = fast.next
-            k -= 1
-        while fast.next:
-            fast = fast.next
-            slow = slow.next
-        new_node = slow.next
-        slow.next = None
-        fast.next = head
-        return new_node
+        n = -1
+        dummy = ListNode(-1)
+        dummy.next = head
+        tail = None
+        while dummy:
+            tail = dummy
+            dummy = dummy.next
+            n += 1
+        k %= n
+        cnt = n - k
+        dummy = ListNode(-1)
+        dummy.next = head
+        while dummy and cnt > 0:
+            dummy = dummy.next
+            cnt -= 1
+        nxt = dummy.next
+        dummy.next = None
+        tail.next = head
+        return nxt
+
 ```
 
 #### [86. 分隔链表](https://leetcode-cn.com/problems/partition-list/)
@@ -11216,47 +11281,24 @@ class Solution:
 ```
 
 #### [213. 打家劫舍 II](https://leetcode-cn.com/problems/house-robber-ii/)
+因为相连，所以nums[1:], nums[:-1]分别计算后取max. pprev, prev, curr表示在该节点能取到的最大值
 ```python
 class Solution:
     def rob(self, nums: List[int]) -> int:
-        n = len(nums)
-        if n == 0: return 0
-        if n < 3: return max(nums)
-
-        def helper(amounts):
-            n = len(amounts)
-            if n == 1: return amounts[0]
-            dp = [0] * (n+1)
-            dp[1] = amounts[0] # becareful
-            for i in range(2, n+1):
-                steal_pre = dp[i-1]
-                steal_this = dp[i-2] + amounts[i-1]
-                dp[i] = max(steal_pre, steal_this)
-            return dp[-1]
-
-        return max(helper(nums[1:]), helper(nums[:-1]))
-```
-```python
-class Solution:
-    def rob(self, nums: List[int]) -> int:
-        n = len(nums)
-        if n == 0:
-            return 0
-        if n <= 3:
-            return max(nums)
-        def helper(nums):
-            pprev = 0
-            prev = 0
-            curr = 0
-            # 注意要从0开始
-            for i in range(n-1):
+        def get_max(nums):
+            n = len(nums)
+            if n < 3:
+                return max(nums)
+            pprev = nums[0]
+            prev = max(nums[0], nums[1])
+            for i in range(2, n):
                 curr = max(pprev+nums[i], prev)
                 pprev = prev
                 prev = curr
             return curr
-
-        result = max(helper(nums[1:]), helper(nums[:-1]))
-        return result
+        if len(nums) == 1:
+            return nums[0]
+        return max(get_max(nums[1:]), get_max(nums[:-1]))
 ```
 
 #### [337. 打家劫舍 III](https://leetcode-cn.com/problems/house-robber-iii/submissions/)
@@ -11833,31 +11875,29 @@ public:
 
 #### [498. 对角线遍历](https://leetcode-cn.com/problems/diagonal-traverse/)
 ```python
-from collections import deque
 class Solution:
     def findDiagonalOrder(self, mat: List[List[int]]) -> List[int]:
-        m = len(mat)
-        if m == 0:
-            return []
-        n = len(mat[0])
-        if n == 0:
-            return []  
-        start_points = []
-        for j in range(n):
-            start_points.append((0, j))
-        for i in range(1, m):
-            start_points.append((i, n-1))
+        """把上边界和右边界加入初始候选集，然后向左下方扫描，偶数逆转"""
+        cands = []
+        n = len(mat)
+        m = len(mat[0])
+        for j in range(m):
+            cands.append((0, j))
+        for i in range(1, n):
+            cands.append((i, m-1))
         result = []
-        # 遍历对角线，偶数反转
-        for i, (row, col) in enumerate(start_points):
+        index = 0
+        while index < len(cands):
             line = []
-            while col >= 0 and row < m:
+            row, col = cands[index]
+            while row < n and col >= 0:
                 line.append(mat[row][col])
                 row += 1
                 col -= 1
-            if i & 1 == 0:
+            if index & 1 == 0:
                 line.reverse()
             result.extend(line)
+            index += 1
         return result
 ```
 层序遍历，特别小心：left/right是两个不同的节点，不能一个不符合把另一个也continue了
@@ -13336,35 +13376,37 @@ class Solution:
         m = len(board[0])
         if m == 0:
             return False
+        if len(word) == 0:
+            return True
         oriens = [(1,0),(-1,0),(0,1),(0,-1)]
-        word_n = len(word)
-        visited = [[0 for j in range(m)] for i in range(n)]
-        def helper(row, col, index):
-            if board[row][col] != word[index]:
-                return False
-            if index == word_n-1:
-                return True
+        def dfs(row, col, index):
+            if index == len(word):
+                return True  
             for orien in oriens:
-                nxt_row = row + orien[0]
-                nxt_col = col + orien[1]
+                nxt_row = orien[0] + row
+                nxt_col = orien[1] + col
                 if nxt_row < 0 or nxt_row >= n:
                     continue
                 if nxt_col < 0 or nxt_col >= m:
                     continue
                 if visited[nxt_row][nxt_col]:
                     continue
+                if board[nxt_row][nxt_col] != word[index]:
+                    continue
                 visited[nxt_row][nxt_col] = 1
-                if helper(nxt_row, nxt_col, index+1):
+                if dfs(nxt_row, nxt_col, index+1):
                     return True
                 visited[nxt_row][nxt_col] = 0
             return False
 
+        visited = [[0 for j in range(m)] for i in range(n)]
         for i in range(n):
             for j in range(m):
-                visited[i][j] = 1
-                if helper(i, j, 0):
-                    return True
-                visited[i][j] = 0
+                if board[i][j] == word[0]:
+                    visited[i][j] = 1
+                    if dfs(i, j, 1):
+                        return True
+                    visited[i][j] = 0
         return False
 ```
 ```python
@@ -13763,22 +13805,6 @@ class Solution:
         return False
 ```
 
-#### 次方
-```python
-class Solution:
-    def myPow(self, x: float, n: int) -> float:
-        """O(logn)"""
-        if x == 0: return 0
-        if n < 0:
-            n, x = -n, 1/x
-        res = 1
-        while n > 0:
-            if n & 1:
-                res *= x
-            x *= x
-            n = n >> 1
-        return res
-```
 ### 树状数组
 ```python
 class FenwickTree:
@@ -14754,59 +14780,36 @@ class Solution:
             level += 1
         return result
 ```
+
 #### [74. 搜索二维矩阵](https://leetcode-cn.com/problems/search-a-2d-matrix/)
 logn + logm 两次二分查找, 注意边界
 ```python
 class Solution:
     def searchMatrix(self, matrix: List[List[int]], target: int) -> bool:
-        def search (matrix, left, right, target, index, func):
-            while left < right:
-                mid = left + (right - left) // 2
-                if func(matrix, mid, index, target):
-                    left = mid + 1
-                else:
-                    right = mid
-            return left
-
         n = len(matrix)
         if n == 0:
             return False
         m = len(matrix[0])
         if m == 0:
             return False
-        func1 = lambda matrix, m, col, t: matrix[m][col] < target
-        func2 = lambda matrix, m, row, t: matrix[row][m] < target  
-        row = search(matrix, 0, n, target, 0, func=func1)
+        def search(index, left, right, matrix, target, cmp):
+            while left < right:
+                mid = left + (right - left) // 2
+                if cmp(index, mid, target):
+                    left = mid + 1
+                else:
+                    right = mid
+            return left
+
+        cmp_col = lambda col, mid, target: matrix[mid][col] < target
+        cmp_row = lambda row, mid, target: matrix[row][mid] < target
+        row = search(0, 0, n, matrix, target, cmp_col)
         if row < n and matrix[row][0] == target:
             return True
-        col = search(matrix, 0, m, target, row-1, func=func2)
-        if col == m:
-            return False  
-        return matrix[row-1][col] == target
+        col = search(row-1, 0, m, matrix, target, cmp_row)
+        return col < m and matrix[row-1][col] == target
 ```
-```python
-class Solution:
-    def searchMatrix(self, matrix: List[List[int]], target: int) -> bool:
-        t, b = 0, len(matrix)
-        if b == 0: return False
-        l, r = 0, len(matrix[0])
-        if r == 0: return False
 
-        while t < b:
-            m = t + (b-t) // 2
-            if matrix[m][-1] < target:
-                t = m + 1
-            else:
-                b = m
-        if t == len(matrix): return False
-        while l < r:
-            m = l + (r-l) // 2
-            if matrix[t][m] < target:
-                l = m + 1
-            else:
-                r = m
-        return matrix[t][l] == target
-```
 #### [240. 搜索二维矩阵 II](https://leetcode-cn.com/problems/search-a-2d-matrix-ii/)
 线性游走排除法，从左下角开始，解空间是右上角，如果target大于当前值，可以col+1排除上方值，如果target小于当前值，可以row-1排除右侧值
 ```python
@@ -14893,23 +14896,6 @@ class Solution:
                     p += lb
             if len(a)==len(b)==1: return True
         return False
-```
-
-#### [50. Pow(x, n)](https://leetcode-cn.com/problems/powx-n/)
-```python
-class Solution:
-    def myPow(self, x: float, n: int) -> float:
-        """快速幂,二进制表示指数"""
-        if n < 0:
-            x = 1/x
-            n = -n
-        res = 1
-        while n:
-            if n & 1:
-                res *= x
-            x *= x
-            n >>= 1
-        return res
 ```
 
 #### [343. 整数拆分](https://leetcode-cn.com/problems/integer-break/)
@@ -15046,65 +15032,37 @@ public:
 ```python
 class Solution:
     def reversePairs(self, nums: List[int]) -> int:
-        n = len(nums)
-        arr = [(i, nums[i]) for i in range(n)]
-        self.res = 0
+        self.cnt = 0
+        nums = [(nums[i], i) for i in range(len(nums))]
+        def mergeSort(l, r):
+            def merge(left, right):
+                n1, n2 = len(left), len(right)
+                p1, p2 = 0, 0
+                result = []
+                while p1 < n1 or p2 < n2:
+                    # 注意是 <=
+                    if p2 == n2 or (p1 < n1 and left[p1][0] <= right[p2][0]):
+                        result.append(left[p1])
+                        self.cnt += p2
+                        p1 += 1
+                    else:
+                        result.append(right[p2])
+                        p2 += 1
+                return result
 
-        def merge(arr_l, arr_r):
-            arr = []
-            n1, n2 = len(arr_l), len(arr_r)
-            p1, p2 = 0, 0
-            while p1 < n1 or p2 < n2:
-                # 注意是 <=
-                if p2 == n2 or (p1 < n1 and arr_l[p1][1] <= arr_r[p2][1]):
-                    self.res += p2
-                    arr.append(arr_l[p1])
-                    p1 += 1
-                else:
-                    arr.append(arr_r[p2])
-                    p2 += 1
-            return arr
-
-        def mergeSort(arr, l, r):
-            if r == 0:
-                return
             if l == r - 1:
-                return [arr[l]]
-            m = l + (r-l) // 2
-            arr_l = mergeSort(arr, l, m)
-            arr_r = mergeSort(arr, m, r)
-            return merge(arr_l, arr_r)
+                return [nums[l]]
+            mid = l + (r - l) // 2
+            left = mergeSort(l, mid)
+            right = mergeSort(mid, r)
+            return merge(left, right)
 
-        mergeSort(arr, 0, n)
-        return self.res
+        if len(nums) == 0:
+            return 0
+        mergeSort(0, len(nums))
+        return self.cnt
 ```
 
-#### [61. 旋转链表](https://leetcode-cn.com/problems/rotate-list/)
-移动k个位置 = 将倒数k%n个节点放到开头. 注意特殊处理k%n==0,return head
-```python
-class Solution:
-    def rotateRight(self, head: ListNode, k: int) -> ListNode:
-        if not head: return head
-        node = head
-        n = 0
-        while node:
-            node = node.next
-            n += 1
-        k %= n
-        if k == 0:
-            return head
-        slow = fast = head
-        while k:
-            fast = fast.next
-            k -= 1
-        while fast.next:
-            fast = fast.next
-            slow = slow.next
-        new_head = slow.next
-        slow.next = None
-        fast.next = head
-        return new_head
-```
 #### [剑指 Offer 45. 把数组排成最小的数](https://leetcode-cn.com/problems/ba-shu-zu-pai-cheng-zui-xiao-de-shu-lcof/)
 字符串归并排序. 重点:转成字符串,比较left[p1] + right[p2] < right[p2] + left[p1]
 ```python
@@ -16145,6 +16103,7 @@ public:
     }
 };
 ```
+
 #### [剑指 Offer 15. 二进制中1的个数](https://leetcode-cn.com/problems/er-jin-zhi-zhong-1de-ge-shu-lcof/)
 ```python
 class Solution:
@@ -16158,6 +16117,7 @@ class Solution:
 ```
 
 #### [剑指 Offer 16. 数值的整数次方](https://leetcode-cn.com/problems/shu-zhi-de-zheng-shu-ci-fang-lcof/)
+[50. Pow(x, n)](https://leetcode-cn.com/problems/powx-n/)
 快速幂 O(log(n))
 ```python
 class Solution:
@@ -16175,6 +16135,7 @@ class Solution:
             n >>= 1
         return res
 ```
+
 #### [剑指 Offer 18. 删除链表的节点](https://leetcode-cn.com/problems/shan-chu-lian-biao-de-jie-dian-lcof/)
 ```python
 class Solution:
@@ -17179,13 +17140,14 @@ class Solution:
 #### [剑指 Offer 62. 圆圈中最后剩下的数字](https://leetcode-cn.com/problems/yuan-quan-zhong-zui-hou-sheng-xia-de-shu-zi-lcof/)
 参考题解: https://leetcode-cn.com/problems/yuan-quan-zhong-zui-hou-sheng-xia-de-shu-zi-lcof/solution/huan-ge-jiao-du-ju-li-jie-jue-yue-se-fu-huan-by-as/
 最后一个人
+![20211106_134350_31](assets/20211106_134350_31.png)
 ```python
 class Solution:
     def lastRemaining(self, n: int, m: int) -> int:
-        ans = 0
+        index = 0 # 最终生存人的index
         for i in range(2, n+1):
-            ans = (ans + m) % i
-        return ans
+            index = (index + m) % i # 每次右移
+        return index
 ```
 
 #### [剑指 Offer 65. 不用加减乘除做加法](https://leetcode-cn.com/problems/bu-yong-jia-jian-cheng-chu-zuo-jia-fa-lcof/)
@@ -17429,16 +17391,6 @@ if __name__ == "__main__":
 	ans = maxSum(nums, k)
 	print(ans)
 ```
-#### [Knuth洗牌算法]
-```python
-def knuth_shuffle(list):
-    # no extra space
-    for i in range(len(list)-1, 0, -1):
-        p = random.randrange(0, i + 1)
-        list[i], list[p] = list[p], list[i]
-    return list
-```
-
 
 ### C++输入输出
 cin, scanf 会忽略空格，回车等间隔符。
@@ -18747,4 +18699,38 @@ class Solution:
         candy = set(candyType)
         n = len(candyType)
         return min(n//2, len(candy))
+```
+
+#### [1218. 最长定差子序列](https://leetcode-cn.com/problems/longest-arithmetic-subsequence-of-given-difference/)
+```python
+from collections import defaultdict
+class Solution:
+    def longestSubsequence(self, arr: List[int], difference: int) -> int:
+        """ 因为统计的是顺序的子序列长度，所以可以循序遍历查表 """
+        dp = defaultdict(int)
+        for val in arr:
+            dp[val] = dp[val-difference] + 1
+        return max(dp.values())
+```
+
+#### [384. 打乱数组](https://leetcode-cn.com/problems/shuffle-an-array/)
+洗牌算法
+```python
+import random
+class Solution:
+    def __init__(self, nums: List[int]):
+        self.nums = nums
+        self.copy = nums.copy()
+
+    def reset(self) -> List[int]:
+        self.nums = self.copy.copy()
+        return self.copy
+
+    def shuffle(self) -> List[int]:
+        n = len(self.nums)
+        # 当前数和当前及之后随机一个数交换
+        for i in range(n):
+            swap_i = random.randint(i, n-1)
+            self.nums[i], self.nums[swap_i] = self.nums[swap_i], self.nums[i]
+        return self.nums
 ```
