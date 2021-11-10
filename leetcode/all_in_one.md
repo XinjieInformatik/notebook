@@ -8572,12 +8572,17 @@ class Solution:
 ```
 
 #### [86. 分隔链表](https://leetcode-cn.com/problems/partition-list/)
-链表partition，链表新建从dummy开始修改地址间的连接是常规操作
+链表partition, 用x分隔, 用dummy_before, dummy_after穿针引线, 然后相连
 ```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
 class Solution:
     def partition(self, head: ListNode, x: int) -> ListNode:
-        dummy_head = dummy_before = ListNode(-1)
-        dummy = dummy_after = ListNode(-1)
+        before_head = dummy_before = ListNode(-1)
+        after_head = dummy_after = ListNode(-1)
         while head:
             if head.val < x:
                 dummy_before.next = head
@@ -8586,9 +8591,9 @@ class Solution:
                 dummy_after.next = head
                 dummy_after = dummy_after.next
             head = head.next
-        dummy_before.next = dummy.next
+        dummy_before.next = after_head.next
         dummy_after.next = None
-        return dummy_head.next
+        return before_head.next
 ```
 ```cpp
 /**
@@ -11050,7 +11055,7 @@ public:
 ```
 .
 #### [295. 数据流的中位数](https://leetcode-cn.com/problems/find-median-from-data-stream/)
-维护1个大顶堆（小于中位数的数），1个小顶堆（大于中位数的数）。新进来的数如果小于大顶堆堆顶，入大顶堆，否则金小顶堆。通过heappop保持大顶堆大小 == 小顶堆 or 大顶堆 == 小顶堆+1.
+维护1个大顶堆（小于中位数的数），1个小顶堆（大于中位数的数）。新进来的数如果小于大顶堆堆顶，入大顶堆，否则进小顶堆。通过heappop保持大顶堆大小 == 小顶堆 or 大顶堆 == 小顶堆+1.
 注意heapq默认是小顶堆，构造大顶堆时添加负号，取数时候均要记得还原。
 
 ```python
@@ -11190,6 +11195,7 @@ class Solution:
             max_index = index
             for i in range(index+1, min(index+step+1, n)):
                 reach_index = i + nums[i]
+                # 如果跳的距离一样远，选最大的index
                 if reach_index >= max_val:
                     max_val = reach_index
                     max_index = i
@@ -12738,22 +12744,22 @@ class Solution:
                 prev = curr
                 curr = nxt
             return prev
-        l1_rev = reverse_list(l1)
-        l2_rev = reverse_list(l2)
+        l1 = reverse_list(l1)
+        l2 = reverse_list(l2)
         carry = 0
-        new_head = new_dummy = ListNode(-1)
-        while l1_rev or l2_rev or carry:
-            l1_val = l1_rev.val if l1_rev else 0
-            l2_val = l2_rev.val if l2_rev else 0
-            val = l1_val + l2_val + carry
-            carry, val = divmod(val, 10)
-            new_node = ListNode(val)
-            new_dummy.next = new_node
-            new_dummy = new_dummy.next
-            l1_rev = l1_rev.next if l1_rev else l1_rev
-            l2_rev = l2_rev.next if l2_rev else l2_rev
-        ans = reverse_list(new_head.next)
-        return ans
+        dummy_head = dummy = ListNode(-1)
+        while l1 or l2 or carry:
+            val1 = l1.val if l1 else 0
+            val2 = l2.val if l2 else 0
+            val = val1 + val2 + carry
+            carry, res = divmod(val, 10)
+            dummy.next = ListNode(res)
+            dummy = dummy.next
+            l1 = l1.next if l1 else None
+            l2 = l2.next if l2 else None
+        dummy.next = None
+        new_head = reverse_list(dummy_head.next)
+        return new_head
 ```
 #### [959. 由斜杠划分区域](https://leetcode-cn.com/problems/regions-cut-by-slashes/)
 TODO
@@ -15414,9 +15420,13 @@ class Solution:
 ```
 
 #### [440. 字典序的第K小数字](https://leetcode-cn.com/problems/k-th-smallest-in-lexicographical-order/)
-求字典序第k个就是上图前序遍历访问的第k节点. 但是不需要用前序遍历，如果能通过数学方法求出节点1和节点2之间需要走几步，减少很多没必要的移动。
+
+![20211107_195655_53](assets/20211107_195655_53.png)
+
+求字典序第k小就是上图前序遍历访问的第k节点. 但是不需要用前序遍历，如果能通过数学方法求出节点1和节点2之间需要走几步，减少很多没必要的移动。
 - 当移动步数小于等于k，说明需要向右节点移动。
 - 当移动步数大于k，说明目标值在节点1和节点2之间，向下移动。
+
 ```python
 class Solution:
     def findKthNumber(self, n: int, k: int) -> int:
@@ -18294,6 +18304,35 @@ class Solution:
         while index < len(nums_str) and nums_str[index] == '0':
             index += 1
         return "".join(nums_str[index:]) if index != len(nums_str) else '0'
+```
+```python
+class Solution:
+    def minNumber(self, nums: List[int]) -> str:
+        """字符串的归并排序"""
+        def merge(left, right):
+            n1, n2 = len(left), len(right)
+            result = []
+            p1, p2 = 0, 0
+            while p1 < n1 or p2 < n2:
+                if p2 == n2 or (p1 < n1 and left[p1]+right[p2]>right[p2]+left[p1]):
+                    result.append(left[p1])
+                    p1 += 1
+                else:
+                    result.append(right[p2])
+                    p2 += 1
+            return result
+
+        def mergeSort(l, r, nums):
+            if l == r - 1:
+                return [nums[l]]
+            mid = l + (r-l) // 2
+            left = mergeSort(l, mid, nums)
+            right = mergeSort(mid, r, nums)
+            return merge(left, right)
+
+        arr = [str(num) for num in nums]
+        ans = mergeSort(0, len(arr), arr)
+        return "".join(ans)
 ```
 
 #### [223. 矩形面积](https://leetcode-cn.com/problems/rectangle-area/)
