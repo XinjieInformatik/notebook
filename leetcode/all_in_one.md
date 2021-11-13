@@ -106,47 +106,6 @@ class Solution:
 ```
 
 #### [169. 多数元素](https://leetcode-cn.com/problems/majority-element/)
-```python
-class Solution:
-    def majorityElement(self, nums: List[int]) -> int:
-        n = len(nums)
-        count = [0 for i in range(32)]
-        for num in nums:
-            for i in range(32):
-                count[i] += num & 1
-                num >>= 1
-        res = 0
-        for i in range(32):
-            if count[i] > n/2:
-                res |= (1<<i)
-        # 将数字32位以上取反，32位以下不变。
-        if res >= 1<<31:
-            res = ~(res ^ 0xffffffff)
-        return res
-```
-```cpp
-class Solution {
-public:
-    int majorityElement(vector<int>& nums) {
-        int n = nums.size();
-        vector<int> stat(32, 0);
-        for (int num : nums){
-            for (int i = 0; i < 32; i++){
-                stat[i] += num & 1;
-                num >>= 1;
-            }
-        }
-        int res = 0;
-        for (int i = 0; i < 32; i++){
-            if (stat[i] > n / 2){
-                res |= (1 << i);
-            }
-        }
-        return res;
-    }
-};
-```
-
 哈希表：O(n), O(n)
 ```python
 class Solution:
@@ -173,6 +132,29 @@ class Solution:
                 candidate = num
             count += (1 if num == candidate else -1)
         return candidate
+```
+
+```cpp
+class Solution {
+public:
+    int majorityElement(vector<int>& nums) {
+        int n = nums.size();
+        vector<int> stat(32, 0);
+        for (int num : nums){
+            for (int i = 0; i < 32; i++){
+                stat[i] += num & 1;
+                num >>= 1;
+            }
+        }
+        int res = 0;
+        for (int i = 0; i < 32; i++){
+            if (stat[i] > n / 2){
+                res |= (1 << i);
+            }
+        }
+        return res;
+    }
+};
 ```
 
 #### [229. 求众数 II](https://leetcode-cn.com/problems/majority-element-ii/)
@@ -231,7 +213,8 @@ class Solution:
             cnt += 1
         return m << cnt
 ```
-```cpp
+
+```c
 class Solution {
 public:
     int rangeBitwiseAnd(int m, int n) {
@@ -245,6 +228,7 @@ public:
     }
 };
 ```
+
 #### [190. 颠倒二进制位](https://leetcode-cn.com/problems/reverse-bits/)
 颠倒给定的 32 位无符号整数的二进制位
 一共32位，先16，16交换，再8，8交换，再4，4交换，再2，2交换，再1，1交换。
@@ -657,6 +641,19 @@ class Solution:
             for j in range(coins[i], amount+1):
                 dp[j] = min(dp[j], dp[j-coins[i]]+1)
         return dp[-1] if dp[-1] != float('inf') else -1
+
+        """二维dp完全背包"""
+        n = len(coins)
+        dp = [[float('inf') for j in range(amount+1)] for i in range(n+1)]
+        for i in range(n+1):
+            dp[i][0] = 0
+        for i in range(1, n+1):
+            for j in range(1, amount+1):
+                if j < coins[i-1]:
+                    dp[i][j] = dp[i-1][j]
+                else:
+                    dp[i][j] = min(dp[i-1][j], dp[i][j-coins[i-1]]+1)
+        return dp[-1][-1] if dp[-1][-1] != float('inf') else -1
 ```
 ```python
 class Solution:
@@ -1269,7 +1266,7 @@ class Solution:
 ```
 给定三个字符串 s1, s2, s3, 验证 s3 是否是由 s1 和 s2 交错组成的。
 ```
-dp[i][j] 表示s1[:i]与s2[:j]能否交替组成s3
+dp[i][j] 表示s1[:i]与s2[:j]能否交替组成s3[:i+j]
 ```python
 class Solution:
     def isInterleave(self, s1: str, s2: str, s3: str) -> bool:
@@ -1294,21 +1291,27 @@ class Solution:
         return dp[-1][-1]
 ```
 
-#### [10. 正则表达式匹配](https://leetcode-cn.com/problems/regular-expression-matching/)
-递归中枚举所有情况,加上记忆化
+
+#### [983. 最低票价](https://leetcode-cn.com/problems/minimum-cost-for-tickets/)
+动态规划，dp 长度为days[-1]+1, 值为0，对于days里的每一天，状态只可能从1，7，30天前转移过来。
+在三种状态下取最小的cost即可
 ```python
-import functools
 class Solution:
-    def isMatch(self, s: str, p: str) -> bool:
-        @functools.lru_cache(None)
-        def helper(text, pattern):
-            # 如果text用完了，helper(text, pattern[2:])会继续将pattern走到头
-            if len(pattern) == 0: return text == ""
-            match = len(text) != 0 and (pattern[0] == text[0] or pattern[0] == ".")
-            if len(pattern) > 1 and pattern[1] == "*":
-                return helper(text, pattern[2:]) or (match and helper(text[1:], pattern))
-            return match and helper(text[1:], pattern[1:])
-        return helper(s, p)
+    def mincostTickets(self, days: List[int], costs: List[int]) -> int:
+        dp = [0] * (days[-1]+1)
+        day_index = 0
+        for i in range(days[-1]):
+            i += 1
+            if i != days[day_index]:
+                dp[i] = dp[i-1]
+                continue
+            else:
+                day_index += 1
+                dp[i] = min(
+                            dp[max(0,i-1)]+costs[0],
+                            dp[max(0,i-7)]+costs[1],
+                            dp[max(0,i-30)]+costs[2])
+        return dp[-1]
 ```
 
 ### 最大子序问题
@@ -1401,7 +1404,8 @@ class Solution:
             max_val = max(max_val, val)
         return max_val
 ```
-#### [560. 和为 K 的子数组](https://leetcode-cn.com/problems/subarray-sum-equals-k/)
+
+#### [560. 和为k的子数组](https://leetcode-cn.com/problems/subarray-sum-equals-k/)
 ```python
 from collections import defaultdict
 class Solution:
@@ -1490,34 +1494,6 @@ class Solution:
                 dp[index] = nums[i]
         return len(dp)
 ```
-#### [673. 最长递增子序列的个数](https://leetcode-cn.com/problems/number-of-longest-increasing-subsequence/)
-给定一个未排序的整数数组，找到最长递增子序列的个数。
-```python
-class Solution:
-    def findNumberOfLIS(self, nums: List[int]) -> int:
-        """dp[i]以nums[i]结尾的最长上升子序列长度，
-           cnt[i]以nums[i]结尾的最长上升子序列个数，
-           状态转移：dp[i] = max(dp[j]) + 1 """
-        n, max_len, ans = len(nums), 0, 0
-        dp = [0] * n
-        cnt = [0] * n
-        for i, x in enumerate(nums):
-            dp[i] = 1
-            cnt[i] = 1
-            for j in range(i):
-                if x > nums[j]:
-                    if dp[j] + 1 > dp[i]:
-                        dp[i] = dp[j] + 1
-                        cnt[i] = cnt[j]  # 重置计数
-                    elif dp[j] + 1 == dp[i]:
-                        cnt[i] += cnt[j]
-            if dp[i] > max_len:
-                max_len = dp[i]
-                ans = cnt[i]  # 重置计数
-            elif dp[i] == max_len:
-                ans += cnt[i]
-        return ans
-```
 
 #### [674. 最长连续递增序列](https://leetcode-cn.com/problems/longest-continuous-increasing-subsequence/)
 ```
@@ -1538,65 +1514,33 @@ class Solution:
         return result
 ```
 
-#### [435. 无重叠区间](https://leetcode-cn.com/problems/non-overlapping-intervals/)
-将问题转化为寻找最大(非严格)递增区间. O(n^2)
-dp[i]的状态可由 1. 保留当前i区间, dp[j]+1 2.删除当前i区间 两种状态转移而来,在两种状态中取max
+#### [673. 最长递增子序列的个数](https://leetcode-cn.com/problems/number-of-longest-increasing-subsequence/)
+给定一个未排序的整数数组，找到最长递增子序列的个数。
 ```python
 class Solution:
-    def eraseOverlapIntervals(self, intervals: List[List[int]]) -> int:
-        n = len(intervals)
-        if n == 0: return 0
-        intervals = sorted(intervals, key=lambda ele:ele[1])
-        dp = [1] * n
-        res = 1
+    def findNumberOfLIS(self, nums: List[int]) -> int:
+        """dp[i]以nums[i]结尾的最长上升子序列长度，
+           cnt[i]以nums[i]结尾的最长上升子序列个数，
+           状态转移：dp[i] = max(dp[j]) + 1 """
+        n, max_len, ans = len(nums), 0, 0
+        dp = [0] * n
+        cnt = [0] * n
         for i in range(n):
-            for j in range(i-1, -1, -1):
-                if intervals[i][0] >= intervals[j][1]:
-                    dp[i] = dp[j] + 1
-                    break
-            dp[i] = max(dp[i], dp[i-1])
-            res = max(dp[i], res)
-        return n - res
-```
-```python
-class Solution:
-    def eraseOverlapIntervals(self, intervals: List[List[int]]) -> int:
-        # 注意，以结束时间sort
-        intervals = sorted(intervals, key=lambda x: x[1])
-        n = len(intervals)
-        left = 0
-        right = 1
-        cnt = 0
-        while right < n:
-            if intervals[right][0] < intervals[left][1]:
-                cnt += 1
-            else:
-                left = right
-            right += 1
-        return cnt
-```
-```cpp
-class Solution {
-public:
-    int eraseOverlapIntervals(vector<vector<int>>& intervals) {
-        // 以最早结束为准
-        sort(intervals.begin(), intervals.end(), [](const auto& u, const auto& v) {
-            return u[1] < v[1];
-        });
-        int left = 0;
-        int n = intervals.size();
-        int cnt = 0;
-        while (left < n) {
-            int right = left + 1;
-            while (right < n && intervals[right][0] < intervals[left][1]) {
-                ++cnt;
-                ++right;
-            }
-            left = right;
-        }
-        return cnt;
-    }
-};
+            dp[i] = 1
+            cnt[i] = 1
+            for j in range(i):
+                if nums[i] > nums[j]:
+                    if dp[j] + 1 > dp[i]:
+                        dp[i] = dp[j] + 1
+                        cnt[i] = cnt[j]  # 重置计数
+                    elif dp[j] + 1 == dp[i]:
+                        cnt[i] += cnt[j]
+            if dp[i] > max_len:
+                max_len = dp[i]
+                ans = cnt[i]  # 重置计数
+            elif dp[i] == max_len:
+                ans += cnt[i]
+        return ans
 ```
 
 #### [376. 摆动序列](https://leetcode-cn.com/problems/wiggle-subsequence/)
@@ -1819,18 +1763,6 @@ class Solution:
     def maxProfit(self, prices: List[int]) -> int:
         n = len(prices)
         if n == 0: return 0
-        profit0 = [0 for i in range(n)]
-        profit1 = [-prices[0] for i in range(n)]
-        for i in range(1, n):
-            profit0[i] = max(profit0[i-1], profit1[i-1]+prices[i])
-            profit1[i] = max(profit1[i-1], profit0[i-2]-prices[i])
-        return profit0[-1]
-```
-```python
-class Solution:
-    def maxProfit(self, prices: List[int]) -> int:
-        n = len(prices)
-        if n == 0: return 0
         profit0 = 0
         profit1 = -prices[0]
         freeze = 0
@@ -1841,6 +1773,19 @@ class Solution:
             profit1 = max(profit1, freeze-prices[i])
             freeze = prev
         return profit0
+```
+
+```python
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        n = len(prices)
+        if n == 0: return 0
+        profit0 = [0 for i in range(n)]
+        profit1 = [-prices[0] for i in range(n)]
+        for i in range(1, n):
+            profit0[i] = max(profit0[i-1], profit1[i-1]+prices[i])
+            profit1[i] = max(profit1[i-1], profit0[i-2]-prices[i])
+        return profit0[-1]
 ```
 
 #### [413. 等差数列划分](https://leetcode-cn.com/problems/arithmetic-slices/)
@@ -1862,6 +1807,23 @@ class Solution:
                 cnt = 0
                 d = nums[i] - nums[i-1]
         return total
+```
+
+#### [10. 正则表达式匹配](https://leetcode-cn.com/problems/regular-expression-matching/)
+递归中枚举所有情况,加上记忆化
+```python
+import functools
+class Solution:
+    def isMatch(self, s: str, p: str) -> bool:
+        @functools.lru_cache(None)
+        def helper(text, pattern):
+            # 如果text用完了，helper(text, pattern[2:])会继续将pattern走到头
+            if len(pattern) == 0: return text == ""
+            match = len(text) != 0 and (pattern[0] == text[0] or pattern[0] == ".")
+            if len(pattern) > 1 and pattern[1] == "*":
+                return helper(text, pattern[2:]) or (match and helper(text[1:], pattern))
+            return match and helper(text[1:], pattern[1:])
+        return helper(s, p)
 ```
 
 ### 单调栈
@@ -4329,6 +4291,21 @@ class Solution:
         return i
 ```
 
+#### [442. 数组中重复的数据](https://leetcode-cn.com/problems/find-all-duplicates-in-an-array/)
+```python
+class Solution:
+    def findDuplicates(self, nums: List[int]) -> List[int]:
+        # 0 <= nums[i]-1 <= n-1, 用index记录出现过的数据
+        result = []
+        n = len(nums)
+        for i in range(n):
+            index = abs(nums[i]) - 1
+            if nums[index] < 0:
+                result.append(index+1)
+            nums[index] = -nums[index]
+        return result
+```
+
 #### [268. 丢失的数字](https://leetcode-cn.com/problems/missing-number/)
 index+[n] 范围是[0, n], nums范围是[0,n]缺一个数, 异或后可找到
 ```python
@@ -6350,7 +6327,7 @@ class Solution:
 #### [140. 单词拆分 II](https://leetcode-cn.com/problems/word-break-ii/)
 https://leetcode-cn.com/problems/word-break-ii/solution/pythonji-yi-hua-dfsjian-zhi-90-by-mai-mai-mai-mai-/ TODO: 再做
 
-#### [473. 火柴拼正方形]()
+#### [473. 火柴拼正方形](https://leetcode-cn.com/problems/matchsticks-to-square/)
 ```python
 class Solution:
     def makesquare(self, nums: List[int]) -> bool:
@@ -6380,6 +6357,7 @@ class Solution:
         nums = tuple(nums)
         return dfs(nums, 0, 0)
 ```
+
 #### [365. 水壶问题](https://leetcode-cn.com/problems/water-and-jug-problem/)
 ```python
 class Solution:
@@ -7532,11 +7510,18 @@ class Solution:
 class Solution:
     def minimumTotal(self, triangle: List[List[int]]) -> int:
         n = len(triangle)
-        dp = [[float('inf') for j in range(n+1)] for i in range(n+1)]
-        dp[0][0] = 0
-        for i in range(1, n+1):
-            for j in range(1, i+1):
-                dp[i][j] = min(dp[i-1][j-1], dp[i-1][j]) + triangle[i-1][j-1]
+        if n == 0:
+            return 0
+        m = len(triangle[-1])
+        if m == 0:
+            return 0
+        dp = [[0 for i in range(m)] for i in range(n)]
+        dp[0][0] = triangle[0][0]
+        for i in range(1, n):
+            for j in range(i+1):
+                left = float('inf') if j == 0 else dp[i-1][j-1]
+                right = float('inf') if j == i else dp[i-1][j]
+                dp[i][j] = min(left, right) + triangle[i][j]
         return min(dp[-1])
 ```
 
@@ -12960,27 +12945,26 @@ def insertionSort(arr):
 ```python
 def heapSort(arr):
     def sift_down(arr, root, k):
-        root_val = arr[root] # 用插入排序的赋值交换
-        # 确保交换后，对后续子节点无影响
-        while (2*root+1 < k):
-            # 构造根节点与左右子节点
-            child = 2 * root + 1  # left = 2 * i + 1, right = 2 * i + 2
-            if child+1 < k and arr[child] < arr[child+1]: # 如果右子节点在范围内且大于左节点
-                child += 1
-            if root_val < arr[child]:
-                arr[root] = arr[child]
-                root = child
-            else: break # 如果有序，后续子节点就不用再检查了
-        arr[root] = root_val
+        val = arr[root]
+        while root<<1 < k:
+            chlid = root << 1
+            if chlid|1 < k and arr[chlid|1] > arr[chlid]:
+                chlid |= 1
+            if arr[chlid] > val:
+                arr[root] = arr[chlid]
+                root = chlid
+            else:
+                break
+        arr[root] = val
 
-    n = len(arr) # n 为heap的规模
-    # 保证根节点最大. 从倒数第二层向上，该元素下沉
-    for i in range((n-1)//2, -1, -1):
-        sift_down(arr, i, n)
-    # 从尾部起，依次与顶点交换并再构造 maxheap，heap规模-1
-    for i in range(n - 1, 0, -1):
-        arr[i], arr[0] = arr[0], arr[i]  # 交换
-        sift_down(arr, 0, i)
+    arr = [0] + arr
+    k = len(arr)
+    for i in range((k-1)>>1, 0, -1):
+        sift_down(arr, i, k)
+    for i in range(k-1, 0, -1):
+        arr[1], arr[i] = arr[i], arr[1]
+        sift_down(arr, 1, i)
+    return arr[1:]
 ```
 
 #### 希尔排序
@@ -13613,19 +13597,18 @@ class Solution:
 ```python
 class Solution:
     def compress(self, chars: List[str]) -> int:
-        # 三指针
         p1, p2, pw = 0, 0, 0
         n = len(chars)
         while p1 < n:
-            while p2 < n and chars[p1] == chars[p2]:
+            while p2 < n and chars[p2] == chars[p1]:
                 p2 += 1
+            cnt = p2 - p1
             chars[pw] = chars[p1]
             pw += 1
-            length = p2 - p1
-            if length > 1:
-                str_length = str(length)
-                for c in str_length:
-                    chars[pw] = c
+            if cnt > 1:
+                cnt_str = str(cnt)
+                for i in range(len(cnt_str)):
+                    chars[pw] = cnt_str[i]
                     pw += 1
             p1 = p2
         return pw
@@ -13777,8 +13760,7 @@ T(n) = 2T(n/2) + O(n) --> T(n) = O(nlogn)
 T(n) = T(n/2) + O(1) --> T(n) = O(logn)
 
 #### [56. 合并区间](https://leetcode-cn.com/problems/merge-intervals/)
-1. 按照x[0] sort intervals
-2.
+按照x[0] sort intervals
 ```python
 class Solution:
     def merge(self, intervals: List[List[int]]) -> List[List[int]]:
@@ -13795,6 +13777,68 @@ class Solution:
             result.append([intervals[index][0], bound])
             index = right
         return result
+```
+
+#### [435. 无重叠区间](https://leetcode-cn.com/problems/non-overlapping-intervals/)
+将问题转化为寻找最大(非严格)递增区间. O(n^2)
+dp[i]的状态可由 1. 保留当前i区间, dp[j]+1 2.删除当前i区间 两种状态转移而来,在两种状态中取max
+```python
+class Solution:
+    def eraseOverlapIntervals(self, intervals: List[List[int]]) -> int:
+        n = len(intervals)
+        if n == 0: return 0
+        intervals = sorted(intervals, key=lambda ele:ele[1])
+        dp = [1] * n
+        res = 1
+        for i in range(n):
+            for j in range(i-1, -1, -1):
+                if intervals[i][0] >= intervals[j][1]:
+                    dp[i] = dp[j] + 1
+                    break
+            dp[i] = max(dp[i], dp[i-1])
+            res = max(dp[i], res)
+        return n - res
+```
+贪心
+```python
+class Solution:
+    def eraseOverlapIntervals(self, intervals: List[List[int]]) -> int:
+        # 注意，以结束时间sort
+        intervals = sorted(intervals, key=lambda x: x[1])
+        n = len(intervals)
+        left = 0
+        right = 1
+        cnt = 0
+        while right < n:
+            if intervals[right][0] < intervals[left][1]:
+                cnt += 1
+            else:
+                left = right
+            right += 1
+        return cnt
+```
+```cpp
+class Solution {
+public:
+    int eraseOverlapIntervals(vector<vector<int>>& intervals) {
+        // 以最早结束为准
+        sort(intervals.begin(), intervals.end(), [](const auto& u, const auto& v) {
+            return u[1] < v[1];
+        });
+        int left = 0;
+        int n = intervals.size();
+        int cnt = 0;
+        while (left < n) {
+            int right = left + 1;
+            while (right < n && intervals[right][0] < intervals[left][1]) {
+                ++cnt;
+                ++right;
+            }
+            left = right;
+        }
+        return cnt;
+    }
+};
 ```
 
 #### [1893. 检查是否区域内所有整数都被覆盖](https://leetcode-cn.com/problems/check-if-all-the-integers-in-a-range-are-covered/)
@@ -13877,28 +13921,6 @@ class Solution:
                 if masks[i] & masks[j] == 0:
                     max_val = max(max_val, lens[i] * lens[j])
         return max_val
-```
-
-#### [983. 最低票价](https://leetcode-cn.com/problems/minimum-cost-for-tickets/)
-动态规划，dp 长度为days[-1]+1, 值为0，对于days里的每一天，状态只可能从1，7，30天前转移过来。
-在三种状态下取最小的cost即可
-```python
-class Solution:
-    def mincostTickets(self, days: List[int], costs: List[int]) -> int:
-        dp = [0] * (days[-1]+1)
-        day_index = 0
-        for i in range(days[-1]):
-            i += 1
-            if i != days[day_index]:
-                dp[i] = dp[i-1]
-                continue
-            else:
-                day_index += 1
-                dp[i] = min(
-                            dp[max(0,i-1)]+costs[0],
-                            dp[max(0,i-7)]+costs[1],
-                            dp[max(0,i-30)]+costs[2])
-        return dp[-1]
 ```
 
 #### [5409. 检查一个字符串是否包含所有长度为 K 的二进制子串](https://leetcode-cn.com/problems/check-if-a-string-contains-all-binary-codes-of-size-k/)
@@ -18772,4 +18794,24 @@ class Solution:
             swap_i = random.randint(i, n-1)
             self.nums[i], self.nums[swap_i] = self.nums[swap_i], self.nums[i]
         return self.nums
+```
+
+#### [520. 检测大写字母](https://leetcode-cn.com/problems/detect-capital/)
+```python
+class Solution:
+    def detectCapitalUse(self, word: str) -> bool:
+        n = len(word)
+        if n <= 1:
+            return True
+        if word[0].isupper() and word[1].isupper():
+            for i in range(2, n):
+                if word[i].islower():
+                    return False
+        elif word[0].isupper() and word[1].islower() or word[0].islower() and word[1].islower():
+            for i in range(2, n):
+                if word[i].isupper():
+                    return False  
+        else:
+            return False
+        return True
 ```
