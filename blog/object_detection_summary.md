@@ -89,10 +89,8 @@ $ sigmoid = \frac{1}{1 + e^{-x}} $
 torch.nn.Conv2d(in_channels, num_anchors*num_classes, kernel_size=3, padding=1)
 ```
 正样本(one-hot编码的物体类别)与负样本(background)作为类别回归的真值。
-网络class head 最终输出的out channel维度为 (num_anchors*num_classes)。
-num_anchors为9，是特征图每个网格配备的based-anchor数目。
-ps: 注意与Faster-RCNN 不同，Faster-RCNN class head 输出维度为 ((class_num+1) * 9)，
-1 是 background，最后一层输出后接softmax。
+网络class head 最终输出的out channel维度为 (num_anchors*num_classes)。num_anchors为9，是特征图每个网格配备的based-anchor数目。
+ps: 注意与Faster-RCNN 不同，Faster-RCNN class head 输出维度为 ((class_num+1) * 9)，1 是 background，最后一层输出后接softmax。
 
 对于bbox位置回归的真值定义：
 每个based-anchor去回归delta cx, delta cy, delta h, delta w。

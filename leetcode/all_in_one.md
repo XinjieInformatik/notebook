@@ -1040,31 +1040,23 @@ public:
 ```
 
 #### [17. 电话号码的字母组合](https://leetcode-cn.com/problems/letter-combinations-of-a-phone-number/)
-注意,与全排列II的不同是不能跳过重复数字
+
 ```python
-from collections import Counter
 class Solution:
     def letterCombinations(self, digits: str) -> List[str]:
-        if len(digits) == 0: return []
-        mapping = {"2":["a","b","c"], "3":["d","e","f"], "4":["g","h","i"], "5":["j","k","l"], "6":["m","n","o"], "7":["p","q","r","s"], "8":["t","u","v"], "9":["w","x","y","z"]}
-        stat = []
-        for num in digits:
-            stat.extend(mapping[num])
-        count = Counter(stat)
-        results = []
+        mapping = {'1':"", '2':"abc", '3':"def", '4':"ghi", '5':"jkl", '6':"mno", '7':"pqrs", '8':"tuv", '9':"wxyz"}
         n = len(digits)
-        def helper(index, curr):
+        result = []
+        def helper(index, res):
             if index == n:
-                results.append(curr)
+                if len(res) > 0:
+                    result.append(res)
                 return
-            for char in mapping[digits[index]]:
-                if count[char] == 0:
-                    continue
-                count[char] -= 1
-                helper(index+1, curr+char)
-                count[char] += 1
+            word = mapping[digits[index]]
+            for char in word:
+                helper(index+1, res+char)
         helper(0, "")
-        return results
+        return result
 ```
 ```cpp
 class Solution {
@@ -2276,28 +2268,28 @@ class Solution:
 ```python
 class Solution:
     def maximumSwap(self, num: int) -> int:
+        # 1.寻找第一个非递减的index 2.寻找index后最大的数 3.寻找index前可交换位置
         nums = list(str(num))
         n = len(nums)
-        index = n
-        # 寻找第一个nums[i]<nums[i+1]的位置
-        for i in range(n-1):
-            if nums[i] < nums[i+1]:
-                index = i + 1
-                break
+        index = 1
+        while index < n and nums[index] <= nums[index-1]:
+            index += 1
         if index == n:
-            return num
-        # 寻找index后最后一个最大的数
-        val = '0'
-        val_index = index  
+            return num  
+
+        max_val = nums[index]
+        max_index = index
         for i in range(index, n):
-            if nums[i] >= val:
-                val = nums[i]
-                val_index = i
-        # 寻找可交换位置进行一次交换
+            # 注意是 >= 尽可能将后面的大数换到前面
+            if nums[i] >= max_val:
+                max_val = nums[i]
+                max_index = i
+
         for i in range(index):
-            if nums[i] < val:
-                nums[i], nums[val_index] = nums[val_index], nums[i]
+            if nums[i] < max_val:
+                nums[i], nums[max_index] = nums[max_index], nums[i]
                 break
+
         return int("".join(nums))
 ```
 
@@ -2377,6 +2369,26 @@ class Solution:
             else:
                 prefix[comsum] = i
         return False
+```
+
+#### [525. 连续数组](https://leetcode-cn.com/problems/contiguous-array/)
+由于「0和1的数量相同」等价于「1的数量减去0的数量等于0」，可以将数组中的0视作−1，则原问题转换成「求最长的连续子数组，其元素和为0」。
+```PYTHON
+from collections import defaultdict
+class Solution:
+    def findMaxLength(self, nums: List[int]) -> int:
+        stat = defaultdict(int)
+        cnt = 0
+        stat[cnt] = -1
+        max_len = 0
+        for i, num in enumerate(nums):
+            cnt += 1 if num == 1 else -1  
+            if cnt in stat:
+                prev_i = stat[cnt]
+                max_len = max(max_len, i-prev_i)
+            else:
+                stat[cnt] = i
+        return max_len
 ```
 
 #### [1109. 航班预订统计](https://leetcode-cn.com/problems/corporate-flight-bookings/)
@@ -3137,13 +3149,14 @@ class Solution:
 ```
 
 #### [547. 朋友圈](https://leetcode-cn.com/problems/friend-circles/)
+[547. 省份数量](https://leetcode-cn.com/problems/number-of-provinces/)
 最终 return self.parent 不同的节点数是错误的解法
 因此维护self.cnt变量,union操作时,如果父节点相同,不操作,父节点不相同,合并子树,cnt-1
 ```python
-class UnionFindSet():
+class UnionFindSet:
     def __init__(self, size):
         self.parent = [i for i in range(size)]
-        self.rank = [0] * size
+        self.rank = [0 for i in range(size)]
         self.cnt = size
 
     def find(self, x):
@@ -3154,7 +3167,7 @@ class UnionFindSet():
     def union(self, x, y):
         px, py = self.find(x), self.find(y)
         if px == py:
-            return
+            return None
         self.cnt -= 1
         if self.rank[px] < self.rank[py]:
             self.parent[px] = py
@@ -3165,12 +3178,12 @@ class UnionFindSet():
             self.rank[py] += 1
 
 class Solution:
-    def findCircleNum(self, M: List[List[int]]) -> int:
-        n = len(M)
+    def findCircleNum(self, isConnected: List[List[int]]) -> int:
+        n = len(isConnected)
         unionfind = UnionFindSet(n)
         for i in range(n):
             for j in range(i):
-                if M[i][j] == 1:
+                if isConnected[i][j] == 1:
                     unionfind.union(i, j)
         return unionfind.cnt
 ```
@@ -4020,7 +4033,7 @@ class Solution:
         return head if left != 1 else prev
 ```
 
-#### [25. K个一组翻转链表](https://leetcode-cn.com/problems/reverse-nodes-in-k-group/)
+#### [25. k个一组翻转链表](https://leetcode-cn.com/problems/reverse-nodes-in-k-group/)
 1. 走k步，切断，反转链表返回反转后的头节点，尾节点
 2. 链表链接 tail.next = nx, prev.next = head
 3. 节点移动，prev = tail, head = nxt
@@ -5472,10 +5485,10 @@ class Solution:
 ```
 题解二： KMP
 其实KMP并不难，解释起来也不需要一大段的，核心就是
-1. 根据子串构造一个next部分匹配表
-2. 遍历数组，当匹配失效时，查询next部分匹配表定位子串接着与主串比较的位置
+1. 根据子串构造一个next部分match表
+2. 遍历数组，当match失效时，查询next部分match表定位子串接着与主串比较的位置
 
-next部分匹配表为对应元素前后缀共同元素的个数，以"ABCDABD"为例。
+next部分match表为对应元素前后缀共同元素的个数，以"ABCDABD"为例。
 - "A"的前缀和后缀都为空集，共有元素的长度为0；
 - "AB"的前缀为[A]，后缀为[B]，共有元素的长度为0；
 - "ABC"的前缀为[A, AB]，后缀为[BC, C]，共有元素的长度0；
@@ -5494,14 +5507,14 @@ ABCDABD   ABCDABD    ABCDABD     ABCDABD      ABCDABD      ABCDABD        ABCDAB
 j         j          j           j            j             j             j
 ```
 
-构造好子串的next表后，i指针遍历主串，当遇到子串首元素时，i，j同时前进，当匹配失效时，查找next表中当前元素的值，将j指针移动到该处。（这样可以避免将j指针又放到起始位置，重新逐一比较。）
+构造好子串的next表后，i指针遍历主串，当遇到子串首元素时，i，j同时前进，当match失效时，查找next表中当前元素的值，将j指针移动到该处。（这样可以避免将j指针又放到起始位置，重新逐一比较。）
 
 ## 题解二：KMP
 ```python
 class Solution:
     def strStr(self, haystack: str, needle: str) -> int:
         def get_next(p):
-            """ 构造子串needle的匹配表, 以 "ABCDABD" 为例
+            """ 构造子串needle的match表, 以 "ABCDABD" 为例
             i         i          i           i            i             i             i
             ABCDABD  ABCDABD   ABCDABD    ABCDABD     ABCDABD      ABCDABD      ABCDABD
             ABCDABD   ABCDABD    ABCDABD     ABCDABD      ABCDABD      ABCDABD        ABCDABD
@@ -5766,12 +5779,14 @@ class Solution:
 #### [171. Excel表列序号](https://leetcode-cn.com/problems/excel-sheet-column-number/)
 ```python
 class Solution:
-    def titleToNumber(self, s: str) -> int:
+    def titleToNumber(self, columnTitle: str) -> int:
         result = 0
         mul = 1
-        for str_ in s[::-1]:
-            ASCII = ord(str_) - 64
-            result += mul * ASCII
+        n = len(columnTitle)
+        for i in range(n-1, -1, -1):
+            char = columnTitle[i]
+            num = ord(char) - 64
+            result += num * mul
             mul *= 26
         return result
 ```
@@ -7308,16 +7323,15 @@ class Solution:
 ```python
 import functools
 class Solution:
-    def findTargetSumWays(self, nums: List[int], S: int) -> int:
+    def findTargetSumWays(self, nums: List[int], target: int) -> int:
         n = len(nums)
         @functools.lru_cache(None)
-        def helper(index, curr):
+        def helper(index, res):
             if index == n:
-                return 1 if curr == S else 0
-            res = 0
-            res += helper(index+1, curr+nums[index])
-            res += helper(index+1, curr-nums[index])
-            return res
+                return 1 if res == target else 0
+            c1 = helper(index+1, res-nums[index])
+            c2 = helper(index+1, res+nums[index])
+            return c1 + c2
 
         return helper(0, 0)
 ```
@@ -7425,29 +7439,32 @@ class Solution:
         return helper(0,0)
 ```
 ```python
-        ## dp
+class Solution:
+    def uniquePathsWithObstacles(self, obstacleGrid: List[List[int]]) -> int:
         n = len(obstacleGrid)
-        if n == 0: return 0
         m = len(obstacleGrid[0])
-        dp = [[0 for i in range(m)] for j in range(n)]
-        # 重要! 如果遇到障碍,则之后的dp均为0
-        flag = False
-        for i in range(n):
-            if obstacleGrid[i][0] == 1:
-                flag = True
-            dp[i][0] = 0 if flag else 1
-        flag = False
-        for j in range(m):
-            if obstacleGrid[0][j] == 1:
-                flag = True
-            dp[0][j] = 0 if flag else 1
-        for i in range(1,n):
-            for j in range(1,m):
+        dp = [[0 for j in range(m)] for i in range(n)]
+        index = 0
+        while index < m:
+            if obstacleGrid[0][index] == 1:
+                break
+            dp[0][index] = 1
+            index += 1
+        index = 0
+        while index < n:
+            if obstacleGrid[index][0] == 1:
+                break
+            dp[index][0] = 1
+            index += 1
+
+        for i in range(1, n):
+            for j in range(1, m):
+                top = dp[i-1][j]
+                right = dp[i][j-1]
                 if obstacleGrid[i][j] == 1:
-                    dp[i][j] = 0
-                else:
-                    dp[i][j] = dp[i-1][j] + dp[i][j-1]
-        return dp[n-1][m-1]
+                    continue
+                dp[i][j] = top + right  
+        return dp[-1][-1]
 ```
 
 #### [329. 矩阵中的最长递增路径](https://leetcode-cn.com/problems/longest-increasing-path-in-a-matrix/)
@@ -7838,32 +7855,6 @@ class Solution:
                 return False
 
         return helper(0, 0)
-
-
-        i, j = 0, 0
-        start = -1
-        match = 0
-        while i < len(s):
-            # 一对一匹配,匹配成功一起移
-            if j < len(p) and (s[i] == p[j] or p[j] == "?"):
-                i += 1
-                j += 1
-            # 记录p的"*"的位置,还有s的位置
-            elif j < len(p) and p[j] == "*":
-                start = j
-                match = i
-                j += 1
-            # j 回到 记录的下一个位置
-            # match 更新下一个位置
-            # 这不代表用*匹配一个字符
-            elif start != -1:
-                j = start + 1
-                match += 1
-                i = match
-            else:
-                return False
-        # 将多余的 * 直接匹配空串
-        return all(x == "*" for x in p[j:])
 ```
 
 ## LinkedList
@@ -9324,20 +9315,21 @@ class Solution:
 2. dfs 深度优先搜索，返回左右节点的min(depth)
 注意只有单边节点的node是非法的，depth记为inf，不做统计
 ```python
-from collections import deque
 class Solution:
     def minDepth(self, root: TreeNode) -> int:
-        def dfs(node, depth):
-            if node.left == None and node.right == None:
-                return depth+1
-            depth_left, depth_right = float("inf"), float("inf")
-            if node.left:
-                depth_left = dfs(node.left, depth+1)
-            if node.right:
-                depth_right = dfs(node.right, depth+1)
-            return min(depth_left, depth_right)
-        if not root: return 0
-        return dfs(root, 0)
+        def helper(root):
+            if not root.left and not root.right:
+                return 1
+            left = float('inf')
+            right = float('inf')
+            if root.left:
+                left = helper(root.left) + 1
+            if root.right:
+                right = helper(root.right) + 1
+            return min(left, right)
+        if not root:
+            return 0
+        return helper(root)
 ```
 
 #### [104. 二叉树的最大深度](https://leetcode-cn.com/problems/maximum-depth-of-binary-tree/)
@@ -10392,9 +10384,9 @@ public:
 
 #### [96. 不同的二叉搜索树](https://leetcode-cn.com/problems/unique-binary-search-trees/)
 给定一个整数 n，求以 1 ... n 为节点组成的二叉搜索树有多少种？
-二叉搜索树的个数
+
 ![20200512_202526_67](assets/20200512_202526_67.png)
-相同长度的序列具有相同数目的二叉搜索树
+相同长度的序列具有相同数目
 ![20200512_202604_95](assets/20200512_202604_95.png)
 ![20200512_202633_10](assets/20200512_202633_10.png)
 ![20200512_202659_98](assets/20200512_202659_98.png)
@@ -10856,6 +10848,7 @@ class Solution:
 ```
 
 #### [215. 数组中的第K个最大元素](https://leetcode-cn.com/problems/kth-largest-element-in-an-array/)
+topk大
 ```python
 class Solution:
     def findKthLargest(self, nums: List[int], k: int) -> int:
@@ -10952,6 +10945,7 @@ class Solution:
 ```
 
 #### [面试题40. 最小的k个数](https://leetcode-cn.com/problems/zui-xiao-de-kge-shu-lcof/)
+topk小
 ```python
 class Solution:
     def getLeastNumbers(self, arr: List[int], k: int) -> List[int]:
@@ -16669,7 +16663,7 @@ public:
 ```python
 class Solution:
     def verifyPostorder(self, postorder: List[int]) -> bool:
-        # 二叉搜索树后续遍历，最right是根节点，right前的数一定一部分小于根，剩下大于根
+        # bts后续遍历，最right是根节点，right前的数一定一部分小于根，剩下大于根
         def helper(nums, left, right):
             # 注意终点判断
             if left == right:
@@ -17910,7 +17904,7 @@ class Solution:
         return True
 ```
 
-#### [429. N 叉树的层序遍历](https://leetcode-cn.com/problems/n-ary-tree-level-order-traversal/)
+#### [429. N叉树的层序遍历](https://leetcode-cn.com/problems/n-ary-tree-level-order-traversal/)
 ```cpp
 /*
 // Definition for a Node.
@@ -17955,6 +17949,32 @@ public:
         return res;
     }
 };
+```
+#### [559. N叉树的最大深度](https://leetcode-cn.com/problems/maximum-depth-of-n-ary-tree/)
+```python
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val=None, children=None):
+        self.val = val
+        self.children = children
+"""
+
+class Solution:
+    def maxDepth(self, root: 'Node') -> int:
+        def helper(root):
+            if len(root.children) == 0:
+                return 1
+            depth = 0
+            for node in root.children:
+                if node == None:
+                    continue
+                dep = helper(node) + 1
+                depth = max(depth, dep)
+            return depth
+        if not root:
+            return 0
+        return helper(root)
 ```
 
 #### [665. 非递减数列](https://leetcode-cn.com/problems/non-decreasing-array/)
@@ -18204,6 +18224,29 @@ class Solution:
         rand_num = random.randint(1, bounder)
         index = self.low_bound(self.presum, rand_num)
         return index
+```
+
+#### [519. 随机翻转矩阵](https://leetcode-cn.com/problems/random-flip-matrix/)
+```PYTHON
+class Solution:
+    def __init__(self, m: int, n: int):
+        self.m = m
+        self.n = n
+        self.total = m * n
+        self.map = {}
+
+    def flip(self) -> List[int]:
+        # 通过hashmap维护连续区间内取随机数的概念
+        # 区间内命中的映射到尾部
+        x = random.randint(0, self.total - 1)
+        self.total -= 1
+        idx = self.map.get(x, x)
+        self.map[x] = self.map.get(self.total, self.total)
+        return [idx // self.n, idx % self.n]
+
+    def reset(self) -> None:
+        self.total = self.m * self.n
+        self.map.clear()
 ```
 
 #### [470. 用 Rand7() 实现 Rand10()](https://leetcode-cn.com/problems/implement-rand10-using-rand7/)
@@ -18814,4 +18857,216 @@ class Solution:
         else:
             return False
         return True
+```
+
+#### [391. 完美矩形](https://leetcode-cn.com/problems/perfect-rectangle/)
+```python
+class Solution:
+    def isRectangleCover(self, rectangles: List[List[int]]) -> bool:
+        area, minX, minY, maxX, maxY = 0, rectangles[0][0], rectangles[0][1], rectangles[0][2], rectangles[0][3]
+        cnt = defaultdict(int)
+        for rect in rectangles:
+            x, y, a, b = rect[0], rect[1], rect[2], rect[3]
+            area += (a - x) * (b - y)
+
+            minX = min(minX, x)
+            minY = min(minY, y)
+            maxX = max(maxX, a)
+            maxY = max(maxY, b)
+
+            cnt[(x, y)] += 1
+            cnt[(x, b)] += 1
+            cnt[(a, y)] += 1
+            cnt[(a, b)] += 1
+
+        # 最终矩形面积 = 所有子矩形面积之和
+        if area != (maxX - minX) * (maxY - minY) or cnt[(minX, minY)] != 1 or cnt[(minX, maxY)] != 1 or cnt[(maxX, minY)] != 1 or cnt[(maxX, maxY)] != 1:
+            return False
+
+        # 排除最外侧四个点，其他点均出现过2次或者4次
+        del cnt[(minX, minY)], cnt[(minX, maxY)], cnt[(maxX, minY)], cnt[(maxX, maxY)]
+
+        return all(c == 2 or c == 4 for c in cnt.values())
+```
+
+#### [397. 整数替换](https://leetcode-cn.com/problems/integer-replacement/)
+```python
+import functools
+class Solution:
+    def integerReplacement(self, n: int) -> int:
+        @functools.lru_cache(None)
+        def helper(num):
+            if num == 1:
+                return 0
+            cnt = float('inf')
+            if num & 1:
+                cnt1 = helper(num+1) + 1
+                cnt2 = helper(num-1) + 1
+                cnt = min(cnt1, cnt2)
+            else:
+                cnt = helper(num//2) + 1
+            return cnt
+
+        return helper(n)
+```
+
+#### [594. 最长和谐子序列](https://leetcode-cn.com/problems/longest-harmonious-subsequence/)
+```python
+from collections import defaultdict
+class Solution:
+    def findLHS(self, nums: List[int]) -> int:
+        stat = defaultdict(int)
+        for num in nums:
+            stat[num] += 1
+        max_len = 0
+        for key in stat:
+            if key-1 in stat:
+                max_len = max(max_len, stat[key]+stat[key-1])
+        return max_len
+```
+```python
+class Solution:
+    def findLHS(self, nums: List[int]) -> int:
+        nums.sort()
+        left = 0
+        n = len(nums)
+        max_len = 0
+        for right in range(n):
+            while left < right and nums[right]-nums[left] > 1:
+                left += 1
+            if nums[right] - nums[left] == 1:
+                max_len = max(max_len, right-left+1)
+        return max_len
+```
+
+#### [622. 设计循环队列](https://leetcode-cn.com/problems/design-circular-queue/)
+```python
+class MyCircularQueue:
+    def __init__(self, k: int):
+        """
+        Initialize your data structure here. Set the size of the queue to be k.
+        """
+        self.queue = [0] * k
+        self.headIndex = 0
+        self.count = 0
+        self.capacity = k
+
+    def enQueue(self, value: int) -> bool:
+        """
+        Insert an element into the circular queue. Return true if the operation is successful.
+        """
+        if self.count == self.capacity:
+            return False
+        self.queue[(self.headIndex + self.count) % self.capacity] = value
+        self.count += 1
+        return True
+
+    def deQueue(self) -> bool:
+        """
+        Delete an element from the circular queue. Return true if the operation is successful.
+        """
+        if self.count == 0:
+            return False
+        self.headIndex = (self.headIndex + 1) % self.capacity
+        self.count -= 1
+        return True
+
+    def Front(self) -> int:
+        """
+        Get the front item from the queue.
+        """
+        if self.count == 0:
+            return -1
+        return self.queue[self.headIndex]
+
+    def Rear(self) -> int:
+        """
+        Get the last item from the queue.
+        """
+        # empty queue
+        if self.count == 0:
+            return -1
+        return self.queue[(self.headIndex + self.count - 1) % self.capacity]
+
+    def isEmpty(self) -> bool:
+        """
+        Checks whether the circular queue is empty or not.
+        """
+        return self.count == 0
+
+    def isFull(self) -> bool:
+        """
+        Checks whether the circular queue is full or not.
+        """
+        return self.count == self.capacity
+
+
+
+# Your MyCircularQueue object will be instantiated and called as such:
+# obj = MyCircularQueue(k)
+# param_1 = obj.enQueue(value)
+# param_2 = obj.deQueue()
+# param_3 = obj.Front()
+# param_4 = obj.Rear()
+# param_5 = obj.isEmpty()
+# param_6 = obj.isFull()
+```
+
+#### [706. 设计哈希映射](https://leetcode-cn.com/problems/design-hashmap/)
+实现hash表
+```PYTHON
+class MyHashMap:
+    def __init__(self):
+        self.prime = 1009
+        self.table = [[] for _ in range(self.prime)]
+
+    def get_hash(self, key):
+        return key % self.prime
+
+    def put(self, key: int, value: int) -> None:
+        hashkey = self.get_hash(key)
+        for item in self.table[hashkey]:
+            if item[0] == key:
+                item[1] = value
+                return
+        self.table[hashkey].append([key, value])
+
+    def get(self, key: int) -> int:
+        hashkey = self.get_hash(key)
+        for item in self.table[hashkey]:
+            if item[0] == key:
+                return item[1]
+        return -1
+
+    def remove(self, key: int) -> None:
+        hashkey = self.get_hash(key)
+        for i, item in enumerate(self.table[hashkey]):
+            if item[0] == key:
+                self.table[hashkey].pop(i)
+                return  
+
+# Your MyHashMap object will be instantiated and called as such:
+# obj = MyHashMap()
+# obj.put(key,value)
+# param_2 = obj.get(key)
+# obj.remove(key)
+```
+
+#### [557. 反转字符串中的单词 III](https://leetcode-cn.com/problems/reverse-words-in-a-string-iii/)
+```python
+class Solution:
+    def reverseWords(self, s: str) -> str:
+        def reverse_str(sub_s):
+            sub_s = list(sub_s)
+            n = len(sub_s)
+            for i in range(n//2):
+                sub_s[i], sub_s[n-i-1] = sub_s[n-i-1], sub_s[i]
+            return "".join(sub_s)
+
+        words = s.split(' ')
+        result = []
+        for word in words:
+            rev_word = reverse_str(word)
+            result.append(rev_word)
+        return " ".join(result)
 ```
