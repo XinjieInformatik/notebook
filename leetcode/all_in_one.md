@@ -5826,21 +5826,23 @@ class Solution:
 ```
 
 #### [面试题57 - II. 和为s的连续正数序列](https://leetcode-cn.com/problems/he-wei-sde-lian-xu-zheng-shu-xu-lie-lcof/)
-这题也能滑动窗口，构造1-target的list，sum[l:r]<target, r向前走，sum[l:r]>target, l向前走， sum[l:r]>target，记录，l向前走
+[剑指 Offer 57 - II. 和为s的连续正数序列](https://leetcode-cn.com/problems/he-wei-sde-lian-xu-zheng-shu-xu-lie-lcof/)
+因为是连续区间，因此可滑动窗口，扩张right，不满足时收缩left
 ```python
 class Solution:
     def findContinuousSequence(self, target: int) -> List[List[int]]:
-        target_list = [i+1 for i in range(target)]
-        l, r = 0, 1
+        nums = [i for i in range(1, target)]
+        n = len(nums)
+        left = 0
+        presum = 0
         result = []
-        while (r < len(target_list)):
-            if sum(target_list[l:r]) < target:
-                r += 1
-            elif sum(target_list[l:r]) > target:
-                l += 1
-            else:
-                result.append([i for i in target_list[l:r]])
-                l += 1 # important
+        for right in range(n):
+            presum += nums[right]  
+            while presum >= target:
+                if presum == target:
+                    result.append(nums[left:right+1])
+                presum -= nums[left]
+                left += 1
         return result
 ```
 
@@ -14418,6 +14420,48 @@ class Solution:
         return result
 ```
 
+#### [73. 矩阵置零](https://leetcode-cn.com/problems/set-matrix-zeroes/)
+```PYTHON
+class Solution:
+    def setZeroes(self, matrix: List[List[int]]) -> None:
+        n = len(matrix)
+        if n == 0:
+            return
+        m = len(matrix[0])
+        if m == 0:
+            return
+        # 记录如果第一行/列有0，之后置零
+        zero_firstrow = False
+        zero_firstcol = False
+        for i in range(n):
+            if matrix[i][0] == 0:
+                zero_firstcol = True
+                break
+        for j in range(m):
+            if matrix[0][j] == 0:
+                zero_firstrow = True
+                break
+        # 用第一行/列作为标志位，标志含0的行/列
+        for i in range(1, n):
+            for j in range(1, m):
+                if matrix[i][j] == 0:
+                    matrix[i][0] = 0
+                    matrix[0][j] = 0
+        # 利用标志位，将第一行/列之外的元素置零
+        for i in range(1, n):
+            for j in range(1, m):
+                if matrix[i][0] == 0 or matrix[0][j] == 0:
+                    matrix[i][j] = 0
+        # 如果第一行含0，全置0
+        if zero_firstrow:
+            for j in range(m):
+                matrix[0][j] = 0
+        # 如果第一列含0，全置0
+        if zero_firstcol:
+            for i in range(n):
+                matrix[i][0] = 0
+```
+
 #### [448. 找到所有数组中消失的数字](https://leetcode-cn.com/problems/find-all-numbers-disappeared-in-an-array/)
 ```python
 class Solution:
@@ -16160,6 +16204,29 @@ class Solution:
             x *= x
             n >>= 1
         return res
+```
+
+#### [372. 超级次方](https://leetcode-cn.com/problems/super-pow/)
+
+![20211205_214629_14](assets/20211205_214629_14.png)
+
+```PYTHON
+class Solution:
+    def superPow(self, a: int, b: List[int]) -> int:
+        def qpow(x, n, m):
+            res = 1
+            while n:
+                if n & 1:
+                    res *= x % m
+                x *= x % m
+                n >>= 1
+            return res
+
+        res = 1
+        mod = 1337
+        for num in b:
+            res = qpow(res, 10, mod) * qpow(a, num, mod)
+        return res % mod
 ```
 
 #### [剑指 Offer 18. 删除链表的节点](https://leetcode-cn.com/problems/shan-chu-lian-biao-de-jie-dian-lcof/)
@@ -19069,4 +19136,21 @@ class Solution:
             rev_word = reverse_str(word)
             result.append(rev_word)
         return " ".join(result)
+```
+
+#### [1816. 截断句子](https://leetcode-cn.com/problems/truncate-sentence/)
+```PYTHON
+class Solution:
+    def truncateSentence(self, s: str, k: int) -> str:
+        s += ' '
+        cnt = 0
+        n = len(s)
+        index = 0
+        while index < n:
+            if s[index] == ' ':
+                cnt += 1
+                if cnt == k:
+                    break
+            index += 1
+        return s[:min(n-1, index)]
 ```
