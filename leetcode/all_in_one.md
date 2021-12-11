@@ -15676,9 +15676,9 @@ public:
 
 #### [763. 划分字母区间](https://leetcode-cn.com/problems/partition-labels/)
 ```python
-from collections import Counter
 class Solution:
     def partitionLabels(self, S: str) -> List[int]:
+        """ last记录字母最后出现的inex，如果end==i，能保证该区间字母不在之后区域出现，且区域最小 """
         last = [0] * 26
         n = len(S)
         for i in range(n):
@@ -15689,6 +15689,7 @@ class Solution:
         result = []
         for i in range(n):
             char = S[i]
+            # end记录i之前字母存在的最大index
             end = max(end, last[ord(char)-ord('a')])
             if i == end:
                 result.append(i-start+1)
@@ -19153,4 +19154,143 @@ class Solution:
                     break
             index += 1
         return s[:min(n-1, index)]
+```
+
+#### [689. 三个无重叠子数组的最大和](https://leetcode-cn.com/problems/maximum-sum-of-3-non-overlapping-subarrays/)
+三个区域无重叠，动态规划维护max区域1，max区域1+2，记录max区域1+2+3
+```PYTHON
+class Solution:
+    def maxSumOfThreeSubarrays(self, nums: List[int], k: int) -> List[int]:
+        sum1, sum2, sum3 = 0, 0, 0
+        maxsum1, maxsum2, maxsum3 = 0, 0, 0
+        max1_index, max2_index, max3_index = [], [], []
+        n = len(nums)
+        for i in range(2*k, n):
+            sum1 += nums[i-2*k]
+            sum2 += nums[i-k]
+            sum3 += nums[i]
+            if i >= 3*k - 1:
+                if sum1 > maxsum1:
+                    maxsum1 = sum1
+                    max1_index = [i-3*k+1]
+                if maxsum1 + sum2 > maxsum2:
+                    maxsum2 = maxsum1 + sum2
+                    max2_index = max1_index + [i-2*k+1]
+                if maxsum2 + sum3 > maxsum3:
+                    maxsum3 = maxsum2 + sum3
+                    max3_index = max2_index + [i-k+1]
+                sum1 -= nums[i-3*k+1]
+                sum2 -= nums[i-2*k+1]
+                sum3 -= nums[i-k+1]
+        return max3_index
+```
+
+#### [794. 有效的井字游戏](https://leetcode-cn.com/problems/valid-tic-tac-toe-state/)
+```PYTHON
+class Solution:
+    def validTicTacToe(self, board: List[str]) -> bool:
+        def is_line(c):
+            for i in range(3):
+                if board[i][0] == board[i][1] == board[i][2] == c:
+                    return True
+                if board[0][i] == board[1][i] == board[2][i] == c:
+                    return True
+            if board[0][0] == board[1][1] == board[2][2] == c:
+                return True
+            if board[0][2] == board[1][1] == board[2][0] == c:
+                return True
+            return False
+
+        cnt_o = 0
+        cnt_x = 0
+        for i in range(3):
+            for j in range(3):
+                if board[i][j] == 'O':
+                    cnt_o += 1
+                if board[i][j] == 'X':
+                    cnt_x += 1
+        if cnt_o > cnt_x:
+            return False
+        if cnt_o + 1 < cnt_x:
+            return False  
+        is_x_line = is_line('X')
+        is_o_line = is_line('O')
+        if is_x_line:
+            if not is_o_line:
+                return cnt_o == cnt_x - 1
+            else:
+                return False
+        if is_o_line:
+            return cnt_o == cnt_x
+        return True
+```
+
+#### [748. 最短补全词](https://leetcode-cn.com/problems/shortest-completing-word/)
+```PYTHON
+from collections import defaultdict
+class Solution:
+    def shortestCompletingWord(self, licensePlate: str, words: List[str]) -> str:
+        stat = defaultdict(int)
+        for char in licensePlate:
+            if char.isalpha():
+                stat[char.lower()] += 1
+        min_length = float('inf')
+        result = ""
+        for word in words:
+            check = stat.copy()
+            cnt = 0
+            for char in word:
+                if char not in check:
+                    continue
+                check[char] -= 1  
+                if check[char] == 0:
+                    cnt += 1
+            if cnt == len(stat) and len(word) < min_length:
+                min_length = len(word)
+                result = word
+        return result
+```
+
+#### [911. 在线选举](https://leetcode-cn.com/problems/online-election/)
+维护tops，t在times中index对应tops的值，表示该时刻投票最多的人
+up_bound, 第一个>target的数对应的index
+```python
+from collections import defaultdict
+class TopVotedCandidate:
+    def __init__(self, persons: List[int], times: List[int]):
+        self.times = times
+        self.tops = []
+        top = -1
+        votes = defaultdict(int)
+        for num in persons:
+            votes[num] += 1
+            if votes[num] >= votes[top]:
+                top = num
+            self.tops.append(top)
+
+    def up_bound(self, left, right, nums, target):
+        while left < right:
+            mid = left + (right-left) // 2
+            if nums[mid] <= target:
+                left = mid + 1
+            else:
+                right = mid
+        return left
+
+    def q(self, t: int) -> int:
+        index = self.up_bound(0, len(self.times), self.times, t)
+        return self.tops[index-1]
+```
+
+#### [172. 阶乘后的零](https://leetcode-cn.com/problems/factorial-trailing-zeroes/)
+```PYTHON
+class Solution:
+    def trailingZeroes(self, n: int) -> int:
+        """ 2*5=10 就会多一个0，因为阶乘2的数目多于5，因此统计每个数字因数里有多少个5，累加起来就是尾数0的个数。
+        再进一步，每隔 5 个数，出现一个 5，每隔 25 个数，出现 2 个 5，每隔 125 个数，出现 3 个 5... 以此类推 """
+        cnt = 0
+        while n > 0:
+            n //= 5
+            cnt += n
+        return cnt
 ```
