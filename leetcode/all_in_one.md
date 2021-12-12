@@ -6723,49 +6723,50 @@ public:
 ```
 
 #### [130. 被围绕的区域](https://leetcode-cn.com/problems/surrounded-regions/)
+visited不用回归0
 ```python
 class Solution:
     def solve(self, board: List[List[str]]) -> None:
-        """
-        Do not return anything, modify board in-place instead.
-        """
-        height = len(board)
-        if height==0: return board
-        width = len(board[0])
-        directions = [(1,0),(-1,0),(0,1),(0,-1)]
-        visited = set()
-        def dfs(i,j):
-            if i == 0 or i == height-1 or j == 0 or j == width-1:
-                return False, None
-            if (i,j) in visited:
-                return False, None
-            queue = [(i,j)]
-            visited.add((i,j))
-            result = [(i,j)]
-            flag = True
-            while queue:
-                top = queue.pop()
-                for direction in directions:
-                    row = top[0] + direction[0]
-                    col = top[1] + direction[1]
-                    if row<0 or row>=height or col<0 or col>=width:
-                        continue
-                    if (row,col) not in visited and board[row][col] == "O":
-                        if row == 0 or row == height-1 or col == 0 or col == width-1:
-                            flag = False
-                        queue.append((row,col))
-                        visited.add((row,col))
-                        result.append((row,col))
-            return flag, result
+        oriens = [(0,1), (0,-1), (1,0), (-1,0)]
+        def dfs(row, col):
+            result.append((row, col))
+            if row == 0 or row == n-1 or col == 0 or col == m-1:
+                self.flag = True
+                return
+            # 如果之前访问过没被置X，这次也不会被置X
+            if visited[row][col]:
+                self.flag = True
+                return
+            visited[row][col] = 1
+            for orien in oriens:
+                nxt_row = row + orien[0]
+                nxt_col = col + orien[1]
+                if nxt_row < 0 or nxt_row >= n:
+                    continue
+                if nxt_col < 0 or nxt_col >= m:
+                    continue
+                if board[nxt_row][nxt_col] != 'O':
+                    continue
+                if visited[nxt_row][nxt_col]:
+                    continue
+                dfs(nxt_row, nxt_col)
 
-        for i in range(height):
-            for j in range(width):
-                if board[i][j] == "O":
-                    flag, result = dfs(i,j)
-                    if flag:
-                        for item in result:
-                            row, col = item
-                            board[row][col] = "X"
+        n = len(board)
+        if n == 0:
+            return
+        m = len(board[0])
+        if m == 0:
+            return
+        visited = [[0 for j in range(m)] for i in range(n)]
+        for i in range(1, n-1):
+            for j in range(1, m-1):
+                if board[i][j] == 'O':
+                    result = []
+                    self.flag = False  
+                    dfs(i, j)
+                    if not self.flag:
+                        for row, col in result:
+                            board[row][col] = 'X'
 ```
 
 #### [417. 太平洋大西洋水流问题](https://xinjieinformatik.github.io/2020/09/13/matrix-dfs/)
@@ -6969,26 +6970,25 @@ class Solution(object):
 class Solution:
     def solveNQueens(self, n: int) -> List[List[str]]:
         results = []
-        def result_to_board(result):
-            board = [["."]*n for _ in range(n)]
-            board_ = [""] * n
+        def result_to_board(result, n):
+            board = [['.' for j in range(n)] for i in range(n)]
             for row, col in result:
-                board[row-1][col-1] = "Q"
-            for i in range(n):
-                board_[i] = "".join(board[i])
-            return board_
+                board[row-1][col-1] = 'Q'
+            return [''.join(board[i]) for i in range(n)]
 
         def check(row, col, result):
             for exit_row, exit_col in result:
+                # 行列 no queen
                 if row == exit_row or col == exit_col:
                     return False
+                # 对角线 no queen
                 if abs(row-exit_row) == abs(col-exit_col):
                     return False
             return True
 
         def helper(row, result):
-            if row == n+1:
-                results.append(result_to_board(result))
+            if row == n + 1:
+                results.append(result_to_board(result, n))
                 return
             for col in range(1, n+1):
                 if check(row, col, result):
@@ -11451,22 +11451,21 @@ class Solution:
     def countSubstrings(self, s: str) -> int:
         # 二维dp. dp[i][j] s[i:j+1]是否是回文
         n = len(s)
-        dp = [[0]*n for _ in range(n)]
+        dp = [[0 for j in range(n)] for i in range(n)]
         cnt = 0
         for i in range(n):
             dp[i][i] = 1
             cnt += 1
-        for i in range(n):
-            for j in range(i):
-                # 对角线旁的特殊处理
-                if i-j == 1:
-                    if s[i] == s[j]:
-                        dp[i][j] = 1
+        for i in range(n-1, -1, -1):
+            for j in range(i+1, n):
+                if s[i] == s[j]:
+                    if i == j - 1:
                         cnt += 1
-                else:
-                    if s[i] == s[j] and dp[i-1][j+1]:
                         dp[i][j] = 1
-                        cnt += 1
+                    else:
+                        if dp[i+1][j-1]:
+                            cnt += 1
+                            dp[i][j] = 1
         return cnt
 
 class Solution:
@@ -14966,6 +14965,7 @@ class Solution:
 
 #### [343. 整数拆分](https://leetcode-cn.com/problems/integer-break/)
 剪绳子
+[剑指 Offer 14- I. 剪绳子](https://leetcode-cn.com/problems/jian-sheng-zi-lcof/)
 ```python
 import functools
 class Solution:
@@ -15381,6 +15381,37 @@ class LFUCache:
 ```
 
 #### [378. 有序矩阵中第k小的元素](https://leetcode-cn.com/problems/kth-smallest-element-in-a-sorted-matrix/)
+二分尝试法，边界是[matrix[0][0], matrix[-1][-1]], 检查比mid小的数是否小于k，移动二分边界
+```PYTHON
+class Solution:
+    def kthSmallest(self, matrix: List[List[int]], k: int) -> int:
+        n = len(matrix)
+        def check(mid):
+            row = n - 1
+            col = 0
+            num = 0
+            while row >= 0 and col < n:
+                if matrix[row][col] <= mid:
+                    num += row + 1
+                    col += 1
+                else:
+                    row -= 1
+            return num < k  
+
+        def search(matrix):
+            left = matrix[0][0]
+            right = matrix[-1][-1]
+            while  left < right:
+                mid = left + (right-left) // 2  
+                if check(mid):
+                    left = mid + 1
+                else:
+                    right = mid
+            return left
+
+        return search(matrix)
+```
+
 矩阵堆排序
 ```python
 class Solution:
@@ -19293,4 +19324,49 @@ class Solution:
             n //= 5
             cnt += n
         return cnt
+```
+
+#### [709. 转换成小写字母](https://leetcode-cn.com/problems/to-lower-case/)
+大写字母A - Z 的ASCII 码范围为 [65, 90]
+小写字母a - z 的ASCII 码范围为 [97, 122]
+对于大写字母ASCII码加32即可得到对应的小写字母
+32 对应的二进制表示为 (00100000)
+[65, 96]对应的二进制表示为 [(01000001), (01011010)]
+表示32的那个二进制位都是0，因此可以对32做按位或运算，替代32的加法运算。
+
+```PYTHON
+class Solution:
+    def toLowerCase(self, s: str) -> str:
+        res = ""
+        for char in s:
+            if 'A' <= char <= 'Z':
+                char = chr(ord(char) | 32)
+            res += char
+        return res
+```
+
+#### [679. 24 点游戏](https://leetcode-cn.com/problems/24-game/)
+递归枚举所有情况
+```PYTHON
+class Solution:
+    def judgePoint24(self, cards: List[int]) -> bool:
+        def dfs(nums):
+            if len(nums) == 1:
+                return abs(nums[0] - 24) < 1e-5
+            for i in range(len(nums)):
+                for j in range(i+1, len(nums)):
+                    x, y = nums[i], nums[j]
+                    # nums中除x,y以外的数
+                    rst = nums[:i] + nums[i+1:j] + nums[j+1:]
+                    a = dfs(rst + [x + y])
+                    b = dfs(rst + [x - y])
+                    c = dfs(rst + [y - x])
+                    d = dfs(rst + [x * y])
+                    e = y != 0 and dfs(rst + [x / y])
+                    f = x != 0 and dfs(rst + [y / x])
+                    if a or b or c or d or e or f:
+                        return True
+            return False
+
+        return dfs(cards)
 ```
