@@ -9928,6 +9928,34 @@ public:
 
 #### [117. 填充每个节点的下一个右侧节点指针 II](https://leetcode-cn.com/problems/populating-next-right-pointers-in-each-node-ii/)
 同 [116. 填充每个节点的下一个右侧节点指针](https://leetcode-cn.com/problems/populating-next-right-pointers-in-each-node/)
+```python
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val: int = 0, left: 'Node' = None, right: 'Node' = None, next: 'Node' = None):
+        self.val = val
+        self.left = left
+        self.right = right
+        self.next = next
+"""
+from collections import deque
+class Solution:
+    def connect(self, root: 'Node') -> 'Node':
+        if not root:
+            return root
+        queue = deque([root])
+        while len(queue) > 0:
+            n = len(queue)
+            for i in range(n):
+                top = queue.pop()  
+                top.next = None if i == n-1 else queue[-1]
+                if top.left:
+                    queue.appendleft(top.left)
+                if top.right:
+                    queue.appendleft(top.right)  
+        return root
+```
+
 ```cpp
 /*
 // Definition for a Node.
@@ -12502,6 +12530,27 @@ class Solution:
                 if indegrees[curr] == 0:
                     stack.append(curr)
         return result if len(result) == numCourses else []
+```
+
+#### [851. 喧闹和富有](https://leetcode-cn.com/problems/loud-and-rich/)
+```python
+from collections import defaultdict
+class Solution:
+    def loudAndRich(self, richer: List[List[int]], quiet: List[int]) -> List[int]:
+        connect, degree, ans = defaultdict(list), [0] * len(quiet), [i for i in range(len(quiet))]
+        for u, v in richer:
+            connect[u].append(v)
+            degree[v] += 1
+        queue = deque([i for i in range(len(degree)) if not degree[i]])
+        while queue:
+            u = queue.popleft()
+            for v in connect[u]:
+                if quiet[ans[u]] < quiet[ans[v]]:
+                    ans[v] = ans[u]
+                degree[v] -= 1
+                if not degree[v]:
+                    queue.append(v)
+        return ans
 ```
 
 #### [261. 以图判树](https://leetcode-cn.com/problems/graph-valid-tree/)
@@ -19369,4 +19418,78 @@ class Solution:
             return False
 
         return dfs(cards)
+```
+
+#### [395. 至少有 K 个重复字符的最长子串](https://leetcode-cn.com/problems/longest-substring-with-at-least-k-repeating-characters/)
+```python
+class Solution:
+    def longestSubstring(self, s: str, k: int) -> int:
+        # 如果整个分治子串长度已经小于k, return 0
+        if len(s) < k:
+            return 0
+        # 寻找子串中出现频率最小的
+        c = min(s, key=s.count)
+        # 如果最小频率大于k，返回子串长度
+        if s.count(c) >= k:
+            return len(s)
+        # 如果最小频率小于k，分治，对多子串取max
+        return max([self.longestSubstring(item, k) for item in s.split(c)])
+```
+
+#### [1610. 可见点的最大数目](https://leetcode-cn.com/problems/maximum-number-of-visible-points/)
+```python
+class Solution:
+    def visiblePoints(self, points: List[List[int]], angle: int, location: List[int]) -> int:
+        """
+        以location为坐标系原点，根据点和点的横坐标差、纵坐标差，利用arctan函数计算弧度，再把弧度换算成角度。
+        将得到的点排序，利用双指针进行滑窗滑动。滑窗的限制是最大角减最小角不得大于固定的angle角度。
+        从第一个点开始转圈，直到转完所有点，得到最大的个数。
+        """
+        sameCnt = 0
+        polarDegrees = []
+        for p in points:
+            if p == location:
+                sameCnt += 1
+            else:
+                # atan2: atan2(y, x) 返回给定的X及Y坐标值的反正切值, [-pi, pi]
+                polarDegrees.append(atan2(p[1] - location[1], p[0] - location[0]))
+        polarDegrees.sort()
+
+        n = len(polarDegrees)
+        polarDegrees += [deg + 2 * pi for deg in polarDegrees]
+
+        maxCnt = 0
+        right = 0
+        degree = angle * pi / 180
+        for i in range(n):
+            while right < n * 2 and polarDegrees[right] <= polarDegrees[i] + degree:
+                right += 1
+            maxCnt = max(maxCnt, right - i)
+        return sameCnt + maxCnt
+```
+
+
+#### [475. 供暖器](https://leetcode-cn.com/problems/heaters/)
+二分查找
+```python
+class Solution:
+    def findRadius(self, houses: List[int], heaters: List[int]) -> int:
+        def low_bound(nums, left, right, target):
+            while left < right:
+                mid = left + (right-left) // 2
+                if nums[mid] < target:
+                    left = mid + 1
+                else:
+                    right = mid
+            return left
+
+        heaters.sort()
+        ans = 0
+        n = len(heaters)
+        for num in houses:
+            index = low_bound(heaters, 0, n, num)
+            left = num - heaters[index-1] if index > 0 else float('inf')
+            right = heaters[index] - num if index < n else float('inf')
+            ans = max(ans, min(left, right))
+        return ans
 ```
