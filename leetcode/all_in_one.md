@@ -19493,3 +19493,17 @@ class Solution:
             ans = max(ans, min(left, right))
         return ans
 ```
+
+#### [1154. 一年中的第几天](https://leetcode-cn.com/problems/day-of-the-year/)
+```python
+class Solution:
+    def dayOfYear(self, date: str) -> int:
+        months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        date = date.split('-')
+        year, month, day = list(map(int, date))
+        days = sum(months[:month-1])
+        # 闰年判断方式 year % 400 == 0 or (year % 4 == 0 and year % 100 != 0)
+        days = days + 1 if month > 2 and (year % 400 == 0 or (year % 4 == 0 and year % 100 != 0)) else days
+        days += day
+        return days
+```
