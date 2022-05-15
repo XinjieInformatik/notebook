@@ -19507,3 +19507,33 @@ class Solution:
         days += day
         return days
 ```
+
+#### [812. 最大三角形面积](https://leetcode.cn/problems/largest-triangle-area/)
+保持点的顺序, 同时注意面积正负在多种case下可以忽略, 最后取abs即可
+```python
+class Solution:
+    def largestTriangleArea(self, points: List[List[int]]) -> float:
+        def calculate_order(x1, x2, x3):
+            xl, xm, xr = sorted([x1, x2, x3])
+            return xl, xm, xr
+
+        def calculate_area(x1, y1, x2, y2, x3, y3):
+            area1 = (y1 + y2) * (x2 - x1) / 2
+            area2 = (y2 + y3) * (x3 - x2) / 2
+            area3 = (y1 + y3) * (x3 - x1) / 2
+            area = area3 - area1 - area2
+            return abs(area)
+
+        n = len(points)
+        max_area = 0
+        for p1 in range(n):
+            for p2 in range(p1+1, n):
+                for p3 in range(p2+1, n):
+                    x1, y1 = points[p1]
+                    x2, y2 = points[p2]
+                    x3, y3 = points[p3]
+                    area = calculate_area(x1, y1, x2, y2, x3, y3)
+                    max_area = max(max_area, area)
+
+        return max_area
+```
