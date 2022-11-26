@@ -3457,14 +3457,18 @@ class Solution:
 ```python
 class Solution:
     def lengthOfLongestSubstring(self, s: str) -> int:
-        l, r, max_len = 0, 0, 0
-        while (r < len(s)):
-            if s[r] in s[l:r]:
-                l += 1
-            else:
-                max_len = max(max_len, r-l+1)
-                r += 1
-        return max_len
+        visited = set()
+        max_length = 0
+        left = 0
+        for right in range(len(s)):
+            while left < right and s[right] in visited:
+                visited.remove(s[left])
+                left += 1
+
+            max_length = max(max_length, right-left+1)
+            visited.add(s[right])
+
+        return max_length
 ```
 
 #### [面试题57 - II. 和为s的连续正数序列](https://leetcode-cn.com/problems/he-wei-sde-lian-xu-zheng-shu-xu-lie-lcof/)
@@ -4414,4 +4418,41 @@ class Solution:
                 res += last1 - last2
 
         return res
+```
+
+
+#### [882. 细分图中的可到达节点](https://leetcode.cn/problems/reachable-nodes-in-subdivided-graph/)
+```python
+class Solution:
+    def reachableNodes(self, edges: List[List[int]], maxMoves: int, n: int) -> int:
+        g = [[] for _ in range(n)]
+        for u, v, cnt in edges:
+            g[u].append((v, cnt + 1))
+            g[v].append((u, cnt + 1))  # 建图
+
+        dist = self.dijkstra(g, 0)  # 从 0 出发的最短路
+
+        ans = sum(d <= maxMoves for d in dist)  # 可以在 maxMoves 步内到达的点的个数
+        for u, v, cnt in edges:
+            a = max(maxMoves - dist[u], 0)
+            b = max(maxMoves - dist[v], 0)
+            ans += min(a + b, cnt)  # 这条边上可以到达的节点数
+        return ans
+
+    # Dijkstra 算法模板
+    # 返回从 start 到每个点的最短路
+    def dijkstra(self, g: List[List[Tuple[int]]], start: int) -> List[int]:
+        dist = [inf] * len(g)
+        dist[start] = 0
+        h = [(0, start)]
+        while h:
+            d, x = heappop(h)
+            if d > dist[x]:
+                continue
+            for y, wt in g[x]:
+                new_d = dist[x] + wt
+                if new_d < dist[y]:
+                    dist[y] = new_d
+                    heappush(h, (new_d, y))
+        return dist
 ```
