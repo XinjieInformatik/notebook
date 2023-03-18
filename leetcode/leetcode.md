@@ -4458,6 +4458,7 @@ class Solution:
 ```
 
 #### [2389. 和有限的最长子序列](https://leetcode.cn/problems/longest-subsequence-with-limited-sum/)
+注意转成 accumulate 的序列去做
 ```python
 class Solution:
     def naive_solve(self, nums: List[int], queries: List[int]) -> List[int]:
