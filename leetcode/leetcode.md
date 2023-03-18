@@ -4456,3 +4456,40 @@ class Solution:
                     heappush(h, (new_d, y))
         return dist
 ```
+
+#### [2389. 和有限的最长子序列](https://leetcode.cn/problems/longest-subsequence-with-limited-sum/)
+```python
+class Solution:
+    def naive_solve(self, nums: List[int], queries: List[int]) -> List[int]:
+        nums = sorted(nums)
+        result = []
+        for num_q in queries:
+            total = 0
+            valid_length = len(nums)
+            for idx, num_i in enumerate(nums):
+                total += num_i
+                if total > num_q:
+                    valid_length = idx
+                    break
+            result.append(valid_length)
+        
+        return result
+
+    def binary_solve(self, nums: List[int], queries: List[int]) -> List[int]:
+        def _up_bound(arr, left, right, target):
+            while left < right:
+                mid = left + (right-left) // 2
+                if arr[mid] <= target:
+                    left = mid + 1
+                else:
+                    right = mid
+
+            return left
+
+        accu_nums = list(accumulate(sorted(nums)))
+
+        return [_up_bound(accu_nums, 0, len(accu_nums), target) for target in queries] 
+
+    def answerQueries(self, nums: List[int], queries: List[int]) -> List[int]:
+        return self.memory_solve(nums, queries)
+```
