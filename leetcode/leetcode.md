@@ -5,89 +5,89 @@
 符号匹配用单个栈
 ```python
 class Solution:
+    def __init__(self):
+        self.valid_mapping = {
+            ")": "(",
+            "}": "{",
+            "]": "[",
+        }
     def isValid(self, s: str) -> bool:
         stack = []
-        match = {'{':'}', '[':']', '(':')'}
-        for item in s:
-            if item in match.keys():
-                stack.append(item)
-            else:
-                if len(stack) != 0:
-                    if match[stack[-1]] == item:
-                        stack.pop()
-                    else: return False
-                else: return False
-        if len(stack) == 0: return True
-        else: return False
+        for i in range(len(s)):
+            if len(stack) > 0 and s[i] in self.valid_mapping:
+                char = stack.pop()
+                if char != self.valid_mapping[s[i]]:
+                    return False
+                continue
+            stack.append(s[i])
+
+        return len(stack) == 0
 ```
 
 #### [394. 字符串解码](https://leetcode-cn.com/problems/decode-string/)
-单个栈
+栈模拟递归
 ```python
 class Solution:
     def decodeString(self, s: str) -> str:
         stack = []
-        str_out = ""
-
-        for index, item in enumerate(s):
-            if item != ']':
-                stack.append(item)
+        digit = 0
+        result = ""
+        for char in s:
+            if char.isdigit():
+                digit = digit*10 + int(char)
+            elif char == '[':
+                stack.append((digit, result))
+                digit = 0
+                result = ""
+            elif char == ']':
+                _digit, last_result = stack.pop()
+                result = last_result + _digit * result
             else:
-                str_temp = ""
-                str_num = ""
-                count = 1
-                sign = stack[-1]
+                result += char
+        
+        return result
+```
 
-                while (sign != '['):
-                    str_temp += stack.pop()
-                    sign = stack[-1]
+```python
+class Solution:
+    def decodeString(self, s: str) -> str:
+        def _recursive(idx: int, digit: int = 0) -> str:
+            sub_s = ""
+            while idx < len(s):
+                if s[idx].isdigit():
+                    digit = digit * 10 + int(s[idx])
+                elif s[idx] == "[":
+                    res, idx = _recursive(idx+1)
+                    sub_s += digit * res
+                    digit = 0 # important
+                elif s[idx] == "]":
+                    return sub_s, idx
+                else:
+                    sub_s += s[idx]
+                
+                idx += 1
+            
+            return sub_s
 
-                stack.pop() # delete '['
-                sign = stack[-1]
-
-                while (sign.isdigit()):
-                    str_num += stack.pop()
-                    if stack:
-                        sign = stack[-1]
-                    else:
-                        sign = "end"
-
-                str_num = str_num[::-1]
-                str_temp = str_temp[::-1]
-
-                try:
-                    num = int(str_num)
-                except:
-                    num = 1
-                str_temp *= num
-                for item in str_temp:
-                    stack.append(item)
-
-        if stack:
-            str_out = ''.join(stack)
-
-        return str_out
+        return _recursive(idx=0)
 ```
 
 #### [739. 每日温度](https://leetcode-cn.com/problems/daily-temperatures/)
 包含index的单调递减栈
 ```python
 class Solution:
-    def dailyTemperatures(self, T: List[int]) -> List[int]:
-        result = [0] * len(T)
+    def dailyTemperatures(self, temperatures: List[int]) -> List[int]:
         stack = []
-
-        for index, item in enumerate(T):
-            # while 维护单调栈
-            while stack and item > stack[-1][1]:
-                i, value = stack.pop()
-                res = index - i
-                result[i] = res
-
-            stack.append((index, item))
-
+        result = [0 for _ in range(len(temperatures))]
+        for index in range(len(temperatures)):
+            while len(stack) > 0 and temperatures[index] > stack[-1][1]:
+                prev_index, prev_val = stack.pop()
+                result[prev_index] = index - prev_index
+            stack.append((index, temperatures[index]))
+        
         return result
 ```
+
 #### [496. 下一个更大元素 I](https://leetcode-cn.com/problems/next-greater-element-i/)
 ```python
 class Solution:
@@ -4493,4 +4493,63 @@ class Solution:
 
     def answerQueries(self, nums: List[int], queries: List[int]) -> List[int]:
         return self.memory_solve(nums, queries)
+```
+
+#### [1625. 执行操作后字典序最小的字符串](https://leetcode.cn/problems/lexicographically-smallest-string-after-applying-operations/)
+```python
+from collections import deque
+
+class Solution:
+    def findLexSmallestString(self, s: str, a: int, b: int) -> str:
+        """
+        Find the lexicographically smallest string that can be obtained from s by performing the following operations:
+        - Add a to odd-indexed digits (0-indexed) of the string. The result is a new string.
+        - Rotate the string b positions to the right. The result is a new string.
+        
+        :param s: The input string, consisting of digits (0-9).
+        :param a: The integer to add to odd-indexed digits.
+        :param b: The number of positions to rotate the string to the right.
+        :return: The lexicographically smallest string that can be obtained from s.
+        """
+        # BFS, imitate all possible answers
+        queue = deque([s])
+        ans = s
+        visited = set([s])
+
+        while queue:
+            curr = queue.popleft()
+            ans = min(ans, curr)
+
+            choice1 = "".join(str((int(char) + a) % 10) if idx & 1 else char for idx, char in enumerate(curr))
+            choice2 = curr[-b:] + curr[:-b]
+
+            for choice in [choice1, choice2]:
+                if choice not in visited:
+                    queue.append(choice)
+                    visited.add(choice)
+
+        return ans
+```
+
+#### [1574. 删除最短的子数组使剩余数组有序](https://leetcode.cn/problems/shortest-subarray-to-be-removed-to-make-array-sorted/)
+先从right往left，再从left往right推移
+```python
+class Solution:
+    def findLengthOfShortestSubarray(self, arr: List[int]) -> int:
+        num = len(arr)
+        right = num - 1
+        while right > 0 and arr[right-1] <= arr[right]:
+            right -= 1
+        if right == 0:
+            return 0
+            
+        min_length = right
+        for left in range(num):
+            while right < num and arr[left] > arr[right]:
+                right += 1
+            min_length = min(min_length, right-left-1)
+            if left < num - 1 and arr[left] > arr[left+1]:
+                break
+
+        return min_length
 ```
