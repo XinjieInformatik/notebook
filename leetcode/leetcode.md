@@ -2386,40 +2386,26 @@ class Solution:
         return head
 ```
 #### [88. 合并两个有序数组](https://leetcode-cn.com/problems/merge-sorted-array/submissions/)
-双指针
+三个指针，从后往前，取大赋值
 ```python
 class Solution:
     def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:
-        nums1_copy = nums1[:m].copy()
-        p0 = 0; p1 = 0; p3 = 0
-        while (p0 < m and p1 < n):
-            if nums1_copy[p0] < nums2[p1]:
-                nums1[p3] = nums1_copy[p0]
-                p0 += 1; p3 += 1
+        p1 = m - 1
+        p2 = n - 1
+        p3 = m + n - 1
+
+        while p3 >= 0:
+            num1 = -float("inf") if p1 < 0 else nums1[p1]
+            num2 = -float("inf") if p2 < 0 else nums2[p2]
+            if num1 > num2:
+                nums1[p3] = num1
+                p1 -= 1
             else:
-                nums1[p3] = nums2[p1]
-                p1 += 1; p3 += 1
-        if p0 == m: nums1[p3:] = nums2[p1:]
-        else: nums1[p3:] = nums1_copy[p0:]
-        return nums1
+                nums1[p3] = num2
+                p2 -= 1
 
-class Solution:
-    def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:
-        i, j = 0, 0
-        nums1[:] = nums1[:m]
-
-        while (i < m and j < n):
-            if nums1[i] > nums2[j]:
-                nums1.insert(i, nums2[j]) # 注意insert后元素位置的变化, 数组大小的变化!
-                j += 1
-                i += 1
-                m += 1
-            else:
-                i += 1
-
-        if j < n: nums1.extend(nums2[j:])
-
-        return nums1
+            p3 -= 1
+        
 ```
 
 #### [1296. 划分数组为连续数字的集合](https://leetcode-cn.com/problems/divide-array-in-sets-of-k-consecutive-numbers/)
@@ -4090,12 +4076,12 @@ class Solution:
 ```python
 class Solution:
     def removeElement(self, nums: List[int], val: int) -> int:
-        l = 0
-        for r in range(len(nums)):
-            if nums[r] != val:
-                nums[l] = nums[r]
-                l += 1
-        return l
+        left = 0
+        for right in range(len(nums)):
+            if nums[right] != val:
+                nums[left] = nums[right]
+                left += 1
+        return left
 ```
 
 #### [576.出界的路径数](https://leetcode-cn.com/problems/out-of-boundary-paths/)
@@ -4552,4 +4538,60 @@ class Solution:
                 break
 
         return min_length
+```
+
+#### [2395. 和相等的子数组](https://leetcode.cn/problems/find-subarrays-with-equal-sum/)
+hashmap
+```python
+class Solution:
+    def findSubarrays(self, nums: List[int]) -> bool:
+        targets = set()
+        for i in range(len(nums)-1):
+            target = nums[i] + nums[i+1]
+            if target in targets:
+                return True
+            targets.add(target)
+        
+        return False
+```
+
+#### [1027. 最长等差数列](https://leetcode.cn/problems/longest-arithmetic-subsequence/)
+```python
+class Solution:
+    def longestArithSeqLength(self, nums: List[int]) -> int:
+        @cache
+        def dfs(i: int) -> dict[int, int]:
+            max_len = {}
+            for j in range(i - 1, -1, -1):
+                d = nums[i] - nums[j]  # 公差
+                if d not in max_len:
+                    max_len[d] = dfs(j).get(d, 1) + 1
+            return max_len
+            
+        return max(max(dfs(i).values()) for i in range(1, len(nums)))
+```
+
+#### [1003. 检查替换后的词是否有效](https://leetcode.cn/problems/check-if-word-is-valid-after-substitutions/)
+```python
+class Solution:
+    def isValid(self, s: str) -> bool:
+        stk = []
+        for c in s:
+            stk.append(c)
+            if ''.join(stk[-3:]) == "abc":
+                stk[-3:] = []
+
+        return len(stk) == 0
+```
+
+#### [1439. 有序矩阵中的第 k 个最小数组和](https://leetcode.cn/problems/find-the-kth-smallest-sum-of-a-matrix-with-sorted-rows/)
+从第一行开始，维护最小的k个和
+```python
+class Solution:
+    def kthSmallest(self, mat: List[List[int]], k: int) -> int:
+        a = mat[0][:k]
+        for row in mat[1:]:
+            a = sorted(x + y for x in a for y in row)[:k]
+
+        return a[-1]
 ```
