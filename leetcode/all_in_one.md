@@ -19838,3 +19838,30 @@ class Solution:
 
         return cnt >= k
 ```
+
+#### [2559. 统计范围内的元音字符串数](https://leetcode.cn/problems/count-vowel-strings-in-ranges/)
+利用前缀和做差，减少计算次数
+```python
+class Solution:
+    def vowelStrings(self, words: List[str], queries: List[List[int]]) -> List[int]:
+        def _target_alpha(char: str):
+            return char in {'a', 'e', 'i', 'o', 'u'}
+        
+        def _target_str(string: str):
+            if len(string) == 0:
+                return False
+
+            return _target_alpha(string[0]) and _target_alpha(string[-1])
+
+        n = len(words)
+        prefix_sums = [0] * (n + 1)
+        for i in range(n):
+            value = 1 if _target_str(words[i]) else 0
+            prefix_sums[i + 1] = prefix_sums[i] + value
+        ans = []
+        for i in range(len(queries)):
+            start, end = queries[i]
+            ans.append(prefix_sums[end + 1] - prefix_sums[start])
+
+        return ans
+```
