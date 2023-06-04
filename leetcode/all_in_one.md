@@ -19537,3 +19537,304 @@ class Solution:
 
         return max_area
 ```
+
+#### [795. 区间子数组个数](https://leetcode.cn/problems/number-of-subarrays-with-bounded-maximum/)
+```python
+class Solution:
+    def numSubarrayBoundedMax(self, nums: List[int], left: int, right: int) -> int:
+        res = 0
+        last2 = last1 = -1
+        for i, x in enumerate(nums):
+            if left <= x <= right:
+                last1 = i
+            elif x > right:
+                last2 = i
+                last1 = -1
+            if last1 != -1:
+                res += last1 - last2
+
+        return res
+```
+
+
+#### [882. 细分图中的可到达节点](https://leetcode.cn/problems/reachable-nodes-in-subdivided-graph/)
+```python
+class Solution:
+    def reachableNodes(self, edges: List[List[int]], maxMoves: int, n: int) -> int:
+        g = [[] for _ in range(n)]
+        for u, v, cnt in edges:
+            g[u].append((v, cnt + 1))
+            g[v].append((u, cnt + 1))  # 建图
+
+        dist = self.dijkstra(g, 0)  # 从 0 出发的最短路
+
+        ans = sum(d <= maxMoves for d in dist)  # 可以在 maxMoves 步内到达的点的个数
+        for u, v, cnt in edges:
+            a = max(maxMoves - dist[u], 0)
+            b = max(maxMoves - dist[v], 0)
+            ans += min(a + b, cnt)  # 这条边上可以到达的节点数
+        return ans
+
+    # Dijkstra 算法模板
+    # 返回从 start 到每个点的最短路
+    def dijkstra(self, g: List[List[Tuple[int]]], start: int) -> List[int]:
+        dist = [inf] * len(g)
+        dist[start] = 0
+        h = [(0, start)]
+        while h:
+            d, x = heappop(h)
+            if d > dist[x]:
+                continue
+            for y, wt in g[x]:
+                new_d = dist[x] + wt
+                if new_d < dist[y]:
+                    dist[y] = new_d
+                    heappush(h, (new_d, y))
+        return dist
+```
+
+#### [2389. 和有限的最长子序列](https://leetcode.cn/problems/longest-subsequence-with-limited-sum/)
+注意转成 accumulate 的序列去做
+```python
+class Solution:
+    def naive_solve(self, nums: List[int], queries: List[int]) -> List[int]:
+        nums = sorted(nums)
+        result = []
+        for num_q in queries:
+            total = 0
+            valid_length = len(nums)
+            for idx, num_i in enumerate(nums):
+                total += num_i
+                if total > num_q:
+                    valid_length = idx
+                    break
+            result.append(valid_length)
+        
+        return result
+
+    def binary_solve(self, nums: List[int], queries: List[int]) -> List[int]:
+        def _up_bound(arr, left, right, target):
+            while left < right:
+                mid = left + (right-left) // 2
+                if arr[mid] <= target:
+                    left = mid + 1
+                else:
+                    right = mid
+
+            return left
+
+        accu_nums = list(accumulate(sorted(nums)))
+
+        return [_up_bound(accu_nums, 0, len(accu_nums), target) for target in queries] 
+
+    def answerQueries(self, nums: List[int], queries: List[int]) -> List[int]:
+        return self.memory_solve(nums, queries)
+```
+
+#### [1625. 执行操作后字典序最小的字符串](https://leetcode.cn/problems/lexicographically-smallest-string-after-applying-operations/)
+```python
+from collections import deque
+
+class Solution:
+    def findLexSmallestString(self, s: str, a: int, b: int) -> str:
+        """
+        Find the lexicographically smallest string that can be obtained from s by performing the following operations:
+        - Add a to odd-indexed digits (0-indexed) of the string. The result is a new string.
+        - Rotate the string b positions to the right. The result is a new string.
+        
+        :param s: The input string, consisting of digits (0-9).
+        :param a: The integer to add to odd-indexed digits.
+        :param b: The number of positions to rotate the string to the right.
+        :return: The lexicographically smallest string that can be obtained from s.
+        """
+        # BFS, imitate all possible answers
+        queue = deque([s])
+        ans = s
+        visited = set([s])
+
+        while queue:
+            curr = queue.popleft()
+            ans = min(ans, curr)
+
+            choice1 = "".join(str((int(char) + a) % 10) if idx & 1 else char for idx, char in enumerate(curr))
+            choice2 = curr[-b:] + curr[:-b]
+
+            for choice in [choice1, choice2]:
+                if choice not in visited:
+                    queue.append(choice)
+                    visited.add(choice)
+
+        return ans
+```
+
+#### [1574. 删除最短的子数组使剩余数组有序](https://leetcode.cn/problems/shortest-subarray-to-be-removed-to-make-array-sorted/)
+先从right往left，再从left往right推移
+```python
+class Solution:
+    def findLengthOfShortestSubarray(self, arr: List[int]) -> int:
+        num = len(arr)
+        right = num - 1
+        while right > 0 and arr[right-1] <= arr[right]:
+            right -= 1
+        if right == 0:
+            return 0
+            
+        min_length = right
+        for left in range(num):
+            while right < num and arr[left] > arr[right]:
+                right += 1
+            min_length = min(min_length, right-left-1)
+            if left < num - 1 and arr[left] > arr[left+1]:
+                break
+
+        return min_length
+```
+
+#### [2395. 和相等的子数组](https://leetcode.cn/problems/find-subarrays-with-equal-sum/)
+hashmap
+```python
+class Solution:
+    def findSubarrays(self, nums: List[int]) -> bool:
+        targets = set()
+        for i in range(len(nums)-1):
+            target = nums[i] + nums[i+1]
+            if target in targets:
+                return True
+            targets.add(target)
+        
+        return False
+```
+
+#### [1027. 最长等差数列](https://leetcode.cn/problems/longest-arithmetic-subsequence/)
+```python
+class Solution:
+    def longestArithSeqLength(self, nums: List[int]) -> int:
+        @cache
+        def dfs(i: int) -> dict[int, int]:
+            max_len = {}
+            for j in range(i - 1, -1, -1):
+                d = nums[i] - nums[j]  # 公差
+                if d not in max_len:
+                    max_len[d] = dfs(j).get(d, 1) + 1
+            return max_len
+            
+        return max(max(dfs(i).values()) for i in range(1, len(nums)))
+```
+
+#### [1003. 检查替换后的词是否有效](https://leetcode.cn/problems/check-if-word-is-valid-after-substitutions/)
+```python
+class Solution:
+    def isValid(self, s: str) -> bool:
+        stk = []
+        for c in s:
+            stk.append(c)
+            if ''.join(stk[-3:]) == "abc":
+                stk[-3:] = []
+
+        return len(stk) == 0
+```
+
+#### [1439. 有序矩阵中的第 k 个最小数组和](https://leetcode.cn/problems/find-the-kth-smallest-sum-of-a-matrix-with-sorted-rows/)
+从第一行开始，维护最小的k个和
+```python
+class Solution:
+    def kthSmallest(self, mat: List[List[int]], k: int) -> int:
+        a = mat[0][:k]
+        for row in mat[1:]:
+            a = sorted(x + y for x in a for y in row)[:k]
+
+        return a[-1]
+```
+
+#### [1156. 单字符重复子串的最大长度](https://leetcode.cn/problems/swap-for-longest-repeated-character-substring/)
+依次遍历字符串，从该idx开始向前寻找最长连续子串，看是否可以交换，交换后能有多少延续。
+```python
+from collections import Counter
+class Solution:
+    def maxRepOpt1(self, text: str) -> int:
+        char_stat = Counter(text)
+        text_length = len(text)
+        result = 0
+        for idx in range(text_length):
+            next_idx = idx
+            while next_idx < text_length and text[next_idx] == text[idx]:
+                next_idx += 1
+            part_length = next_idx - idx
+
+            if next_idx != text_length-1 and char_stat[text[idx]] > part_length:
+                part_length += 1
+
+            nnext_idx = next_idx + 1
+            while nnext_idx < text_length and text[nnext_idx] == text[idx]:
+                nnext_idx += 1
+            if nnext_idx > next_idx + 1:
+                part_length = min(nnext_idx - idx, char_stat[text[idx]])
+
+            result = max(result, part_length)
+            
+        return result
+```
+
+#### [2465. 不同的平均值数目](https://leetcode.cn/problems/number-of-distinct-averages/)
+```python
+class Solution:
+    def _get_num_idx(self, nums: List[int], valid_mask: List[int], mode: str) -> int:
+        assert mode in ["min", "max"], f"{mode} not support yet"
+        num_idx = 0
+        if mode == "max":
+            compare_func = lambda a, b: a > b  
+            num_val = -float("inf")
+        else:
+            compare_func = lambda a, b: a < b
+            num_val = float("inf")
+
+        for idx in range(len(nums)):
+            if not valid_mask[idx]:
+                continue
+            if compare_func(nums[idx], num_val):
+                num_val = nums[idx]
+                num_idx = idx
+                
+        return num_idx
+
+    def distinctAverages(self, nums: List[int]) -> int:
+        diff_avg_num = set()
+        valid_mask = [1 for _ in range(len(nums))]
+        valid_cnt = len(nums)
+        while valid_cnt > 0:
+            max_idx = self._get_num_idx(nums, valid_mask, mode="max")
+            min_idx = self._get_num_idx(nums, valid_mask, mode="min")
+            avg_val = (nums[max_idx] + nums[min_idx]) / 2
+            diff_avg_num.add(avg_val)
+            valid_cnt -= 2
+            valid_mask[max_idx] = 0
+            valid_mask[min_idx] = 0
+            
+        return len(diff_avg_num)
+```
+
+#### [2517. 礼盒的最大甜蜜度](https://leetcode.cn/problems/maximum-tastiness-of-candy-basket/)
+```python 
+class Solution:
+    def maximumTastiness(self, price: List[int], k: int) -> int:
+        price.sort()
+        left, right = 0, price[-1] - price[0]
+        while left < right:
+            mid = (left + right + 1) // 2
+            if self.check(price, k, mid):
+                left = mid
+            else:
+                right = mid - 1
+
+        return left
+
+    def check(self, price: List[int], k: int, tastiness: int) -> bool:
+        prev = -inf
+        cnt = 0
+        for p in price:
+            if p - prev >= tastiness:
+                cnt += 1
+                prev = p
+
+        return cnt >= k
+```
