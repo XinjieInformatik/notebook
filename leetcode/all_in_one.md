@@ -19865,3 +19865,71 @@ class Solution:
 
         return ans
 ```
+
+#### [2460. 对数组执行操作](https://leetcode.cn/problems/apply-operations-to-an-array/)
+```python
+class Solution:
+    def applyOperations(self, nums: List[int]) -> List[int]:
+        for idx in range(len(nums)-1):
+            if nums[idx] == nums[idx+1]:
+                nums[idx] *= 2
+                nums[idx+1] = 0
+
+        left = 0 
+        right = 0
+        while right < len(nums):
+            if nums[right] != 0:
+                nums[left] = nums[right]
+                left += 1
+            right += 1
+
+        while left < len(nums):
+            nums[left] = 0
+            left += 1
+
+        return nums
+```
+
+#### [2611. 老鼠和奶酪](https://leetcode.cn/problems/mice-and-cheese/)
+```python
+class Solution:
+    def miceAndCheese(self, reward1: List[int], reward2: List[int], k: int) -> int:
+        assert len(reward1) == len(reward2), "reward1 and reward2 should be equal length"
+        n = len(reward1)
+        reward_diff = [reward1[i] - reward2[i] for i in range(n)]
+        reward_diff = sorted(reward_diff, reverse=True)
+        
+        max_score = sum(reward2)
+        for num in reward_diff[:k]:
+            max_score += num
+
+        return max_score
+```
+
+#### [2352. 相等行列对](https://leetcode.cn/problems/equal-row-and-column-pairs/)
+```python
+class Solution:
+    def equalPairs(self, grid: List[List[int]]) -> int:
+        def _check_equal(
+            grid: List[List[int]], row: int, col: int
+        ) -> bool:
+            n = len(grid)
+            index = 0
+            while index < len(grid):
+                if grid[row][index] != grid[index][col]:
+                    return False
+                index += 1
+
+            return True 
+
+        if len(grid) == 0:
+            return 0
+
+        result = 0
+        for i in range(len(grid)):
+            for j in range(len(grid[0])):
+                if _check_equal(grid, i, j):
+                    result += 1
+
+        return result
+```
