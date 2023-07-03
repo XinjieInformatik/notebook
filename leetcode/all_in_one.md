@@ -6639,45 +6639,46 @@ class Solution:
 ```python
 class Solution:
     def closedIsland(self, grid: List[List[int]]) -> int:
-        self.oriens = [(0,1),(0,-1),(1,0),(-1,0)]
-        def dfs(i, j, grid):
-            for orien in self.oriens:
-                nxt_i = i + orien[0]
-                nxt_j = j + orien[1]
-                if nxt_i < 0 or nxt_i >= n:
-                    continue
-                if nxt_j < 0 or nxt_j >= m:
-                    continue
-                if grid[nxt_i][nxt_j] == 1:
-                    continue
-                grid[nxt_i][nxt_j] = 1
-                dfs(nxt_i, nxt_j, grid)
-
+        oriens = [(1, 0), (-1, 0), (0, 1), (0, -1)]
         n = len(grid)
-        if n == 0: return 0
+        if n == 0:
+            return 0
         m = len(grid[0])
-        if m == 0: return 0
-
-        for i in range(n):
-            if grid[i][0] == 0:
-                dfs(i, 0, grid)
-            if grid[i][m-1] == 0:
-                dfs(i, m-1, grid)
-
-        for j in range(m):
-            if grid[0][j] == 0:
-                dfs(0, j, grid)
-            if grid[n-1][j] == 0:
-                dfs(n-1, j, grid)
+        
+        def _dfs(row, col):
+            grid[row][col] = 1
+            for orien in oriens:
+                nxt_row = row + orien[1]
+                nxt_col = col + orien[0]
+                if nxt_row < 0 or nxt_row == n:
+                    continue
+                if nxt_col < 0 or nxt_col == m:
+                    continue
+                if grid[nxt_row][nxt_col] == 1:
+                    continue
+                _dfs(nxt_row, nxt_col)
+        
+        for row in range(n):
+            if grid[row][0] == 0:
+                _dfs(row, 0)
+            if grid[row][m-1] == 0:
+                _dfs(row, m-1)
+        
+        for col in range(m):
+            if grid[0][col] == 0:
+                _dfs(0, col)
+            if grid[n-1][col] == 0:
+                _dfs(n-1, col)
 
         cnt = 0
-        for i in range(1, n-1):
-            for j in range(1, m-1):
-                if grid[i][j] == 0:
-                    cnt += 1
-                    dfs(i, j, grid)
+        for row in range(n):
+            for col in range(m):
+                if grid[row][col] == 1:
+                    continue
+                _dfs(row, col)
+                cnt += 1
 
-        return cnt
+        return cnt 
 ```
 
 ```cpp
@@ -12763,32 +12764,34 @@ class Solution:
 先都reverse，再链表相加，再都reverse
 ```python
 class Solution:
-    def addTwoNumbers(self, l1: ListNode, l2: ListNode) -> ListNode:
-        def reverse_list(head):
+    def addTwoNumbers(self, l1: Optional[ListNode], l2: Optional[ListNode]) -> Optional[ListNode]:
+        def _reverse_list(node: ListNode) -> ListNode:
             prev = None
-            curr = head
+            curr = node
             while curr:
                 nxt = curr.next
                 curr.next = prev
                 prev = curr
                 curr = nxt
+            
             return prev
-        l1 = reverse_list(l1)
-        l2 = reverse_list(l2)
+        
+        l1 = _reverse_list(l1)
+        l2 = _reverse_list(l2)
         carry = 0
-        dummy_head = dummy = ListNode(-1)
+        dummy = dummy_head = ListNode(-1)
         while l1 or l2 or carry:
             val1 = l1.val if l1 else 0
             val2 = l2.val if l2 else 0
             val = val1 + val2 + carry
-            carry, res = divmod(val, 10)
+            carry = val // 10
+            res = val % 10
             dummy.next = ListNode(res)
             dummy = dummy.next
             l1 = l1.next if l1 else None
             l2 = l2.next if l2 else None
-        dummy.next = None
-        new_head = reverse_list(dummy_head.next)
-        return new_head
+    
+        return _reverse_list(dummy_head.next)
 ```
 #### [959. 由斜杠划分区域](https://leetcode-cn.com/problems/regions-cut-by-slashes/)
 TODO
@@ -19932,4 +19935,56 @@ class Solution:
                     result += 1
 
         return result
+```
+
+
+#### [1171. 从链表中删去总和值为零的连续节点](https://leetcode.cn/problems/remove-zero-sum-consecutive-nodes-from-linked-list/)
+```python
+class Solution:
+    def removeZeroSumSublists(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        dummy = ListNode(0)
+        dummy.next = head
+        prefix = 0
+        visited = dict()
+        visited[0] = dummy
+        while head:
+            prefix += head.val
+            visited[prefix] = head
+            head = head.next
+
+        # should start from dummy
+        head = dummy
+        prefix = 0
+        while head:
+            prefix += head.val
+            if prefix in visited:
+                head.next = visited[prefix].next
+            head = head.next
+        
+        return dummy.next
+```
+
+#### [1483. 树节点的第 K 个祖先](https://leetcode.cn/problems/kth-ancestor-of-a-tree-node/)
+TODO: dp 找时间再看一下
+```python
+class TreeAncestor:
+
+    def __init__(self, n: int, parent: List[int]):
+        self.log = 16
+        self.ancestors = [[-1] * self.log for _ in range(n)]
+        for i in range(n):
+            self.ancestors[i][0] = parent[i]
+        for j in range(1, self.log):
+            for i in range(n):
+                if self.ancestors[i][j - 1] != -1:
+                    self.ancestors[i][j] = self.ancestors[self.ancestors[i][j - 1]][j - 1]   
+
+    def getKthAncestor(self, node: int, k: int) -> int:
+        for j in range(self.log):
+            if (k>>j) & 1: 
+                node = self.ancestors[node][j]
+                if node == -1:
+                    return -1
+                    
+        return node
 ```
