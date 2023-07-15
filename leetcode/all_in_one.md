@@ -4567,7 +4567,7 @@ class Solution:
 ```
 
 #### [11. 盛最多水的容器](https://leetcode-cn.com/problems/container-with-most-water)
-首尾双指针，哪边低，哪边指针向内移动
+首尾双指针，当前哪边低，哪边指针向内移动
 ```python
 class Solution:
     def maxArea(self, height: List[int]) -> int:
@@ -4598,6 +4598,27 @@ class Solution:
                 second = n
             else:
                 return True
+        return False
+```
+
+```python
+class Solution:
+    def increasingTriplet(self, nums: List[int]) -> bool:
+        n = len(nums)
+        if n < 3:
+            return False
+
+        left_min = nums[0]
+        right_max = [-float("inf")]
+
+        for num in nums[::-1]:
+            right_max.append(max(right_max[-1], num))
+            
+        for index in range(1, n-1):
+            if left_min < nums[index] < right_max[len(right_max) - index - 2]:
+                return True
+            left_min = min(left_min, nums[index])
+
         return False
 ```
 
@@ -13660,6 +13681,29 @@ class Solution:
             p1 = p2
         return pw
 ```
+双指针, `pr`, `pw`  
+```python 
+class Solution:
+    def compress(self, chars: List[str]) -> int:
+        pr = pw = 0
+        while pr < len(chars):
+            char_pivot = chars[pr]
+            cnt = 0
+            while pr < len(chars) and chars[pr] == char_pivot:
+                pr += 1
+                cnt += 1
+
+            chars[pw] = char_pivot
+            if cnt > 1:
+                pw += 1
+                for c in str(cnt):
+                    chars[pw] = c
+                    pw += 1
+            else:
+                pw += 1
+        
+        return pw
+```
 
 #### [6. Z字形变换](https://leetcode-cn.com/problems/zigzag-conversion/)
 准备好numRows行，控制row的增长+=step, 遇到边界掉头，注意边界条件
@@ -14254,46 +14298,33 @@ class Solution:
 ```python
 class Solution:
     def fourSum(self, nums: List[int], target: int) -> List[List[int]]:
-        """注意与三数之和的区别,target可以为负"""
-        nums.sort()
         n = len(nums)
-        results = []
+        nums.sort()
+        result = []
         for p0 in range(n-3):
-            # 当数组最小值和大于target break
-            if nums[p0]+nums[p0+1]+nums[p0+2]+nums[p0+3] > target:
-                break
-            # 当数组最大值和小于target 寻找下一个数字
-            if nums[p0]+nums[n-1]+nums[n-2]+nums[n-3] < target:
-                continue
-            # 重复数 跳过
-            if p0 != 0 and nums[p0] == nums[p0-1]:
+            if p0 > 0 and nums[p0] == nums[p0-1]:
                 continue
             for p1 in range(p0+1, n-2):
-                # 当数组最小值和大于target break
-                if nums[p0]+nums[p1]+nums[p1+1]+nums[p1+2] > target:
-                    break
-                # 当数组最大值和小于target 寻找下一个数字
-                if nums[p0]+nums[p1]+nums[n-2]+nums[n-1] < target:
+                if p1 > p0+1 and nums[p1] == nums[p1-1]:
                     continue
-                # 重复数 跳过
-                if p1 != p0+1 and nums[p1] == nums[p1-1]:
-                    continue
-                p2, p3 = p1+1, n-1
+                p2 = p1 + 1
+                p3 = n - 1
                 while p2 < p3:
-                    val = nums[p0]+nums[p1]+nums[p2]+nums[p3]
-                    if val < target:
-                        p2 += 1
-                    elif val > target:
-                        p3 -= 1
-                    else:
-                        results.append([nums[p0],nums[p1],nums[p2],nums[p3]])
+                    val = nums[p0] + nums[p1] + nums[p2] + nums[p3]
+                    if val == target:
+                        result.append([nums[p0], nums[p1], nums[p2], nums[p3]])
                         p2 += 1
                         p3 -= 1
                         while p2 < p3 and nums[p2] == nums[p2-1]:
                             p2 += 1
                         while p2 < p3 and nums[p3] == nums[p3+1]:
                             p3 -= 1
-        return results
+                    elif val > target:
+                        p3 -= 1 
+                    else:
+                        p2 += 1
+
+        return result
 ```
 ```cpp
 class Solution {
@@ -17940,6 +17971,37 @@ class Solution:
         # print(cnt)
         return False
 ```
+```python 
+class Solution:
+    def canPlaceFlowers(self, flowerbed: List[int], n: int) -> bool:
+        max_extra_flower = 0
+        num_flower = len(flowerbed)
+        for index in range(num_flower):
+            if index == 0:
+                if flowerbed[index] == 0:
+                    if num_flower == 1:
+                        max_extra_flower += 1
+                        flowerbed[index] = 1
+                    else:
+                        if flowerbed[index+1] == 0:
+                            max_extra_flower += 1
+                            flowerbed[index] = 1
+
+            elif index == num_flower-1:
+                if flowerbed[index] == 0 and flowerbed[index-1] == 0:
+                    max_extra_flower += 1
+                    flowerbed[index] = 1
+
+            else:
+                if flowerbed[index] == 0 and flowerbed[index-1] == 0 and flowerbed[index+1] == 0:
+                    max_extra_flower += 1
+                    flowerbed[index] = 1
+
+            if max_extra_flower >= n:
+                return True
+
+        return False
+```
 
 #### [36. 有效的数独](https://leetcode-cn.com/problems/valid-sudoku/)
 ```python
@@ -19987,4 +20049,134 @@ class TreeAncestor:
                     return -1
                     
         return node
+```
+
+#### [2679. 矩阵中的和](https://leetcode.cn/problems/sum-in-a-matrix/)
+```python
+class Solution:
+    def matrixSum(self, nums: List[List[int]]) -> int:
+        def _get_column_max_num(col):
+            max_val = -float("inf")
+            for row in range(len(nums)):
+                val = nums[row][col]
+                max_val = max(max_val, val)
+            
+            return max_val
+
+        if len(nums) == 0:
+            return 0
+        if len(nums[0]) == 0:
+            return 0
+
+        for line in nums:
+            line.sort(reverse=True)
+        
+        ans = 0
+        for col in range(len(nums[0])):
+            ans += _get_column_max_num(col)
+        
+        return ans
+```
+
+#### [167. 两数之和 II - 输入有序数组](https://leetcode.cn/problems/two-sum-ii-input-array-is-sorted/)
+```python
+class Solution:
+    def twoSum(self, numbers: List[int], target: int) -> List[int]:
+        left = 0
+        right = len(numbers) - 1
+        while left < right:
+            val = numbers[left] + numbers[right]
+            if val == target:
+                return [left+1, right+1]
+            elif val < target:
+                left += 1
+            else:
+                right -= 1
+        
+        return []
+```
+
+#### [1071. 字符串的最大公因子](https://leetcode.cn/problems/greatest-common-divisor-of-strings/)
+```python
+class Solution:
+    def gcdOfStrings(self, str1: str, str2: str) -> str:
+        for i in range(min(len(str1), len(str2)), 0, -1):
+            if (len(str1) % i) == 0 and (len(str2) % i) == 0:
+                if str1[: i] * (len(str1) // i) == str1 and str1[: i] * (len(str2) // i) == str2:
+                    return str1[: i]
+                    
+        return ""
+```
+
+#### [1456. 定长子串中元音的最大数目](https://leetcode.cn/problems/maximum-number-of-vowels-in-a-substring-of-given-length/)
+```python 
+class Solution:
+    def maxVowels(self, s: str, k: int) -> int:
+        targets = set(['a', 'e', 'i', 'o', 'u'])
+        def _update_window(index: int, curr: int) -> int:
+            if index == 0:
+                return curr
+            if index >= len(s):
+                return curr
+                
+            if s[index-k] in targets:
+                curr -= 1
+            if s[index] in targets:
+                curr += 1
+
+            return curr
+
+        assert k <= len(s)
+        window = 0
+        for idx in range(k):
+            if s[idx] in targets:
+                window += 1
+                
+        ans = window
+        for idx in range(k, len(s)):
+            window = _update_window(idx, window)
+            ans = max(ans, window)
+
+        return ans
+```
+
+#### [1004. 最大连续1的个数 III](https://leetcode.cn/problems/max-consecutive-ones-iii/)
+滑动窗口，维护窗口内0个数<=k，否则left++
+```python
+class Solution:
+    def longestOnes(self, nums: List[int], k: int) -> int:
+        left = 0
+        ans = 0
+        for right in range(len(nums)):
+            if nums[right] == 0:
+                k -= 1
+            while k < 0:
+                if nums[left] == 0:
+                    k += 1
+                left += 1
+            
+            lenght = right - left + 1
+            ans = max(ans, lenght)
+
+        return ans
+```
+
+#### [1493. 删掉一个元素以后全为 1 的最长子数组](https://leetcode.cn/problems/longest-subarray-of-1s-after-deleting-one-element/)
+同上
+```python 
+class Solution:
+    def longestSubarray(self, nums: List[int]) -> int:
+        left = 0
+        cnt = 0
+        ans = 0
+        for right in range(len(nums)):
+            if nums[right] == 0:
+                cnt += 1
+            while cnt > 1 and left < right:
+                if nums[left] == 0:
+                    cnt -= 1
+                left += 1
+            ans = max(ans, right-left+1)
+        
+        return ans - 1
 ```
