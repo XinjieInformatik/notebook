@@ -7491,6 +7491,15 @@ class Solution:
         return dp[-1][-1]
 ```
 
+#### [980. 不同路径 III](https://leetcode.cn/problems/unique-paths-iii/description/)
+
+```python
+
+# TODO: re-done
+
+```
+
+
 #### [329. 矩阵中的最长递增路径](https://leetcode-cn.com/problems/longest-increasing-path-in-a-matrix/)
 ```python
 class Solution:
@@ -8457,18 +8466,21 @@ class Solution:
 #### [21. 合并两个有序链表](https://leetcode-cn.com/problems/merge-two-sorted-lists/)
 ```python
 class Solution:
-    def mergeTwoLists(self, l1: ListNode, l2: ListNode) -> ListNode:
-        dummy = head = ListNode(-1)
-        while l1 and l2:
-            if l1.val < l2.val:
-                dummy.next = l1
-                l1 = l1.next
+    def mergeTwoLists(self, list1: Optional[ListNode], list2: Optional[ListNode]) -> Optional[ListNode]:
+        dummy = dummy_head = ListNode(-1)
+        while list1 or list2:
+            val1 = list1.val if list1 else float("inf")
+            val2 = list2.val if list2 else float("inf")
+            if val1 < val2:
+                dummy.next = list1 
+                list1 = list1.next
             else:
-                dummy.next = l2
-                l2 = l2.next
-            dummy = dummy.next
-        dummy.next = l1 if l1 else l2
-        return head.next
+                dummy.next = list2 
+                list2 = list2.next
+                
+            dummy = dummy.next 
+        
+        return dummy_head.next
 ```
 #### [234. 回文链表](https://leetcode-cn.com/problems/palindrome-linked-list/)
 快慢指针找到中点切断，翻转长的那个链表，再逐一比较前后两个半个链表
@@ -13851,23 +13863,27 @@ T(n) = 2T(n/2) + O(n) --> T(n) = O(nlogn)
 T(n) = T(n/2) + O(1) --> T(n) = O(logn)
 
 #### [56. 合并区间](https://leetcode-cn.com/problems/merge-intervals/)
-按照x[0] sort intervals
+按照x[0] sort intervals，保证最小index在前面，然后从前往后合并区间
 ```python
 class Solution:
     def merge(self, intervals: List[List[int]]) -> List[List[int]]:
+        n_interval = len(intervals)
+        if n_interval == 0:
+            return []
         intervals = sorted(intervals, key=lambda x: x[0])
-        index = 0
-        n = len(intervals)
-        result = []
-        while index < n:
-            right = index + 1
-            bound = intervals[index][1]
-            while right < n and bound >= intervals[right][0]:
-                bound = max(bound, intervals[right][1])
-                right += 1
-            result.append([intervals[index][0], bound])
-            index = right
-        return result
+        merge_list = [intervals[0]]
+        for idx in range(1, n_interval):
+            curr_end = merge_list[-1][1]
+            next_start = intervals[idx][0]
+            if next_start <= curr_end:
+                merge_list[-1] = [
+                    min(merge_list[-1][0], intervals[idx][0]), 
+                    max(merge_list[-1][1], intervals[idx][1]),
+                ]
+            else:
+                merge_list.append(intervals[idx])
+
+        return merge_list
 ```
 
 #### [435. 无重叠区间](https://leetcode-cn.com/problems/non-overlapping-intervals/)
@@ -20179,4 +20195,28 @@ class Solution:
             ans = max(ans, right-left+1)
         
         return ans - 1
+```
+
+#### [833. 字符串中的查找与替换](https://leetcode.cn/problems/find-and-replace-in-string/description/)
+模拟法
+```python
+class Solution:
+    def findReplaceString(self, s: str, indices: List[int], sources: List[str], targets: List[str]) -> str:
+        s_list = list(s)
+        for src_i in range(len(sources)):
+            idx = indices[src_i]
+            dst = targets[src_i]
+            src = sources[src_i]
+            if s_list[idx:idx+len(src)] != list(src):
+                continue
+            s_list_back = s_list[idx+len(src):] if idx+len(src) < len(s_list) else []
+            s_list_before = s_list[:idx]
+            s_list = s_list_before + list(dst) + s_list_back
+            add_length = len(targets[src_i]) - len(sources[src_i])
+            
+            for i in range(src_i+1, len(indices)):
+                if indices[i] > idx:
+                    indices[i] += add_length
+        
+        return "".join(s_list)
 ```
