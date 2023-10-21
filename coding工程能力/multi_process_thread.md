@@ -92,6 +92,25 @@ def _iter_fn(frames: List[int], scale:int, thresh:int, misc: dict):
         yield frame, scale, thresh
 
 
+def istarmap(self, func, iterable, chunksize=1):
+    self._check_running()
+    if chunksize < 1:
+        raise ValueError("Chunksize must be 1+, not {0:n}".format(chunksize))
+
+    task_batches = pool.Pool._get_tasks(func, iterable, chunksize)
+    result = pool.IMapIterator(self)
+    self._taskqueue.put(
+        (
+            self._guarded_task_generation(
+                result._job, pool.starmapstar, task_batches
+            ),
+            result._set_length,
+        )
+    )
+
+    return (item for chunk in result for item in chunk)
+
+
 if __name__ == "__main__":
     max_workers = 10
     backend = "spawn"
@@ -101,13 +120,20 @@ if __name__ == "__main__":
     if max_workers is None or max_workers > 0:
         if method == "Pool":
             start_time = time.time()
-            mp_ctx = multiprocessing.get_context(backend)
 
+            multiprocessing.pool.Pool.istarmap = istarmap
+            mp_ctx = multiprocessing.get_context(backend)
             worker_pool = mp_ctx.Pool(processes=max_workers)
 
-            new_frames = worker_pool.starmap(
-                func=_mp_worker_fn2,
-                iterable=_iter_fn(frames, 1, 3, {"misc": 1})
+            new_frames = list(
+                tqdm(
+                    worker_pool.istarmap(
+                        func=_mp_worker_fn2,
+                        iterable=_iter_fn(frames, 1, 3, {"misc": 1})
+                    ), 
+                    total=len(frames), 
+                    desc="tbd",
+                )
             )
 
             worker_pool.close()

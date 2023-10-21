@@ -4,6 +4,15 @@
 
 ![](assets/2023-08-20-01-10-22.png)
 
+nerf表征方式, surface light field: $(x, y, z, \theta, \phi) -> MLP -> (r, g, b, \sigma)$  材料与光照一起打包了，利用多视角一致性
+
+retracing: 找到图片每个pixel对应的光线与3d场景的交点，交点再去找到光源，不同方向的光加起来得到像素的颜色（追踪光线的传播过程）
+
+![](assets/2023-09-02-19-00-18.png)
+
+xyz 傅立叶变换 
+
+
 ### NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis
 
 https://arxiv.org/pdf/2003.08934.pdf
@@ -155,12 +164,114 @@ too slow
 
 https://ventusff.github.io/streetsurf_web/
 
+法线贴图 (Normal Map) 是一种凹凸贴图 (Bump Map)。它们是一种特殊的纹理，可让您将表面细节（如凹凸、凹槽和划痕）添加到模型，从而捕捉光线，就像由真实几何体表示一样
+
+### gaussian splatting
+
+https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/
+
+https://huggingface.co/blog/gaussian-splatting
+
+![](assets/2023-10-02-18-51-06.png)
+
+1. SFM获得图片对应的稀疏重建点云
+2. 对于每个点构建3d gaussian
+    - position: xyz （点的位置）
+    - anisotropic covariance: 3x3 matrix （高斯形状）
+    - alpha: transparent （不透明度）
+    - spherical harmonic (SH): 球谐函数，拟合视角相关的外观
+3. 训练过程
+    - rasterize the gaussians to an image using differentiable gaussian rasterization
+        - project each gaussian into 2D from the camera perspective
+        - sort the gaussians by depth
+        - for each pixel, iterate over each gaussian front-to-back, blending them together
+    - calculate the loss based on the difference between the rasterized image and ground truth image
+    - adjust the gaussian parameters according to the loss
+    - apply automated densification and pruning
+        - if the gradient is large for a given gaussian, split (high variance) or clone it
+        - if the alpha of a gaussian gets too low, remove it
+4. 快速可微分光栅渲染
+    - 图像划分16 x 16 tiles，每个tile视锥内挑选可视的3d gaussian
+    - 3d gaussian按深度排序，并行在每个tile上splat（抛雪球）
+    - 反向传播误差时按tile对高斯进行索引
+
+Splatting-抛雪球法：反复对体素的投影叠加效果进行运算
+
 ### Neuralangelo
 
 https://research.nvidia.com/labs/dir/neuralangelo/
+
+
+### RANSAC
+
+RANSAC(Random Sample Consensus, 随机采样一致)，从一组含有“外点”(outliers)的数据中正确估计数学模型参数的迭代算法。
+
+例如对点云中的平面进行拟合
+![](assets/2023-08-30-21-10-39.png)
+
+算法流程：
+1. 随机采样k个点
+2. 对该k个点拟合模型
+3. 计算其他点到拟合模型的距离，小于阈值的作为内点，统计内点个数
+4. 重复m次，选择内点数最多的模型
+
+
+
+### SFM
+
+### Incremental SFM
+一边三角化（triangulation）和pnp（perspective-n-points），一边进行局部BA
+![](assets/2023-08-30-21-27-52.png)
+
+https://jiajiewu.gitee.io/post/tech/slam-sfm/sfm-intro/
 
 ### colmap 算法
 
 三角化：对新提取的特征点计算其在3D空间中的坐标位置
 
 BA优化(Bundle Adjustment)：根据相机模型和A,B图像特征匹配好的像素坐标，求出A图像上的像素坐标对应的归一化的空间点坐标，然后根据该空间点的坐标计算重投影到B图像上的像素坐标，重投影的像素坐标(估计值)与匹配好的B图像上的像素坐标(测量值),不会完全重合，BA的目的就是每一个匹配好的特征点建立方程，然后联立，形成超定方程，解出最优的位姿矩阵或空间点坐标(两者可以同时优化)。
+
+
+### PnP
+PnP(Perspective-n-Point): 给定3D点的坐标、对应2D点坐标以及内参矩阵，求解相机的位姿。
+
+
+### 指标
+
+- PSNR (Peak Signal-to-Noise Ratio) 峰值信噪比
+- SSIM (Structural SIMilarity) 结构相似性
+
+### 相机运动估计
+估计 R | t
+
+#### 两组2d点
+
+对级几何：![](assets/2023-10-06-19-41-18.png)
+
+- 本质矩阵(3x3，自由度5): $ E = t \otimes R $
+- 基础矩阵(3x3，自由度7): $ F = K_2^{-T} E K_1^{-1} $
+- 相机坐标系: $ x_2^T E x_1 = 0 $
+- 像素坐标系: $ p_2^T F p_1 = 0 $
+
+
+RANSAC估计基础矩阵
+1. 随机采样8对匹配点
+2. 8点法求解基础矩阵 $\hat F$ (wo奇异值约束)
+3. 奇异值约束获取基础矩阵F (有两个非0奇异值)
+4. 基于sampson distance计算误差，并统计内点个数
+5. 重复上述过程，选择内点数最多的结果，重新计算F
+
+求解本质矩阵 
+1. $ \hat E = K_2^T F K_1 $
+2. 奇异值约束获取本质矩阵E
+
+求解相机姿态
+对本质矩阵进行奇异值分解，有可能对应4个解，确保在两个相机中都有正的深度，确定正确解。 
+
+
+#### 两组3d点
+
+#### 一组3d一组2d点
+
+
+652933ec7b70cff7bb94a0a0\n652933ee05ddc11924be279a\n652933f08cd3fd16fea17863\n652933f2c5fe51e9eddc4c0f\n652933f5c5fe51e9eddc4cf7\n652933f78cd3fd16fea17873\n652933f95240b9c57acfebdb\n652933fa7b70cff7bb94a1e8\n652933fe8cd3fd16fea179a6\n6529340205ddc11924be2acc\n65293406c5fe51e9eddc4f60\n652934097b70cff7bb94a3e4\n6529340e5240b9c57acfee3f\n6529341105ddc11924be2bac\n652934147b70cff7bb94a3f6\n652934187b70cff7bb94a45b\n6529341c8cd3fd16fea17ceb\n6529341f7b70cff7bb94a475\n6529342405ddc11924be2c94\n652934287b70cff7bb94a542

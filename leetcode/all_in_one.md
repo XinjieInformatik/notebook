@@ -1645,9 +1645,7 @@ public:
 ```
 
 #### [121. 买卖股票的最佳时机](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock/)
-```
 最多只允许完成一笔交易（即买入和卖出一支股票一次）
-```
 ```python
 class Solution:
     def maxProfit(self, prices: List[int]) -> int:
@@ -1656,30 +1654,18 @@ class Solution:
         profit1: 状态为手中有股票的最大收益
         """
         n = len(prices)
-        if n == 0: return 0
+        if n == 0: 
+            return 0
         profit0 = 0
-        profit1 = - prices[0]
+        profit1 = -prices[0]
         for i in range(n):
             profit0 = max(profit0, profit1+prices[i])
             profit1 = max(profit1, -prices[i])
         return profit0
 ```
-```python
-class Solution:
-    def maxProfit(self, prices: List[int]) -> int:
-        n = len(prices)
-        prev = prices[0]
-        max_profit = 0
-        for i in range(1, n):
-            max_profit = max(prices[i]-prev, max_profit)
-            prev = min(prev, prices[i])
-        return max_profit
-```
 
 #### [122. 买卖股票的最佳时机 II](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-ii/)
-```
 可以尽可能地完成更多的交易（多次买卖一支股票）。
-```
 ```python
 class Solution:
     def maxProfit(self, prices: List[int]) -> int:
@@ -20219,4 +20205,121 @@ class Solution:
                     indices[i] += add_length
         
         return "".join(s_list)
+```
+
+#### [2136. 全部开花的最早一天](https://leetcode.cn/problems/earliest-possible-day-of-full-bloom/description/)
+```python
+class Solution:
+    def earliestFullBloom(self, plantTime: List[int], growTime: List[int]) -> int:
+        def compare_fn(i: int, j: int) -> int:
+            if growTime[i] > growTime[j]:
+                return -1
+            if growTime[i] < growTime[j]:
+                return 1
+            return 0
+        
+        n = len(plantTime)
+        idx = list(range(n))
+        idx.sort(key=cmp_to_key(compare_fn))
+        
+        prev = ans = 0
+        for i in idx:
+            ans = max(ans, prev + plantTime[i] + growTime[i])
+            prev += plantTime[i]
+
+        return ans
+```
+
+#### [1333. 餐厅过滤器](https://leetcode.cn/problems/filter-restaurants-by-vegan-friendly-price-and-distance/description/)
+```python
+from dataclasses import dataclass
+
+@dataclass
+class Restaurant:
+    uid: int
+    rating: int
+    vegan_friendly: bool
+    price: int
+    distance: int
+    
+    def __post_init__(self) -> None:
+        self.vegan_friendly = bool(self.vegan_friendly)
+
+class Solution:
+    def filterRestaurants(
+        self, restaurants: List[List[int]], veganFriendly: int, maxPrice: int, maxDistance: int
+    ) -> List[int]:
+        restaurant_objs = []
+        for item in restaurants:
+            restaurant_obj = Restaurant(
+                uid=item[0],
+                rating=item[1],
+                vegan_friendly=item[2],
+                price=item[3],
+                distance=item[4],
+            )
+            restaurant_objs.append(restaurant_obj)
+        
+        if veganFriendly:
+            restaurant_objs = filter(lambda item: item.vegan_friendly == True, restaurant_objs)
+        restaurant_objs = filter(lambda item: item.price <= maxPrice, restaurant_objs)
+        restaurant_objs = filter(lambda item: item.distance <= maxDistance, restaurant_objs)
+        
+        restaurant_objs = sorted(restaurant_objs, key=lambda item: (item.rating, item.uid), reverse=True)
+
+        return [item.uid for item in restaurant_objs]
+```
+
+
+#### [2316. 统计无向图中无法互相到达点对数](https://leetcode.cn/problems/count-unreachable-pairs-of-nodes-in-an-undirected-graph/description/)
+
+```python
+from collections import defaultdict
+
+class Solution:
+    def dfs(self, index: int, adjacency: Dict) -> int:
+        self.visited.add(index)
+        count = 1
+        
+        for point_idx in adjacency[index]:
+            if point_idx in self.visited:
+                continue
+
+            self.visited.add(point_idx)
+            count += self.dfs(point_idx, adjacency)
+
+        return count
+
+
+    def countPairs(self, n: int, edges: List[List[int]]) -> int:
+        adjacency = defaultdict(list)
+        for edge in edges:
+            start, end = edge
+            adjacency[start].append(end)
+            adjacency[end].append(start)
+        # print(adjacency)
+        result = 0
+        self.visited = set()
+        for index in range(n):
+            if index in self.visited:
+                continue
+            cnt = self.dfs(index, adjacency)
+            # print(index, self.visited, n - len(self.visited))
+            result += cnt * (n - cnt)
+            
+        return result // 2
+```
+
+
+#### [1726. 同积元组](https://leetcode.cn/problems/tuple-with-same-product/description)
+```python
+class Solution:
+    def tupleSameProduct(self, nums: List[int]) -> int:
+        n = len(nums)
+        cnt = Counter([nums[i] * nums[j] for i in range(n) for j in range(i + 1, n)])
+        ans = 0
+        for _, v in cnt.items():
+            ans += v * (v - 1) * 4
+
+        return ans
 ```
