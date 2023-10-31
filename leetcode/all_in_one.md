@@ -257,7 +257,7 @@ class Solution:
 - 多重背包在 物体i重量j维度 正向遍历,保证物体可以重复使用
 **dp二维改一维,还是双重循环,框架不变,只是dp只使用重量j的维度**
 
-#### [简化01背包](https://www.lintcode.com/problem/backpack/description)
+#### [简化01背包](https://www.lintcode.com/problem/backpack)
 ```
 在n个物品中挑选若干物品装入背包，最多能装多满？假设背包的大小为m，每个物品的大小为A[i]
 ```
@@ -309,7 +309,7 @@ class Solution:
             # print(dp)
         return dp[-1]
 ```
-#### [经典01背包](https://www.lintcode.com/problem/backpack-ii/description)
+#### [经典01背包](https://www.lintcode.com/problem/backpack-ii)
 ```
 有 n 个物品和一个大小为 m 的背包. 给定数组 A 表示每个物品的大小和数组 V 表示每个物品的价值. 问最多能装入背包的总价值是多大?
 所挑选的要装入背包的物品的总大小不能超过 m, 每个物品只能取一次
@@ -378,7 +378,7 @@ class Solution:
         return dp[-1][-1][-1]
 ```
 
-#### [分组背包](https://www.acwing.com/problem/content/description/9/)
+#### [分组背包](https://www.acwing.com/problem/content/9/)
 ```cpp
 #include<bits/stdc++.h>
 using namespace std;
@@ -503,7 +503,7 @@ class Solution:
 
         return helper(0, 0)
 ```
-#### [562. 背包问题 IV](https://www.lintcode.com/problem/backpack-iv/description)
+#### [562. 背包问题 IV](https://www.lintcode.com/problem/backpack-iv)
 ```
 给出 n 个物品, 以及一个数组, nums[i]代表第i个物品的大小, 保证大小均为正数并且没有重复,正整数 target 表示背包的大小, 找到能填满背包的方案数。每一个物品可以使用无数次
 ```
@@ -4492,17 +4492,14 @@ class Solution:
 ```python
 class Solution:
     def hIndex(self, citations: List[int]) -> int:
-        citations = sorted(citations)
-        n = len(citations)
-        index = n - 1
-        h = 0
-        while index >= 0:
-            if citations[index] > h:
-                h += 1
-            else:
-                break
+        citations.sort()
+        h_index = 0
+        index = len(citations) - 1
+        while index >= 0 and citations[index] > h_index:
+            h_index += 1
             index -= 1
-        return h
+
+        return h_index
 ```
 ```python
 class Solution:
@@ -4543,12 +4540,11 @@ class Solution:
         right = n
         while left < right:
             mid = left + (right - left) // 2
-            if citations[mid] == n - mid:
-                return n - mid
-            elif citations[mid] < n - mid:
+            if citations[mid] < n - mid:
                 left = mid + 1
             else:
                 right = mid
+
         return n - left
 ```
 
@@ -7477,7 +7473,7 @@ class Solution:
         return dp[-1][-1]
 ```
 
-#### [980. 不同路径 III](https://leetcode.cn/problems/unique-paths-iii/description/)
+#### [980. 不同路径 III](https://leetcode.cn/problems/unique-paths-iii/)
 
 ```python
 
@@ -20183,7 +20179,7 @@ class Solution:
         return ans - 1
 ```
 
-#### [833. 字符串中的查找与替换](https://leetcode.cn/problems/find-and-replace-in-string/description/)
+#### [833. 字符串中的查找与替换](https://leetcode.cn/problems/find-and-replace-in-string/)
 模拟法
 ```python
 class Solution:
@@ -20207,7 +20203,7 @@ class Solution:
         return "".join(s_list)
 ```
 
-#### [2136. 全部开花的最早一天](https://leetcode.cn/problems/earliest-possible-day-of-full-bloom/description/)
+#### [2136. 全部开花的最早一天](https://leetcode.cn/problems/earliest-possible-day-of-full-bloom/)
 ```python
 class Solution:
     def earliestFullBloom(self, plantTime: List[int], growTime: List[int]) -> int:
@@ -20230,7 +20226,7 @@ class Solution:
         return ans
 ```
 
-#### [1333. 餐厅过滤器](https://leetcode.cn/problems/filter-restaurants-by-vegan-friendly-price-and-distance/description/)
+#### [1333. 餐厅过滤器](https://leetcode.cn/problems/filter-restaurants-by-vegan-friendly-price-and-distance/)
 ```python
 from dataclasses import dataclass
 
@@ -20271,7 +20267,7 @@ class Solution:
 ```
 
 
-#### [2316. 统计无向图中无法互相到达点对数](https://leetcode.cn/problems/count-unreachable-pairs-of-nodes-in-an-undirected-graph/description/)
+#### [2316. 统计无向图中无法互相到达点对数](https://leetcode.cn/problems/count-unreachable-pairs-of-nodes-in-an-undirected-graph/)
 
 ```python
 from collections import defaultdict
@@ -20311,7 +20307,7 @@ class Solution:
 ```
 
 
-#### [1726. 同积元组](https://leetcode.cn/problems/tuple-with-same-product/description)
+#### [1726. 同积元组](https://leetcode.cn/problems/tuple-with-same-product)
 ```python
 class Solution:
     def tupleSameProduct(self, nums: List[int]) -> int:
@@ -20322,4 +20318,59 @@ class Solution:
             ans += v * (v - 1) * 4
 
         return ans
+```
+
+#### [1402. 做菜顺序](https://leetcode.cn/problems/reducing-dishes/)
+```python
+class Solution:
+    def maxSatisfaction(self, satisfaction: List[int]) -> int:
+        n = len(satisfaction)
+        dp = [[0 for _ in range(n + 1)] for _ in range(n + 1)]
+        satisfaction.sort()
+        res = 0
+        
+        for i in range(1, n + 1):
+            for j in range(1, i + 1):
+                dp[i][j] = dp[i - 1][j - 1] + satisfaction[i - 1] * j
+                if j < i:
+                    dp[i][j] = max(dp[i][j], dp[i - 1][j])
+                res = max(res, dp[i][j])
+
+        return res
+```
+
+#### [2558. 从数量最多的堆取走礼物](https://leetcode.cn/problems/take-gifts-from-the-richest-pile)
+```python
+class Solution:
+    def pickGifts(self, gifts: List[int], k: int) -> int:
+        # 1. heapify(default min)
+        # 2. heappop
+        # 3. heappush
+        heap = [-item for item in gifts]
+        heapify(heap)
+        while k > 0:
+            max_val = heappop(heap)
+            max_val = -int(math.sqrt(-max_val))
+            heappush(heap, max_val)
+            k -= 1
+        
+        return -sum(heap)
+```
+
+#### [735. 小行星碰撞](https://leetcode.cn/problems/asteroid-collision)
+
+```python
+class Solution:
+    def asteroidCollision(self, asteroids: List[int]) -> List[int]:
+        stack = []
+        for aster in asteroids:
+            alive = True
+            while alive and aster < 0 and stack and stack[-1] > 0:
+                alive = stack[-1] < -aster
+                if stack[-1] <= -aster:
+                    stack.pop()
+            if alive:
+                stack.append(aster)
+
+        return stack
 ```
