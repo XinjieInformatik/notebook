@@ -3134,8 +3134,7 @@ class Solution:
         return True
 ```
 
-#### [547. 朋友圈](https://leetcode-cn.com/problems/friend-circles/)
-[547. 省份数量](https://leetcode-cn.com/problems/number-of-provinces/)
+#### [547. 省份数量](https://leetcode-cn.com/problems/number-of-provinces/)
 最终 return self.parent 不同的节点数是错误的解法
 因此维护self.cnt变量,union操作时,如果父节点相同,不操作,父节点不相同,合并子树,cnt-1
 ```python
@@ -11853,7 +11852,8 @@ class Solution:
                 traversal(node.left, level+1, res)
                 traversal(node.right, level+1, res)
 
-        res = []; level = 0
+        res = []
+        level = 0
         traversal(root, level, res)
         return res
 ```
@@ -13849,23 +13849,21 @@ T(n) = T(n/2) + O(1) --> T(n) = O(logn)
 ```python
 class Solution:
     def merge(self, intervals: List[List[int]]) -> List[List[int]]:
-        n_interval = len(intervals)
-        if n_interval == 0:
-            return []
-        intervals = sorted(intervals, key=lambda x: x[0])
-        merge_list = [intervals[0]]
-        for idx in range(1, n_interval):
-            curr_end = merge_list[-1][1]
-            next_start = intervals[idx][0]
-            if next_start <= curr_end:
-                merge_list[-1] = [
-                    min(merge_list[-1][0], intervals[idx][0]), 
-                    max(merge_list[-1][1], intervals[idx][1]),
-                ]
-            else:
-                merge_list.append(intervals[idx])
+        if len(intervals) == 0:
+            return intervals
 
-        return merge_list
+        intervals.sort(key=lambda x: x[0])
+        merged_list = [intervals[0]]
+        for interval in intervals[1:]:
+            start, end = interval
+            if start <= merged_list[-1][-1]:
+                end = max(end, merged_list[-1][1])
+                start = min(start, merged_list[-1][0])
+                merged_list[-1] = [start, end]
+            else:
+                merged_list.append(interval)
+        
+        return merged_list
 ```
 
 #### [435. 无重叠区间](https://leetcode-cn.com/problems/non-overlapping-intervals/)
