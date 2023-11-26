@@ -11908,26 +11908,29 @@ public:
 class Solution:
     def findDiagonalOrder(self, mat: List[List[int]]) -> List[int]:
         """把上边界和右边界加入初始候选集，然后向左下方扫描，偶数逆转"""
-        cands = []
         n = len(mat)
+        if n == 0:
+            return []
         m = len(mat[0])
+
+        candidates = []
         for j in range(m):
-            cands.append((0, j))
+            candidates.append((0, j))
         for i in range(1, n):
-            cands.append((i, m-1))
+            candidates.append((i, m-1))
+
         result = []
-        index = 0
-        while index < len(cands):
-            line = []
-            row, col = cands[index]
-            while row < n and col >= 0:
-                line.append(mat[row][col])
-                row += 1
+        for idx, candidate in enumerate(candidates):
+            row, col = candidate
+            line = [mat[row][col]]
+            while col > 0 and row < n - 1:
                 col -= 1
-            if index & 1 == 0:
-                line.reverse()
+                row += 1
+                line.append(mat[row][col])
+            if not (idx & 1):
+                line = line[::-1]
             result.extend(line)
-            index += 1
+
         return result
 ```
 层序遍历，特别小心：left/right是两个不同的节点，不能一个不符合把另一个也continue了
@@ -12025,14 +12028,17 @@ public:
 #         self.right = None
 
 class Solution:
-    def sortedArrayToBST(self, nums: List[int]) -> TreeNode:
-        def helper(left, right):
-            if left >= right: return None
-            mid = left + (right-left)//2
-            root = TreeNode(nums[mid])
-            root.left = helper(left, mid)
-            root.right = helper(mid+1, right)
-            return root
+    def sortedArrayToBST(self, nums: List[int]) -> Optional[TreeNode]:
+        def helper(left: int, right: int) -> Optional[TreeNode]:
+            if left >= right:
+                return None
+            mid = left + (right-left) // 2
+            node = TreeNode(nums[mid])
+            node.left = helper(left, mid)
+            node.right = helper(mid+1, right)
+
+            return node
+        
         return helper(0, len(nums))
 ```
 
@@ -12040,11 +12046,11 @@ class Solution:
 ```python
 from collections import deque
 class Solution:
-    def updateMatrix(self, matrix: List[List[int]]) -> List[List[int]]:
-        rows = len(matrix)
+    def updateMatrix(self, mat: List[List[int]]) -> List[List[int]]:
+        rows = len(mat)
         if rows == 0:
             return []
-        cols = len(matrix[0])
+        cols = len(mat[0])
 
         def bfs(i, j):
             queue = deque([(i, j)])
@@ -12060,9 +12066,9 @@ class Solution:
                         next_col = col + direction[1]
                         if next_row < 0 or next_row >= rows or next_col < 0 or next_col >= cols:
                             continue
-                        if matrix[next_row][next_col] == 0:
+                        if mat[next_row][next_col] == 0:
                             return level
-                        if matrix[next_row][next_col] == 1 and (next_row, next_col) not in visited:
+                        if mat[next_row][next_col] == 1 and (next_row, next_col) not in visited:
                             queue.appendleft((next_row, next_col))
                             visited.add((next_row, next_col))
 
@@ -12070,12 +12076,41 @@ class Solution:
         result = [[0] * cols for _ in range(rows)]
         for i in range(rows):
             for j in range(cols):
-                if matrix[i][j] == 0:
+                if mat[i][j] == 0:
                     result[i][j] = 0
                 else:
                     result[i][j] = bfs(i, j)
 
         return result
+```
+```python
+from collections import deque
+class Solution:
+    def updateMatrix(self, mat: List[List[int]]) -> List[List[int]]:
+        n, m = len(mat), len(mat[0])
+        distance = [[0]*m for i in range(n)]
+        zeros = [(i, j) for i in range(n) for j in range(m) if mat[i][j] == 0]
+        queue = deque(zeros)
+        visited = set(zeros)
+
+        directions = [(0,1),(0,-1),(1,0),(-1,0)]
+        while queue:
+            for _ in range(len(queue)):
+                row, col = queue.pop()
+                for direction in directions:
+                    nxt_row = row + direction[0]
+                    nxt_col = col + direction[1]
+                    if nxt_row < 0 or nxt_row >= n:
+                        continue
+                    if nxt_col < 0 or nxt_col >= m:
+                        continue
+                    if (nxt_row, nxt_col) in visited:
+                        continue
+                    distance[nxt_row][nxt_col] = distance[row][col] + 1
+                    queue.appendleft((nxt_row, nxt_col))
+                    visited.add((nxt_row, nxt_col))
+        
+        return distance
 ```
 
 #### [994. 腐烂的橘子](https://leetcode-cn.com/problems/rotting-oranges/)
@@ -12128,6 +12163,50 @@ class Solution:
                     return -1
 
         return level-1
+```
+```python
+from collections import deque
+class Solution:
+    def orangesRotting(self, grid: List[List[int]]) -> int:
+        n = len(grid)
+        if n == 0: 
+            return 0
+        m = len(grid[0])
+
+        start_points = []
+        total = 0
+        for i in range(n):
+            for j in range(m):
+                if grid[i][j] == 2:
+                    start_points.append((i, j))
+                if grid[i][j] != 0:
+                    total += 1
+        if total == 0:
+            return 0
+
+        queue = deque(start_points)
+        visited = set(start_points)
+        directions = [(0,1),(0,-1),(1,0),(-1,0)]
+        level = 0
+        while queue:
+            for _ in range(len(queue)):
+                row, col = queue.pop()
+                for direction in directions:
+                    nxt_row, nxt_col = row + direction[0], col + direction[1]
+                    if nxt_row < 0 or nxt_row >= n:
+                        continue
+                    if nxt_col < 0 or nxt_col >= m:
+                        continue
+                    if (nxt_row, nxt_col) in visited:
+                        continue
+                    if grid[nxt_row][nxt_col] != 1:
+                        continue
+                    queue.appendleft((nxt_row, nxt_col))
+                    visited.add((nxt_row, nxt_col))
+            level += 1
+             
+        minute = level - 1 if len(visited) == total else -1
+        return minute
 ```
 
 #### [LCP 09. 最小跳跃次数](https://leetcode-cn.com/problems/zui-xiao-tiao-yue-ci-shu/)
