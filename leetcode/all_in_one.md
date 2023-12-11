@@ -12688,6 +12688,59 @@ class Solution:
         return unionfind.cnt == 1
 ```
 
+#### [1631. 最小体力消耗路径](https://leetcode.cn/problems/path-with-minimum-effort/description/?envType=daily-question&envId=2023-12-11)
+```python
+class UnionSet(object):
+    def __init__(self, n):
+        self.parent = [i for i in range(n)]
+        self.rank = [0] * n
+        self.cnt = n
+
+    def find(self, x):
+        if x != self.parent[x]:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+
+    def union(self, x, y):
+        px, py = self.find(x), self.find(y)
+        if self.rank[px] < self.rank[py]:
+            self.parent[px] = py
+        elif self.rank[px] > self.rank[py]:
+            self.parent[py] = px
+        else:
+            self.parent[px] = py
+            self.rank[py] += 1
+        self.cnt -= 1
+
+    def is_connect(self, x, y):
+        return self.find(x) == self.find(y)
+
+class Solution:
+    def minimumEffortPath(self, heights: List[List[int]]) -> int:
+        m, n = len(heights), len(heights[0])
+        edges = list() # [from, to, cost]
+        for i in range(m):
+            for j in range(n):
+                iden = i * n + j
+                if i > 0:
+                    edges.append((iden - n, iden, abs(heights[i][j] - heights[i - 1][j])))
+                if j > 0:
+                    edges.append((iden - 1, iden, abs(heights[i][j] - heights[i][j - 1])))
+        
+        edges.sort(key=lambda e: e[2])
+        print(edges)
+
+        us = UnionSet(m * n)
+        ans = 0
+        for x, y, v in edges:
+            us.union(x, y)
+            if us.is_connect(0, m * n - 1):
+                ans = v
+                break
+        
+        return ans
+```
+
 #### [743. 网络延迟时间](https://leetcode-cn.com/problems/network-delay-time/)
 有权边的单源最短路径问题 用 dijkstra. 配合小顶锥 时间复杂度 O(ElogE), 使用斐波那契堆可进一步下降为 O(VlogV)
 ```python
