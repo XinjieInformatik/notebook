@@ -683,25 +683,26 @@ class Solution:
 class Solution:
     def climbStairs(self, n: int) -> int:
         ## dp 1维数组
-        if n == 1: return 1
-        dp = [0] * n
-        dp[0] = 1
-        dp[1] = 2
-        for i in range(2, n):
+        dp = [0 for i in range(n+2)]
+        dp[1] = 1
+        for i in range(2, n+2):
             dp[i] = dp[i-1] + dp[i-2]
+
         return dp[-1]
 
         ## dp 常数
-        if n == 1: return 1
-        if n == 2: return 2
+        if n == 1:
+            return 1
+        if n == 2:
+            return 2
         prev = 1
         curr = 2
-        nxt = 0
         for i in range(2, n):
             nxt = prev + curr
             prev = curr
             curr = nxt
-        return nxt
+
+        return curr
 
         ## 枚举+记忆
         import functools
@@ -735,6 +736,20 @@ public:
         return nxt;
     }
 };
+```
+
+#### [746. 使用最小花费爬楼梯](https://leetcode.cn/problems/min-cost-climbing-stairs)
+```python
+class Solution:
+    def minCostClimbingStairs(self, cost: List[int]) -> int:
+        n = len(cost)
+        dp = [0 for i in range(n+1)]
+        for i in range(n+1):
+            prev_cost = dp[i-1] + cost[i-1] if i >= 1 else 0
+            pprev_cost = dp[i-2] + cost[i-2] if i >= 2 else 0
+            dp[i] = min(prev_cost, pprev_cost)
+        
+        return dp[-1]
 ```
 
 #### [486. 预测赢家](https://leetcode-cn.com/problems/predict-the-winner/)
@@ -5156,6 +5171,26 @@ public:
         return left;
     }
 };
+```
+
+#### [1901. 寻找峰值 II](https://leetcode.cn/problems/find-a-peak-element-ii)
+```python
+class Solution:
+    def findPeakGrid(self, mat: List[List[int]]) -> List[int]:
+        m = len(mat)
+        low, high = 0, m - 1
+        while low <= high:
+            i = (low + high) // 2
+            j = mat[i].index(max(mat[i]))
+            if i - 1 >= 0 and mat[i][j] < mat[i - 1][j]:
+                high = i - 1
+                continue
+            if i + 1 < m and mat[i][j] < mat[i + 1][j]:
+                low = i + 1
+                continue
+            return [i, j]
+
+        return None
 ```
 
 #### [1095. 山脉数组中查找目标值](https://leetcode-cn.com/problems/find-in-mountain-array/)
@@ -14330,31 +14365,29 @@ class Solution:
 class Solution:
     def threeSum(self, nums: List[int]) -> List[List[int]]:
         nums.sort()
-        n = len(nums)
-        results = []
-        for p0 in range(n-2):
-            # 如果p0已经大于0了,p1,p2必定大于0,break
-            if nums[p0] > 0:
-                break
-            # 如果遇到重复数字,跳过
-            if p0 != 0 and nums[p0] == nums[p0-1]:
+        result = []
+        for i in range(len(nums)):
+            if i > 0 and nums[i] == nums[i-1]:
                 continue
-            p1, p2 = p0+1, n-1
-            while p1 < p2:
-                if nums[p0] + nums[p1] + nums[p2] < 0:
-                    p1 += 1
-                elif nums[p0] + nums[p1] + nums[p2] > 0:
-                    p2 -= 1
+            if nums[i] > 0:
+                break
+            left, right = i+1, len(nums)-1
+            while left < right:
+                val = nums[i] + nums[left] + nums[right]
+                if val > 0:
+                    right -= 1
+                elif val < 0:
+                    left += 1
                 else:
-                    results.append([nums[p0],nums[p1],nums[p2]])
-                    p1 += 1
-                    p2 -= 1
-                    # 找到三元数后,对于重复的数字跳过
-                    while p1 < p2 and nums[p1] == nums[p1-1]:
-                        p1 += 1
-                    while p1 < p2 and nums[p2] == nums[p2+1]:
-                        p2 -= 1
-        return results
+                    result.append([nums[i], nums[left], nums[right]])
+                    left += 1
+                    right -= 1
+                    while left < right and nums[left] == nums[left-1]:
+                        left += 1
+                    while left < right and nums[right] == nums[right+1]:
+                        right -= 1
+
+        return result
 ```
 ```cpp
 class Solution {
