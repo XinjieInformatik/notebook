@@ -1106,6 +1106,10 @@ public:
 给定一个字符串 s，找到 s 中最长的回文子串。
 输入: "babad" 输出: "bab" 注意: "aba" 也是一个有效答案。
 ```
+动态规划:
+- dp[i][j]表示s[i:j+1]是否是回文子串
+- if s[i] == s[j] and dp[i+1][j-1], then dp[i][j] = True
+- for i in range(n-1, -1, -1): for j in range(i+1, n)
 ```python
 class Solution:
     def longestPalindrome(self, s: str) -> str:
@@ -13867,22 +13871,23 @@ class Solution:
 ```
 
 #### [6. Z字形变换](https://leetcode-cn.com/problems/zigzag-conversion/)
+#### [6. N字形变换](https://leetcode-cn.com/problems/zigzag-conversion/)
 准备好numRows行，控制row的增长+=step, 遇到边界掉头，注意边界条件
 ```python
 class Solution:
     def convert(self, s: str, numRows: int) -> str:
         if numRows == 1:
             return s
-        lines = [[] for i in range(numRows)]
+        row_idx = 0
+        result = ["" for i in range(numRows)]
         step = 1
-        n = len(s)
-        row = 0
-        for i in range(n):
-            lines[row].append(s[i])
-            row += step
-            if row == numRows-1 or (row == 0 and i != 0):
+        for idx in range(len(s)):
+            result[row_idx] += s[idx]
+            row_idx += step
+            if (row_idx == 0 and idx > 0) or row_idx == numRows-1:
                 step *= -1
-        return "".join(["".join(word) for word in lines])
+
+        return "".join(result)
 ```
 
 #### [541. 反转字符串 II](https://leetcode-cn.com/problems/reverse-string-ii/)
@@ -20536,4 +20541,30 @@ class Solution:
                 stack.append(aster)
 
         return stack
+```
+
+#### [2706. 购买两块巧克力](https://leetcode.cn/problems/buy-two-chocolates)
+```python
+class Solution:
+    def buyChoco(self, prices: List[int], money: int) -> int:
+        if len(prices) < 1:
+            return money
+            
+        # 函数抽象
+        def _get_argmin(nums: List[int], init_idx: int = 0, skip_idxs: Set[int]=None) -> int:
+            min_idx = init_idx
+            for index in range(len(nums)):
+                if skip_idxs and index in skip_idxs:
+                    continue
+                if nums[index] < nums[min_idx]:
+                    min_idx = index
+
+            return min_idx
+
+        # 业务逻辑
+        min_idx = _get_argmin(prices)
+        min2_idx = _get_argmin(prices, init_idx=min_idx-1, skip_idxs={min_idx})
+        result = money - prices[min_idx] - prices[min2_idx]
+
+        return result if result >= 0 else money
 ```
