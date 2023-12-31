@@ -1,8 +1,23 @@
 # python动态调用cpp
 
-[[TOC]]
+<!-- TOC tocDepth:2..3 chapterDepth:2..6 -->
 
-## 背景
+- [背景](#背景)
+- [环境配置](#环境配置)
+- [简单示例](#简单示例)
+    - [用pybind11进行封装](#用pybind11进行封装)
+    - [编译cpp动态库.so](#编译cpp动态库so)
+    - [python调用](#python调用)
+- [实际示例](#实际示例)
+    - [入参 py::object](#入参-pyobject)
+    - [出参 py::typing:Dict](#出参-pytypingdict)
+    - [example](#example)
+    - [CMakeLists.txt](#cmakeliststxt)
+    - [setup.py](#setuppy)
+
+<!-- /TOC -->
+
+## 1. 背景
 python中调用c++库，可以：
 1. 通过subprocess.check_call调用编译好的二进制执行文件，输入输出以文件形式中转；
 2. 发布c++库的pip包，同时基于例如pybind11的能力 ，提供相关接口。
@@ -10,13 +25,13 @@ python中调用c++库，可以：
 方式2优势：1. 维护方便，接口定义清晰； 2. 数据流直接通过对象传递，避免以文件形式中转的IO落盘与黑盒； 3. 数据定义清晰，对于python/c++各自的改动都不大。
 该文档对python动态调用c++进行了梳理，能够涵盖绝大多数的相关开发需求，提供很好的借鉴与快速上手指南
 
-## 环境配置
+## 2. 环境配置
 pybind11: https://pybind11.readthedocs.io/en/stable/basics.html
 先编译 make install，然后pip也装一下pybind11的python package.
 
-## 简单示例
+## 3. 简单示例
 `add_module`是package名，`add`是函数名
-### 用pybind11进行封装
+### 3.1. 用pybind11进行封装
 ```cpp
 // add.cpp
 #include <pybind11/pybind11.h>
@@ -33,12 +48,12 @@ PYBIND11_MODULE(add_module, m) {
     m.def("add", &add, py::arg("num1"), py::arg("num2")=0);
 }
 ```
-### 编译cpp动态库.so
+### 3.2. 编译cpp动态库.so
 会生成 e.g. add_module.cpython-38-x86_64-linux-gnu.so
 ```bash
 c++ -O3 -Wall -shared -std=c++11 -fPIC $(python3 -m pybind11 --includes) add.cpp -o add_module$(python3-config --extension-suffix)
 ```
-### python调用
+### 3.3. python调用
 ```python
 import sys
 sys.path.append("path to add_module.so")
@@ -46,13 +61,13 @@ import add_module
 result = add_module.add(num1=2, num2=3)
 ```
 
-## 实际示例
+## 4. 实际示例
 举一个类传递的例子
-### 入参 py::object
+### 4.1. 入参 py::object
 封装的入参需要指定类型，例如：py::typing:str, py::typing:Dict, py::typing:Tuple, py::object等。对于接收到的数据结构，需要.cast<type>()转换成对应具体的数据类型。
-### 出参 py::typing:Dict
+### 4.2. 出参 py::typing:Dict
 一般组成py::typing:Dict, 然后结合python Dataclass的能力恢复成python对象。
-### example
+### 4.3. example
 python调用某个cpp的函数，写一个接口类`InterfaceClass`, 其中借用pybind11的能力写一个`ConvertfromPyClass1ToClass1`函数，将python对象转为对应的cpp对象，正常处理cpp对象，然后再通过`ConvertfromClass2ToPyClass2Dict`转回dict，python调用接口类接受后通过dataclass恢复成python对象。
 
 ```cpp
@@ -141,7 +156,7 @@ Eigen::MatrixXd convert_numpy_to_eigen_matrix(py::array_t<double> input) {
 }
 ```
 
-### CMakeLists.txt
+### 4.4. CMakeLists.txt
 ```cpp
 cmake_minimum_required(VERSION 3.12)
 project(my_module)
@@ -152,7 +167,7 @@ add_subdirectory(pybind11)
 pybind11_add_module(my_module MyClass_python.cpp MyClass.h)
 ```
 
-### setup.py
+### 4.5. setup.py
 python setup.py bdist_wheel
 ```python
 from setuptools import setup, Extension
