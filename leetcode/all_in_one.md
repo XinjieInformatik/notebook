@@ -3952,6 +3952,46 @@ int main() {
 ```
 ```python
 class Solution:
+    def reverseBetween(self, head: Optional[ListNode], left: int, right: int) -> Optional[ListNode]:
+        def reverse_linklist(head: ListNode) -> ListNode:
+            prev = None
+            curr = head
+            while curr:
+                next_node = curr.next
+                curr.next = prev 
+                prev = curr 
+                curr = next_node
+            return prev
+
+        if not head:
+            return head
+        
+        dummy_head = dummy = ListNode(None)
+        dummy.next = head
+        for _ in range(left-1):
+            dummy = dummy.next
+
+        # prev node of head_node
+        left_node = dummy
+        # fisrt node to reverse
+        head_node = dummy.next
+        for _ in range(right-left+1):
+            dummy = dummy.next
+        # last node to reverse
+        tail_node = dummy
+        # later node of tail_node
+        right_node = tail_node.next
+        # cut link and rev
+        tail_node.next = None
+        rev_node = reverse_linklist(head_node)
+        # relink the linklist
+        left_node.next = rev_node
+        head_node.next = right_node
+
+        return dummy_head.next
+```
+```python
+class Solution:
     def reverseBetween(self, head: ListNode, left: int, right: int) -> ListNode:
         dummy_head = dummy = ListNode(-1)
         dummy_head.next = head
@@ -4827,36 +4867,26 @@ class Solution:
 1. 一次遍历就可以了. O(n)
 
 #### [88. 合并两个有序数组](https://leetcode-cn.com/problems/merge-sorted-array/)
-3指针从后往前，如果P2走到-1结束即可，如果P1走到-1剩下将P2走完即可
-```python
-class Solution:
-    def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:
-        p1 = m - 1
-        p2 = n - 1
-        p3 = m + n - 1
-        while p2 >= 0:
-            if p1 < 0 or nums1[p1] < nums2[p2]:
-                nums1[p3] = nums2[p2]
-                p3 -= 1
-                p2 -= 1
-            else:
-                nums1[p3] = nums1[p1]
-                p3 -= 1
-                p1 -= 1
-```
+3指针从后往前，需要从后往前遍历的原始是防止之前的数被修改了
 ```PYTHON
 class Solution:
     def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:
+        """
+        Do not return anything, modify nums1 in-place instead.
+        """
         p1, p2, pw = m-1, n-1, m+n-1
         while pw >= 0:
-            if p1 < 0 or (p2 >= 0 and nums2[p2] >= nums1[p1]):
-                nums1[pw] = nums2[p2]
-                p2 -= 1
-                pw -= 1
-            else:
-                nums1[pw] = nums1[p1]
+            num1 = nums1[p1] if p1 >= 0 else -float("inf")
+            num2 = nums2[p2] if p2 >= 0 else -float("inf")
+            if num1 > num2:
+                nums1[pw] = num1
                 p1 -= 1
-                pw -= 1
+            else:
+                nums1[pw] = num2
+                p2 -= 1
+            pw -= 1
+
+        return
 ```
 
 #### [面试题 10.01. 合并排序的数组](https://leetcode-cn.com/problems/sorted-merge-lcci/)
@@ -10636,29 +10666,28 @@ class Solution:
 
         return helper(0)
 ```
-栈: 遇到[时,将当前res,num保存,重置res,num,遇到]时将stack中与当前res拼接.
+栈: 遇到`[`时,将当前res,num保存,重置res,num,遇到`]`时将stack中与当前res拼接.
 ```python
 class Solution:
     def decodeString(self, s: str) -> str:
         stack = []
-        n = len(s)
-        for i in range(n):
-            if s[i] == ']':
-                res = ""
-                while len(stack)>0 and stack[-1] != '[':
+        for idx in range(len(s)):
+            if s[idx] == "]":
+                sub_str = ""
+                while len(stack) > 0 and stack[-1] != "[":
                     char = stack.pop()
-                    res = char + res
+                    sub_str = char + sub_str
                 stack.pop()
                 num = ""
-                while len(stack)>0 and stack[-1].isdigit():
+                while len(stack) > 0 and stack[-1].isdigit():
                     val = stack.pop()
                     num = val + num
-                num = int(num)
-                res *= num
-                for char in res:
-                    stack.append(char)
+
+                sub_res = int(num) * sub_str
+                stack.extend(list(sub_res))
             else:
-                stack.append(s[i])
+                stack.append(s[idx])
+
         return "".join(stack)
 ```
 
@@ -18056,6 +18085,44 @@ public:
 ```
 
 #### [649. Dota2 参议院](https://leetcode-cn.com/problems/dota2-senate/)
+```python
+from enum import Enum, unique
+
+@unique
+class PartyVictoryEnum(Enum):
+    RADIANT = "Radiant"
+    DIRE = "Dire"
+    R = "R"
+    D = "D"
+
+class Solution:
+    def predictPartyVictory(self, senate: str) -> str:
+        def _find_nearest_target(
+            word: List[str], target: str, start_idx: int
+        ) -> int:
+            for idx in range(start_idx, len(word)):
+                if word[idx] == target:
+                    return idx
+            for idx in range(0, start_idx):
+                if word[idx] == target:
+                    return idx
+            return None
+
+        senates = list(senate)
+        index = 0
+        while index < len(senates) and len(senates) > 1:
+            char = senates[index]
+            target_char = PartyVictoryEnum.R.value if char == PartyVictoryEnum.D.value else PartyVictoryEnum.D.value
+            find_idx = _find_nearest_target(senates, target_char, start_idx=index)
+            if find_idx is None:
+                break
+            senates.pop(find_idx)
+            index += 1
+            if index >= len(senates):
+                index = 0
+
+        return PartyVictoryEnum.RADIANT.value if senates[0] == PartyVictoryEnum.R.value else PartyVictoryEnum.DIRE.value
+```
 ```cpp
 class Solution {
 public:
@@ -20567,4 +20634,73 @@ class Solution:
         result = money - prices[min_idx] - prices[min2_idx]
 
         return result if result >= 0 else money
+```
+
+#### [2807. 在链表中插入最大公约数](https://leetcode.cn/problems/insert-greatest-common-divisors-in-linked-list)
+```python
+def gcd(a, b):
+    while b != 0:
+        a, b = b, a % b
+    return a
+
+def gcd(a, b):
+    return a if b == 0 else gcd(b, a % b)
+```
+```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def insertGreatestCommonDivisors(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        def gcd(a, b):
+            return a if b == 0 else gcd(b, a % b)
+        
+        slow = head
+        fast = slow.next
+        while fast:
+            val = gcd(slow.val, fast.val)
+            node = ListNode(val)
+            slow.next = node
+            node.next = fast
+            slow = fast
+            fast = fast.next
+        
+        return head
+```
+
+#### [1944. 队列中可以看到的人数](https://leetcode.cn/problems/number-of-visible-people-in-a-queue)
+```python
+class Solution:
+    def canSeePersonsCount(self, heights: List[int]) -> List[int]:
+        n = len(heights)
+        stack = []
+        result = [0] * n
+        for i in range(n - 1, -1, -1):
+            h = heights[i]
+            while stack and h > stack[-1]:
+                result[i] += 1
+                stack.pop()
+            if stack:
+                result[i] += 1
+            stack.append(h)
+        return result
+
+        # result = []
+        # for index in range(len(heights)):
+        #     if index == len(heights) - 1:
+        #         result.append(0)
+        #         continue
+        #     prev_max = 0
+        #     cnt = 0
+        #     for right in range(index+1, len(heights)):
+        #         if heights[right] >= prev_max:
+        #             prev_max = heights[right]
+        #             cnt += 1
+        #             if prev_max > heights[index]:
+        #                 break
+        #     result.append(cnt)
+        
+        # return result
 ```
