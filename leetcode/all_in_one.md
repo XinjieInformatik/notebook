@@ -4210,13 +4210,12 @@ python pop() - O(1), pop(i) - O(n), remove(val) - O(n)
 ```python
 class Solution:
     def removeElement(self, nums: List[int], val: int) -> int:
-        start, end = 0, len(nums) - 1
-        while start <= end:
-            if nums[start] == val:
-                nums[start], nums[end], end = nums[end], nums[start], end - 1
-            else:
-                start +=1
-        return start
+        left = 0
+        for right in range(len(nums)):
+            if nums[right] != val:
+                nums[left] = nums[right]
+                left += 1
+        return left
 ```
 #### [26. 删除排序数组中的重复项](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array/)
 双指针，快指针往前走，当遇到快慢指针值不一样，慢指针走一步，修改当前元素为快指针指向的元素。(注意题目限制条件，数组有序！)
@@ -4247,6 +4246,8 @@ class Solution:
 ```
 
 #### [80. 删除排序数组中的重复项 II](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array-ii/)
+#### [80. 删除有序数组中的重复项 II](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array-ii/)
+
 该解法可拓展为删除有序数组的k重复项，同样可解决 leetcode 26。
 
 如果当前元素比其第前k个元素大（如果当前元素与其第前k个元素不同），将当前元素赋值给指针停留位置，指针停留位置+1。保证nums[:i]重复不超过k个元素.
@@ -4261,22 +4262,24 @@ class Solution:
                 i += 1
         return i
 ```
-三指针模拟法, 注意pw要一路写
+
 ```python
 class Solution:
     def removeDuplicates(self, nums: List[int]) -> int:
-        pw, pr, index = 0, 0, 0
-        n = len(nums)
-        while index < n:
-            pr = index
-            cnt = 0
-            while pr < n and nums[pr] == nums[index]:
-                pr += 1
+        pw, pl = 0, 0
+        while pl < len(nums):
+            cnt = 1
+            pl_start = pl
+            while pl+1 < len(nums) and nums[pl] == nums[pl+1]:
+                pl += 1
                 cnt += 1
-            for i in range(pw, pw+min(cnt,2)):
-                nums[pw] = nums[index]
-                pw += 1
-            index = pr
+            end_idx = min(pw+min(2,cnt), len(nums))
+            for i in range(pw, end_idx):
+                nums[i] = nums[pl_start]
+                pl_start += 1
+            pw += min(2, cnt)
+            pl += 1
+        
         return pw
 ```
 #### [189. 旋转数组](https://leetcode-cn.com/problems/rotate-array/)
@@ -20703,4 +20706,73 @@ class Solution:
         #     result.append(cnt)
         
         # return result
+```
+
+#### [2707. 字符串中的额外字符](https://leetcode.cn/problems/extra-characters-in-a-string)
+```python
+class Solution:
+    def minExtraChar(self, s: str, dictionary: List[str]) -> int:
+        # dp[i]: s[:i]拆分后有几个字符没有使用
+        n = len(s)
+        dp = [float("inf")] * (n + 1)
+        dp[0] = 0
+        dictionary = set(dictionary)
+        for i in range (1, n + 1):
+            dp[i] = dp[i-1] + 1
+            for j in range(i - 1, -1, -1):
+                if s[j:i] in dictionary:
+                    dp[i] = min(dp[i], dp[j])
+
+        return dp[n]
+```
+
+#### [2095. 删除链表的中间节点](https://leetcode.cn/problems/delete-the-middle-node-of-a-linked-list)
+中间节点：快慢指针
+```python
+class Solution:
+    def deleteMiddle(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        slow = ListNode(-1)
+        slow.next = head
+        fast = slow.next
+        if not fast.next:
+            return None
+        while fast and fast.next:
+            slow = slow.next
+            fast = fast.next.next
+        
+        slow.next = slow.next.next
+
+        return head
+```
+
+#### [2696. 删除子串后的字符串最小长度](https://leetcode.cn/problems/minimum-string-length-after-removing-substrings)
+巧利用栈
+```python
+class Solution:
+    def minLength(self, s: str) -> int:
+        hashmap = set(["AB", "CD"])
+        stack = []
+        for char in s:
+            stack.append(char)
+            n_stack = len(stack)
+            while n_stack >= 2 and "".join(stack[n_stack-2:n_stack]) in hashmap:
+                stack.pop()
+                stack.pop()
+
+        return len(stack)
+```
+
+#### [2645. 构造有效字符串的最少插入数](https://leetcode.cn/problems/minimum-additions-to-make-valid-string)
+```python
+class Solution:
+    def addMinimum(self, word: str) -> int:
+        # dp[i]: 将word[:i+1]拼凑成abc所需最小插入数
+        n = len(word)
+        dp = [0] * (n + 1)
+        for i in range(1, n + 1):
+            dp[i] = dp[i - 1] + 2
+            if i > 1 and word[i - 1] > word[i - 2]:
+                dp[i] = dp[i - 1] - 1
+
+        return dp[n]
 ```
