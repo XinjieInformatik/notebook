@@ -1930,15 +1930,16 @@ class Solution:
     def trap(self, height: List[int]) -> int:
         """单调递减stack"""
         stack = []
-        n = len(height)
         total = 0
-        for i in range(n):
-            while len(stack) > 0 and height[stack[-1]] < height[i]:
-                index = stack.pop()
+        for right_idx in range(len(height)):
+            while len(stack) > 0 and height[right_idx] > height[stack[-1]]:
+                curr_idx = stack.pop()
                 if len(stack) > 0:
-                    h = min(height[stack[-1]], height[i])
-                    total += (h - height[index]) * (i - stack[-1] - 1)
-            stack.append(i)
+                    left_idx = stack[-1]
+                    h = min(height[right_idx], height[left_idx])
+                    total += (h - height[curr_idx]) * (right_idx - left_idx - 1)
+            stack.append(right_idx)
+
         return total
 ```
 
@@ -2629,19 +2630,16 @@ class Solution:
 class Solution:
     def lengthOfLongestSubstring(self, s: str) -> int:
         window = set()
-        l = 0
-        n = len(s)
-        ans = 0
-        for r in range(n):
-            if s[r] not in window:
-                window.add(s[r])
-                ans = max(ans, r-l+1)
-            else:
-                while s[r] in window:
-                    window.remove(s[l])
-                    l += 1
-                window.add(s[r])
-        return ans
+        left = 0
+        max_length = 0
+        for right in range(len(s)):
+            while s[right] in window:
+                window.remove(s[left])
+                left += 1
+            max_length = max(max_length, right-left+1)
+            window.add(s[right])
+
+        return max_length
 ```
 ```cpp
 class Solution {
@@ -3869,339 +3867,6 @@ class Solution:
         return result
 ```
 
-## 链表
-#### [206. 反转链表](https://leetcode-cn.com/problems/reverse-linked-list/)
-```python
-class ListNode:
-    def __init__(self, x):
-        self.val = x
-        self.next = None
-
-class Solution:
-    def reverseList(self, head: ListNode) -> ListNode:
-        prev = None
-        curr = head
-        while curr:
-            nxt = curr.next
-            curr.next = prev
-            prev = curr
-            curr = nxt
-        return prev
-
-    # 递归
-    def reverseList(self, head: ListNode) -> ListNode:
-        if(head==None or head.next==None):
-            return head
-	    cur = self.reverseList(head.next)
-	    head.next.next = head
-	    head.next = None
-	    return cur
-```
-
-```cpp
-#include <iostream>
-#include <vector>
-using namespace std;
-
-struct ListNode {
-    int val;
-    ListNode* next;
-    ListNode(int x): val(x), next(nullptr) {}
-};
-
-class Solution {
-public:
-    ListNode* reverseList(ListNode *head) {
-        ListNode* prev = nullptr;
-        ListNode* curr = head;
-        while (curr) {
-            ListNode* nxt = curr->next;
-            curr->next = prev;
-            prev = curr;
-            curr = nxt;
-        }
-        return prev;
-    }
-};
-
-int main() {
-    vector<int> nums{1,2,3,4,5};
-    auto* dummy = new ListNode(-1);
-    ListNode* d_head = dummy;
-    for (auto num : nums) {
-        dummy->next = new ListNode(num);
-        dummy = dummy->next;
-    }
-    dummy->next = nullptr;
-
-    auto solver = Solution();
-    ListNode* rev_head = solver.reverseList(d_head->next);
-    while (rev_head) {
-        printf("\033[0:1:31m%d ", rev_head->val);
-        rev_head = rev_head->next;
-    }
-    return 0;
-}
-```
-
-#### [92. 反转链表 II](https://leetcode-cn.com/problems/reverse-linked-list-ii/)
-```
-反转从位置 m 到 n 的链表。请使用一趟扫描完成反转。
-输入: 1->2->3->4->5->NULL, m = 2, n = 4
-输出: 1->4->3->2->5->NULL
-```
-```python
-class Solution:
-    def reverseBetween(self, head: Optional[ListNode], left: int, right: int) -> Optional[ListNode]:
-        def reverse_linklist(head: ListNode) -> ListNode:
-            prev = None
-            curr = head
-            while curr:
-                next_node = curr.next
-                curr.next = prev 
-                prev = curr 
-                curr = next_node
-            return prev
-
-        if not head:
-            return head
-        
-        dummy_head = dummy = ListNode(None)
-        dummy.next = head
-        for _ in range(left-1):
-            dummy = dummy.next
-
-        # prev node of head_node
-        left_node = dummy
-        # fisrt node to reverse
-        head_node = dummy.next
-        for _ in range(right-left+1):
-            dummy = dummy.next
-        # last node to reverse
-        tail_node = dummy
-        # later node of tail_node
-        right_node = tail_node.next
-        # cut link and rev
-        tail_node.next = None
-        rev_node = reverse_linklist(head_node)
-        # relink the linklist
-        left_node.next = rev_node
-        head_node.next = right_node
-
-        return dummy_head.next
-```
-```python
-class Solution:
-    def reverseBetween(self, head: ListNode, left: int, right: int) -> ListNode:
-        dummy_head = dummy = ListNode(-1)
-        dummy_head.next = head
-        dummy.next = head
-        for i in range(1, left):
-            dummy = dummy.next
-        curr = dummy.next
-        for i in range(left, right):
-            nxt = curr.next
-            curr.next = nxt.next
-            nxt.next = dummy.next
-            dummy.next = nxt
-        return dummy_head.next
-```
-```PYTHON
-class Solution:
-    def reverseBetween(self, head: ListNode, left: int, right: int) -> ListNode:
-        def reverse_list(head):
-            prev = None
-            curr = head
-            while curr:
-                nxt = curr.next
-                curr.next = prev
-                prev = curr
-                curr = nxt
-            return prev, head
-
-        dummy_head = dummy = ListNode(-1)
-        dummy_head.next = head
-        dummy.next = head
-        for i in range(left-1):
-            dummy = dummy.next
-        prev = dummy
-        inv_head = dummy.next
-        dummy.next = None
-        dummy = inv_head
-        for i in range(right-left):
-            dummy = dummy.next
-        nxt = dummy.next
-        dummy.next = None
-        rev_head, rev_tail = reverse_list(inv_head)
-        prev.next = rev_head
-        rev_tail.next = nxt
-        return dummy_head.next
-```
-```python
-# Definition for singly-linked list.
-# class ListNode:
-#     def __init__(self, val=0, next=None):
-#         self.val = val
-#         self.next = next
-class Solution:
-    def reverseBetween(self, head: ListNode, left: int, right: int) -> ListNode:
-        slow = head  
-        stage1 = left - 2
-        while stage1 > 0:
-            slow = slow.next
-            stage1 -= 1
-        if left > 1:
-            cut_head = slow.next
-            slow.next = None
-        else:
-            cut_head = head
-
-        fast = cut_head
-        stage2 = right - left
-        while stage2 > 0:
-            fast = fast.next
-            stage2 -= 1
-        cut_nxt = fast.next
-        fast.next = None
-
-        prev = None
-        curr = cut_head
-        while curr:
-            nxt = curr.next
-            curr.next = prev
-            prev = curr
-            curr = nxt
-
-        slow.next = prev
-        cut_head.next = cut_nxt
-        return head if left != 1 else prev
-```
-
-#### [25. k个一组翻转链表](https://leetcode-cn.com/problems/reverse-nodes-in-k-group/)
-1. 走k步，切断，反转链表返回反转后的头节点，尾节点
-2. 链表链接 tail.next = nx, prev.next = head
-3. 节点移动，prev = tail, head = nxt
-```python
-class Solution:
-    def reverseKGroup(self, head: ListNode, k: int) -> ListNode:
-        def reverse_link(head):
-            prev = None
-            curr = head
-            while curr:
-                nxt = curr.next
-                curr.next = prev
-                prev = curr
-                curr = nxt
-            return prev, head
-
-        prev = dummy_head = ListNode(-1)
-        dummy_head.next = head
-        prev.next = head
-        while head:
-            tail = prev
-            for i in range(k):
-                tail = tail.next
-                if not tail:
-                    return dummy_head.next
-            nxt = tail.next
-            tail.next = None
-            head, tail = reverse_link(head)
-            tail.next = nxt
-            prev.next = head
-            prev = tail
-            head = nxt
-        return dummy_head.next
-```
-
-```python
-class Solution:
-    def reverseKGroup(self, head: ListNode, k: int) -> ListNode:
-        """利用 stack LIFO 的性质反转链表"""
-        dummy = dummyhead = ListNode(-1)
-        node = head
-        while True:
-            cnt = k
-            stack = []
-            temp = node
-            # 把k个节点加入stack
-            while cnt > 0 and node:
-                cnt -= 1
-                stack.append(node)
-                node = node.next
-            # 如果不满k个, 不反转
-            if cnt != 0:
-                dummy.next = temp
-                break
-            while stack:
-                dummy.next = stack.pop()
-                dummy = dummy.next
-            # 避免死循环
-            dummy.next = None
-        return dummyhead.next
-```
-
-#### [排序奇升偶降链表](https://mp.weixin.qq.com/s/0WVa2wIAeG0nYnVndZiEXQ)
-```python
-class ListNode:
-    def __init__(self, val, nxt=None):
-        self.val = val
-        self.next = nxt
-
-input_line = '1 8 3 6 5 4 7 2'
-inputs = list(map(int, input_line.split(' ')))
-dummy = ListNode(-1)
-dummy_head = dummy
-for val in inputs:
-    node = ListNode(val)
-    dummy.next = node
-    dummy = dummy.next
-dummy.next = None
-head = dummy_head.next
-
-cnt = 1
-increase_list = ListNode(-1)
-decrease_list = ListNode(-1)
-dummy_increase = increase_list
-dummy_decrease = decrease_list
-while head:
-    if cnt & 1:
-        increase_list.next = head
-        increase_list = increase_list.next
-    else:
-        decrease_list.next = head
-        decrease_list = decrease_list.next
-    cnt += 1
-    head = head.next
-increase_list.next = None
-decrease_list.next = None
-
-prev = None
-curr = dummy_decrease.next
-while curr:
-    nxt = curr.next
-    curr.next = prev
-    prev = curr
-    curr = nxt
-
-dummy = ListNode(-1)
-dummy_head = dummy
-inc_head = dummy_increase.next
-while prev and inc_head:
-    if prev.val < inc_head.val:
-        dummy.next = prev
-        prev = prev.next
-    else:
-        dummy.next = inc_head
-        inc_head = inc_head.next
-    dummy = dummy.next
-dummy.next = prev if prev else inc_head
-ans = dummy_head.next
-while ans:
-    print(ans.val, end=' ')
-    ans = ans.next
-```
-
-# 400 leetcode
 ### Array
 #### [27. 移除元素](https://leetcode-cn.com/problems/remove-element/)
 python pop() - O(1), pop(i) - O(n), remove(val) - O(n)
@@ -4283,6 +3948,7 @@ class Solution:
         return pw
 ```
 #### [189. 旋转数组](https://leetcode-cn.com/problems/rotate-array/)
+#### [189. 轮转数组](https://leetcode.cn/problems/rotate-array)
 ```python
 class Solution:
     def rotate(self, nums, k):
@@ -7944,6 +7610,371 @@ class Solution:
 ```
 
 ## LinkedList
+
+#### [206. 反转链表](https://leetcode-cn.com/problems/reverse-linked-list/)
+```python
+class ListNode:
+    def __init__(self, x):
+        self.val = x
+        self.next = None
+
+class Solution:
+    def reverseList(self, head: ListNode) -> ListNode:
+        prev = None
+        curr = head
+        while curr:
+            nxt = curr.next
+            curr.next = prev
+            prev = curr
+            curr = nxt
+        return prev
+
+    # 递归
+    def reverseList(self, head: ListNode) -> ListNode:
+        if(head==None or head.next==None):
+            return head
+	    cur = self.reverseList(head.next)
+	    head.next.next = head
+	    head.next = None
+	    return cur
+```
+
+```cpp
+#include <iostream>
+#include <vector>
+using namespace std;
+
+struct ListNode {
+    int val;
+    ListNode* next;
+    ListNode(int x): val(x), next(nullptr) {}
+};
+
+class Solution {
+public:
+    ListNode* reverseList(ListNode *head) {
+        ListNode* prev = nullptr;
+        ListNode* curr = head;
+        while (curr) {
+            ListNode* nxt = curr->next;
+            curr->next = prev;
+            prev = curr;
+            curr = nxt;
+        }
+        return prev;
+    }
+};
+
+int main() {
+    vector<int> nums{1,2,3,4,5};
+    auto* dummy = new ListNode(-1);
+    ListNode* d_head = dummy;
+    for (auto num : nums) {
+        dummy->next = new ListNode(num);
+        dummy = dummy->next;
+    }
+    dummy->next = nullptr;
+
+    auto solver = Solution();
+    ListNode* rev_head = solver.reverseList(d_head->next);
+    while (rev_head) {
+        printf("\033[0:1:31m%d ", rev_head->val);
+        rev_head = rev_head->next;
+    }
+    return 0;
+}
+```
+
+#### [92. 反转链表 II](https://leetcode-cn.com/problems/reverse-linked-list-ii/)
+```
+反转从位置 m 到 n 的链表。请使用一趟扫描完成反转。
+输入: 1->2->3->4->5->NULL, m = 2, n = 4
+输出: 1->4->3->2->5->NULL
+```
+```python
+class Solution:
+    def reverseBetween(self, head: Optional[ListNode], left: int, right: int) -> Optional[ListNode]:
+        def reverse_linklist(head: ListNode) -> ListNode:
+            prev = None
+            curr = head
+            while curr:
+                next_node = curr.next
+                curr.next = prev 
+                prev = curr 
+                curr = next_node
+            return prev
+
+        if not head:
+            return head
+        
+        dummy_head = dummy = ListNode(None)
+        dummy.next = head
+        for _ in range(left-1):
+            dummy = dummy.next
+
+        # prev node of head_node
+        left_node = dummy
+        # fisrt node to reverse
+        head_node = dummy.next
+        for _ in range(right-left+1):
+            dummy = dummy.next
+        # last node to reverse
+        tail_node = dummy
+        # later node of tail_node
+        right_node = tail_node.next
+        # cut link and rev
+        tail_node.next = None
+        rev_node = reverse_linklist(head_node)
+        # relink the linklist
+        left_node.next = rev_node
+        head_node.next = right_node
+
+        return dummy_head.next
+```
+```python
+class Solution:
+    def reverseBetween(self, head: ListNode, left: int, right: int) -> ListNode:
+        dummy_head = dummy = ListNode(-1)
+        dummy_head.next = head
+        dummy.next = head
+        for i in range(1, left):
+            dummy = dummy.next
+        curr = dummy.next
+        for i in range(left, right):
+            nxt = curr.next
+            curr.next = nxt.next
+            nxt.next = dummy.next
+            dummy.next = nxt
+        return dummy_head.next
+```
+```PYTHON
+class Solution:
+    def reverseBetween(self, head: ListNode, left: int, right: int) -> ListNode:
+        def reverse_list(head):
+            prev = None
+            curr = head
+            while curr:
+                nxt = curr.next
+                curr.next = prev
+                prev = curr
+                curr = nxt
+            return prev, head
+
+        dummy_head = dummy = ListNode(-1)
+        dummy_head.next = head
+        dummy.next = head
+        for i in range(left-1):
+            dummy = dummy.next
+        prev = dummy
+        inv_head = dummy.next
+        dummy.next = None
+        dummy = inv_head
+        for i in range(right-left):
+            dummy = dummy.next
+        nxt = dummy.next
+        dummy.next = None
+        rev_head, rev_tail = reverse_list(inv_head)
+        prev.next = rev_head
+        rev_tail.next = nxt
+        return dummy_head.next
+```
+```python
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def reverseBetween(self, head: ListNode, left: int, right: int) -> ListNode:
+        slow = head  
+        stage1 = left - 2
+        while stage1 > 0:
+            slow = slow.next
+            stage1 -= 1
+        if left > 1:
+            cut_head = slow.next
+            slow.next = None
+        else:
+            cut_head = head
+
+        fast = cut_head
+        stage2 = right - left
+        while stage2 > 0:
+            fast = fast.next
+            stage2 -= 1
+        cut_nxt = fast.next
+        fast.next = None
+
+        prev = None
+        curr = cut_head
+        while curr:
+            nxt = curr.next
+            curr.next = prev
+            prev = curr
+            curr = nxt
+
+        slow.next = prev
+        cut_head.next = cut_nxt
+        return head if left != 1 else prev
+```
+
+#### [25. k个一组翻转链表](https://leetcode-cn.com/problems/reverse-nodes-in-k-group/)
+1. 走k步，切断，反转链表返回反转后的头节点，尾节点
+2. 链表链接 tail.next = nx, prev.next = head
+3. 节点移动，prev = tail, head = nxt
+```python
+class Solution:
+    def reverseKGroup(self, head: ListNode, k: int) -> ListNode:
+        def reverse_link(head):
+            prev = None
+            curr = head
+            while curr:
+                nxt = curr.next
+                curr.next = prev
+                prev = curr
+                curr = nxt
+            return prev, head
+
+        prev = dummy_head = ListNode(-1)
+        dummy_head.next = head
+        prev.next = head
+        while head:
+            tail = prev
+            for i in range(k):
+                tail = tail.next
+                if not tail:
+                    return dummy_head.next
+            nxt = tail.next
+            tail.next = None
+            head, tail = reverse_link(head)
+            tail.next = nxt
+            prev.next = head
+            prev = tail
+            head = nxt
+        return dummy_head.next
+```
+
+```python
+class Solution:
+    def reverseKGroup(self, head: ListNode, k: int) -> ListNode:
+        """利用 stack LIFO 的性质反转链表"""
+        dummy = dummyhead = ListNode(-1)
+        node = head
+        while True:
+            cnt = k
+            stack = []
+            temp = node
+            # 把k个节点加入stack
+            while cnt > 0 and node:
+                cnt -= 1
+                stack.append(node)
+                node = node.next
+            # 如果不满k个, 不反转
+            if cnt != 0:
+                dummy.next = temp
+                break
+            while stack:
+                dummy.next = stack.pop()
+                dummy = dummy.next
+            # 避免死循环
+            dummy.next = None
+        return dummyhead.next
+```
+
+#### [2130. 链表最大孪生和](https://leetcode.cn/problems/maximum-twin-sum-of-a-linked-list)
+反转链表后半段, 然后依次相加
+```python
+    def pairSum(self, head: Optional[ListNode]) -> int:
+        
+        def _reverse_linklist(node: ListNode) -> ListNode:
+            prev = None
+            while node:
+                next_node = node.next
+                node.next = prev
+                prev = node
+                node = next_node
+
+            return prev
+                
+        slow = ListNode(-1)
+        slow.next = head
+        fast = slow
+        while fast and fast.next:
+            slow = slow.next 
+            fast = fast.next.next
+
+        rev_head = _reverse_linklist(slow.next)
+        max_val = -float("inf")
+        while head and rev_head:
+            val = head.val + rev_head.val
+            max_val = max(max_val, val)
+            head = head.next
+            rev_head = rev_head.next
+        
+        return max_val
+```
+
+#### [排序奇升偶降链表](https://mp.weixin.qq.com/s/0WVa2wIAeG0nYnVndZiEXQ)
+```python
+class ListNode:
+    def __init__(self, val, nxt=None):
+        self.val = val
+        self.next = nxt
+
+input_line = '1 8 3 6 5 4 7 2'
+inputs = list(map(int, input_line.split(' ')))
+dummy = ListNode(-1)
+dummy_head = dummy
+for val in inputs:
+    node = ListNode(val)
+    dummy.next = node
+    dummy = dummy.next
+dummy.next = None
+head = dummy_head.next
+
+cnt = 1
+increase_list = ListNode(-1)
+decrease_list = ListNode(-1)
+dummy_increase = increase_list
+dummy_decrease = decrease_list
+while head:
+    if cnt & 1:
+        increase_list.next = head
+        increase_list = increase_list.next
+    else:
+        decrease_list.next = head
+        decrease_list = decrease_list.next
+    cnt += 1
+    head = head.next
+increase_list.next = None
+decrease_list.next = None
+
+prev = None
+curr = dummy_decrease.next
+while curr:
+    nxt = curr.next
+    curr.next = prev
+    prev = curr
+    curr = nxt
+
+dummy = ListNode(-1)
+dummy_head = dummy
+inc_head = dummy_increase.next
+while prev and inc_head:
+    if prev.val < inc_head.val:
+        dummy.next = prev
+        prev = prev.next
+    else:
+        dummy.next = inc_head
+        inc_head = inc_head.next
+    dummy = dummy.next
+dummy.next = prev if prev else inc_head
+ans = dummy_head.next
+while ans:
+    print(ans.val, end=' ')
+    ans = ans.next
+```
+
 #### [141. 环形链表](https://leetcode-cn.com/problems/linked-list-cycle/)
 ```python
 # Definition for singly-linked list.
@@ -8358,6 +8389,26 @@ class Solution:
             cur = cur.next
         return dummy.next
 ```
+
+#### [872. 叶子相似的树](https://leetcode.cn/problems/leaf-similar-trees)
+yield后接迭代器返回的对象， yield from后接迭代器方法
+```python
+class Solution:
+    def leafSimilar(self, root1: Optional[TreeNode], root2: Optional[TreeNode]) -> bool:
+        def helper_iter(node: TreeNode) -> int:
+            if not node:
+                return 
+            yield from helper_iter(node.left)
+            if node.left is None and node.right is None:
+                yield node.val
+            yield from helper_iter(node.right)
+
+        iter1 = helper_iter(root1)
+        iter2 = helper_iter(root2)
+        
+        return list(iter1) == list(iter2)
+```
+
 
 #### [1. 两数之和](https://leetcode-cn.com/problems/two-sum/)
 ```python
@@ -8887,6 +8938,102 @@ class Solution:
             intv *= 2
 
         return res.next
+```
+
+#### [1171. 从链表中删去总和值为零的连续节点](https://leetcode.cn/problems/remove-zero-sum-consecutive-nodes-from-linked-list/)
+```python
+class Solution:
+    def removeZeroSumSublists(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        dummy = ListNode(0)
+        dummy.next = head
+        prefix = 0
+        visited = dict()
+        visited[0] = dummy
+        while head:
+            prefix += head.val
+            visited[prefix] = head
+            head = head.next
+
+        # should start from dummy
+        head = dummy
+        prefix = 0
+        while head:
+            prefix += head.val
+            if prefix in visited:
+                head.next = visited[prefix].next
+            head = head.next
+        
+        return dummy.next
+```
+
+#### [430. 扁平化多级双向链表](https://leetcode-cn.com/problems/flatten-a-multilevel-doubly-linked-list/)
+```python
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val, prev, next, child):
+        self.val = val
+        self.prev = prev
+        self.next = next
+        self.child = child
+"""
+
+class Solution:
+    def flatten(self, head: 'Node') -> 'Node':
+        def dfs(node):
+            if not node:
+                return node
+            if node.child:
+                lastNode = dfs(node.child)
+
+            LNode = dfs(node.next)
+            if LNode == None:
+                LNode = node
+
+            if node.child:
+                nxtNode = node.next
+                childNode = node.child
+                node.child = None
+                node.next = childNode
+                childNode.prev = node
+                if nxtNode:
+                    lastNode.next = nxtNode
+                    nxtNode.prev = lastNode
+            return LNode
+
+        if not head:
+            return head
+        dfs(head)
+        return head
+```
+
+#### [2807. 在链表中插入最大公约数](https://leetcode.cn/problems/insert-greatest-common-divisors-in-linked-list)
+```python
+def gcd(a, b):
+    while b != 0:
+        a, b = b, a % b
+    return a
+
+def gcd(a, b):
+    return a if b == 0 else gcd(b, a % b)
+```
+```python
+class Solution:
+    def insertGreatestCommonDivisors(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        def gcd(a, b):
+            return a if b == 0 else gcd(b, a % b)
+        
+        slow = head
+        fast = slow.next
+        while fast:
+            val = gcd(slow.val, fast.val)
+            node = ListNode(val)
+            slow.next = node
+            node.next = fast
+            slow = fast
+            fast = fast.next
+        
+        return head
 ```
 
 ## Tree
@@ -11261,41 +11408,18 @@ class MedianFinder:
 1. 状态转移方程
 2. 初始值
 #### [55. 跳跃游戏](https://leetcode-cn.com/problems/jump-game)
-动态规划, 维护max_step作为能够最远跳达的位置,如果当前index<=max_step, 用nums[i]+i更新max_step
 ```python
 class Solution:
     def canJump(self, nums: List[int]) -> bool:
-        max_step = 0
-        n = len(nums)
-        for i in range(n):
-            if i <= max_step:
-                nxt = nums[i]+i
-                max_step = max(max_step, nxt)
-                if max_step >= n-1:
-                    return True
-            else:
+        max_reachable = 0
+        for i in range(len(nums)):
+            if i > max_reachable:
                 return False
-```
-贪心模拟，在当前index，下一个跳跃点位是下一步可到达点位中能跳的最远的
-```python
-class Solution:
-    def canJump(self, nums: List[int]) -> bool:  
-        index = 0
-        n = len(nums)
-        while index < n-1:
-            step = nums[index]
-            if step == 0:
-                return False
-            max_val = 0
-            max_index = index
-            for i in range(index+1, min(index+step+1, n)):
-                reach_index = i + nums[i]
-                # 如果跳的距离一样远，选最大的index
-                if reach_index >= max_val:
-                    max_val = reach_index
-                    max_index = i
-            index = max_index
-        return index >= n-1
+            max_reachable = max(max_reachable, i + nums[i])
+            if max_reachable >= len(nums) - 1:
+                return True
+                
+        return False
 ```
 
 #### [45. 跳跃游戏 II](https://leetcode-cn.com/problems/jump-game-ii/)
@@ -13983,30 +14107,37 @@ class Solution:
 #### [438. 找到字符串中所有字母异位词](https://leetcode-cn.com/problems/find-all-anagrams-in-a-string)
 1. stat统计p字符频率 2. 双指针，不符合条件时，left收缩 3. 判断left,right之间的长度是否等于p，确保是连续字串
 ```PYTHON
-from collections import defaultdict
 class Solution:
     def findAnagrams(self, s: str, p: str) -> List[int]:
+        def word_stat_equal(word_stat1: Dict, word_stat2: Dict) -> bool:
+            if len(word_stat1) != len(word_stat2):
+                return False
+            for key in word_stat1:
+                if key not in word_stat2:
+                    return False
+                if word_stat1[key] !=  word_stat2[key]:
+                    return False
+            
+            return True
+
         stat = defaultdict(int)
         for char in p:
             stat[char] += 1
-        cnt = len(stat)
-        left, right = 0, 0
-        n = len(s)
+        
+        window = defaultdict(int)
+        word_len = len(p)
         result = []
-        for right in range(n):
-            if s[right] in stat:
-                stat[s[right]] -= 1
-                if stat[s[right]] == 0:
-                    cnt -= 1
-                    if cnt == 0:
-                        while cnt == 0 and left <= right:
-                            if s[left] in stat:
-                                stat[s[left]] += 1
-                                if stat[s[left]] == 1:
-                                    cnt += 1
-                            left += 1
-                        if right - left + 2 == len(p):
-                            result.append(left-1)
+        for idx in range(len(s)):
+            # update window stat
+            if idx-word_len >= 0:
+                window[s[idx-word_len]] -= 1
+                if window[s[idx-word_len]] == 0:
+                    window.pop(s[idx-word_len])
+            window[s[idx]] += 1
+
+            if word_stat_equal(window, stat):
+                result.append(idx-word_len+1)
+        
         return result
 ```
 
@@ -17297,47 +17428,6 @@ public:
 };
 ```
 
-#### [430. 扁平化多级双向链表](https://leetcode-cn.com/problems/flatten-a-multilevel-doubly-linked-list/)
-```python
-"""
-# Definition for a Node.
-class Node:
-    def __init__(self, val, prev, next, child):
-        self.val = val
-        self.prev = prev
-        self.next = next
-        self.child = child
-"""
-
-class Solution:
-    def flatten(self, head: 'Node') -> 'Node':
-        def dfs(node):
-            if not node:
-                return node
-            if node.child:
-                lastNode = dfs(node.child)
-
-            LNode = dfs(node.next)
-            if LNode == None:
-                LNode = node
-
-            if node.child:
-                nxtNode = node.next
-                childNode = node.child
-                node.child = None
-                node.next = childNode
-                childNode.prev = node
-                if nxtNode:
-                    lastNode.next = nxtNode
-                    nxtNode.prev = lastNode
-            return LNode
-
-        if not head:
-            return head
-        dfs(head)
-        return head
-```
-
 #### [剑指 Offer 38. 字符串的排列](https://leetcode-cn.com/problems/zi-fu-chuan-de-pai-lie-lcof/)
 同 [47. 全排列 II](https://leetcode-cn.com/problems/permutations-ii/)
 ```python
@@ -20235,33 +20325,6 @@ class Solution:
         return result
 ```
 
-
-#### [1171. 从链表中删去总和值为零的连续节点](https://leetcode.cn/problems/remove-zero-sum-consecutive-nodes-from-linked-list/)
-```python
-class Solution:
-    def removeZeroSumSublists(self, head: Optional[ListNode]) -> Optional[ListNode]:
-        dummy = ListNode(0)
-        dummy.next = head
-        prefix = 0
-        visited = dict()
-        visited[0] = dummy
-        while head:
-            prefix += head.val
-            visited[prefix] = head
-            head = head.next
-
-        # should start from dummy
-        head = dummy
-        prefix = 0
-        while head:
-            prefix += head.val
-            if prefix in visited:
-                head.next = visited[prefix].next
-            head = head.next
-        
-        return dummy.next
-```
-
 #### [1483. 树节点的第 K 个祖先](https://leetcode.cn/problems/kth-ancestor-of-a-tree-node/)
 TODO: dp 找时间再看一下
 ```python
@@ -20639,40 +20702,6 @@ class Solution:
         return result if result >= 0 else money
 ```
 
-#### [2807. 在链表中插入最大公约数](https://leetcode.cn/problems/insert-greatest-common-divisors-in-linked-list)
-```python
-def gcd(a, b):
-    while b != 0:
-        a, b = b, a % b
-    return a
-
-def gcd(a, b):
-    return a if b == 0 else gcd(b, a % b)
-```
-```python
-# Definition for singly-linked list.
-# class ListNode:
-#     def __init__(self, val=0, next=None):
-#         self.val = val
-#         self.next = next
-class Solution:
-    def insertGreatestCommonDivisors(self, head: Optional[ListNode]) -> Optional[ListNode]:
-        def gcd(a, b):
-            return a if b == 0 else gcd(b, a % b)
-        
-        slow = head
-        fast = slow.next
-        while fast:
-            val = gcd(slow.val, fast.val)
-            node = ListNode(val)
-            slow.next = node
-            node.next = fast
-            slow = fast
-            fast = fast.next
-        
-        return head
-```
-
 #### [1944. 队列中可以看到的人数](https://leetcode.cn/problems/number-of-visible-people-in-a-queue)
 ```python
 class Solution:
@@ -20775,4 +20804,41 @@ class Solution:
                 dp[i] = dp[i - 1] - 1
 
         return dp[n]
+```
+
+#### [2182. 构造限制重复的字符串](https://leetcode.cn/problems/construct-string-with-repeat-limit)
+```python
+class Solution:
+    def repeatLimitedString(self, s: str, repeatLimit: int) -> str:
+        N = 26
+        count = [0] * N
+        for c in s:
+            count[ord(c) - ord('a')] += 1
+        ret = []
+        i, j, m = N - 1, N - 2, 0
+        while i >= 0 and j >= 0:
+            if count[i] == 0: # 当前字符已经填完，填入后面的字符，重置 m
+                m, i = 0, i - 1
+            elif m < repeatLimit: # 当前字符未超过限制
+                count[i] -= 1
+                ret.append(chr(ord('a') + i))
+                m += 1
+            elif j >= i or count[j] == 0: # 当前字符已经超过限制，查找可填入的其他字符
+                j -= 1
+            else: # 当前字符已经超过限制，填入其他字符，并且重置 m
+                count[j] -= 1
+                ret.append(chr(ord('a') + j))
+                m = 0
+                
+        return ''.join(ret)
+```
+
+#### [2171. 拿出最少数目的魔法豆](https://leetcode.cn/problems/removing-minimum-number-of-magic-beans)
+```python
+class Solution:
+    def minimumRemoval(self, beans: List[int]) -> int:
+        beans.sort()
+        max_rest = max([beans[idx]*(len(beans)-idx) for idx in range(len(beans))])
+
+        return sum(beans) - max_rest
 ```
