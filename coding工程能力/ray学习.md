@@ -164,3 +164,16 @@ if __name__ == "__main__":
     print(result)
 
 ```
+
+```py
+def time_cost(func: callable):
+    def wrapper(*args, **kwargs):
+        start_time = time()
+        result = func(*args, **kwargs)
+        end_time = time()
+        # logger.info(f"Function {func.__name__} executed in : {end_time-start_time: .1f}s")
+        print(f"Function {func.__name__} executed in : {end_time-start_time: .1f}s")
+        return result
+    
+    return wrapper
+```

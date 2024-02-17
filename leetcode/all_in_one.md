@@ -20842,3 +20842,27 @@ class Solution:
 
         return sum(beans) - max_rest
 ```
+
+#### [2765. 最长交替子数组](https://leetcode.cn/problems/longest-alternating-subarray)
+```python
+class Solution:
+    def alternatingSubarray(self, nums: List[int]) -> int:
+        def compute_alter_array_length(array: List[int], index: int) -> bool:
+            if index >= len(array):
+                return False
+                
+            step = 1
+            start_idx = index
+            while index+1 < len(array) and array[index+1]-array[index] == step:
+                index += 1
+                step *= -1
+            
+            return -1 if start_idx == index else index - start_idx + 1
+
+        max_length = -1
+        for idx in range(len(nums)):
+            length = compute_alter_array_length(nums, idx)
+            max_length = max(max_length, length)
+
+        return max_length
+```
